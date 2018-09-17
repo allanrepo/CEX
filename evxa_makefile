@@ -1,0 +1,63 @@
+###################################################################
+# Copyright 1998, LTX Corporation, Westwood, MA
+# 
+#  Makefile for building EVXA Demo Programs
+#
+#  99-05-21  Shah Alam  Added rules for evxa_program_demo
+#  99-04-12  Shah Alam  Created
+# ###################################################################
+
+CC=/usr/bin/g++
+CFLAGS=-m64 -fpermissive -g -Wall -Wno-return-type -Wno-unknown-pragmas -DLINUX_TARGET
+LFLAGS=-m64 -lcrypt -lnsl -lm -lrt -levxa -L/ltx/customer/lib64 -Wl,-rpath /ltx/customer/lib64
+
+INCDIR=-I.  -I/ltx/customer/include -I/ltx/customer/include/evxa
+
+DEMO_PROGS=evxa_basic_demo evxa_io_demo evxa_program_demo cex
+
+BASIC_CXX_FILES=evxa_basic_demo.cxx
+IO_CXX_FILES=evxa_io_demo.cxx
+PROGRAM_CXX_FILES=evxa_program_demo.cxx evxa_program_input.cxx evxa_program_state_notification.cxx evxa_program_entry_points.cxx
+CEX_FILES=cex.cpp argSwitches.cpp
+
+BASIC_OBJS = $(BASIC_CXX_FILES:.cxx=.o)
+IO_OBJS = $(IO_CXX_FILES:.cxx=.o)
+PROGRAM_OBJS = $(PROGRAM_CXX_FILES:.cxx=.o)
+CEX_OBJS = $(CEX_FILES:.cpp=.o)
+
+all : $(DEMO_PROGS)
+
+cex.o : $(CEX_FILES)
+	$(CC) -c $(CFLAGS) $(INCDIR) $(CEX_FILES)
+
+cex : $(CEX_OBJS)
+	$(CC) -o cex  $(CEX_OBJS) $(LIB_FILES) $(LFLAGS)
+
+evxa_basic_demo.o : $(BASIC_CXX_FILES)
+	$(CC) -c $(CFLAGS) $(INCDIR) $(BASIC_CXX_FILES)
+
+evxa_basic_demo : $(BASIC_OBJS)
+	$(CC) -o evxa_basic_demo  $(BASIC_OBJS) $(LIB_FILES) $(LFLAGS)
+
+
+evxa_io_demo.o : $(IO_CXX_FILES)
+	$(CC) -c $(CFLAGS) $(INCDIR) $(IO_CXX_FILES)
+
+evxa_io_demo : $(IO_OBJS)
+	$(CC) -o evxa_io_demo  $(IO_OBJS) $(LIB_FILES) $(LFLAGS)
+
+evxa_program_demo.o : $(PROGRAM_CXX_FILES)
+	$(CC) -c $(CFLAGS) $(INCDIR) $(PROGRAM_CXX_FILES)
+
+evxa_program_input.o : $(PROGRAM_CXX_FILES)
+	$(CC) -c $(CFLAGS) $(INCDIR) $(PROGRAM_CXX_FILES)
+
+evxa_program_state_notification.o : $(PROGRAM_CXX_FILES)
+	$(CC) -c $(CFLAGS) $(INCDIR) $(PROGRAM_CXX_FILES)
+
+evxa_program_entry_points.o : $(PROGRAM_CXX_FILES)
+	$(CC) -c $(CFLAGS) $(INCDIR) $(PROGRAM_CXX_FILES)
+
+evxa_program_demo : $(PROGRAM_OBJS)
+	$(CC) -o evxa_program_demo  $(PROGRAM_OBJS) $(LIB_FILES) $(LFLAGS)
+

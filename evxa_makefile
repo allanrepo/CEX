@@ -13,12 +13,12 @@ LFLAGS=-m64 -lcrypt -lnsl -lm -lrt -levxa -L/ltx/customer/lib64 -Wl,-rpath /ltx/
 
 INCDIR=-I.  -I/ltx/customer/include -I/ltx/customer/include/evxa
 
-DEMO_PROGS=evxa_basic_demo evxa_io_demo evxa_program_demo cex
+DEMO_PROGS=evxa_basic_demo evxa_io_demo evxa_program_demo _cex
 
 BASIC_CXX_FILES=evxa_basic_demo.cxx
 IO_CXX_FILES=evxa_io_demo.cxx
 PROGRAM_CXX_FILES=evxa_program_demo.cxx evxa_program_input.cxx evxa_program_state_notification.cxx evxa_program_entry_points.cxx
-CEX_FILES=cex.cpp argSwitches.cpp
+CEX_FILES= cex.cpp argSwitches.cpp CmdLineArgs.cpp demo.cpp
 
 BASIC_OBJS = $(BASIC_CXX_FILES:.cxx=.o)
 IO_OBJS = $(IO_CXX_FILES:.cxx=.o)
@@ -30,8 +30,8 @@ all : $(DEMO_PROGS)
 cex.o : $(CEX_FILES)
 	$(CC) -c $(CFLAGS) $(INCDIR) $(CEX_FILES)
 
-cex : $(CEX_OBJS)
-	$(CC) -o cex  $(CEX_OBJS) $(LIB_FILES) $(LFLAGS)
+_cex : $(CEX_OBJS)
+	$(CC) -o _cex  $(CEX_OBJS) $(LIB_FILES) $(LFLAGS)
 
 evxa_basic_demo.o : $(BASIC_CXX_FILES)
 	$(CC) -c $(CFLAGS) $(INCDIR) $(BASIC_CXX_FILES)

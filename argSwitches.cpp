@@ -7,7 +7,7 @@ using namespace utilities::args;
 
 unsigned long argSwitches::argOption::m_shortOptWidth = 0;
 unsigned long argSwitches::argOption::m_longOptWidth = 0;
-unsigned long argSwitches::argOption::m_paramDescWidth = 0;
+unsigned long argSwitches::argOption::m_paramDescWidth = 0;  
 const std::string argSwitches::argOption::m_emptyStr("");
 
 
@@ -53,10 +53,10 @@ unsigned long formatStringToVectorList(const std::string& str, std::vector<std::
 argSwitches::argOption::argOption()
 {
 	m_shortOption = "";
-	m_longOption = "";
+	m_longOption = "";  
 	m_paramName = "";
 	m_description = "";
-	m_strValue = "";
+	//m_strValue = "";
 	m_isSet = false;
 	m_hasParam = false;
 	m_hiddenArg = false;
@@ -68,7 +68,7 @@ argSwitches::argOption::argOption(const std::string& shortOpt, const std::string
 	m_shortOption = shortOpt;
 	m_longOption = longOpt;
 	m_description = desc;
-	m_strValue = "";
+	//m_strValue = "";
 	m_isSet = false;
 	m_hasParam = hasParam;
 	m_hiddenArg = hiddenArg;
@@ -96,6 +96,9 @@ const std::string& argSwitches::argOption::description(const std::string& desc)
 	return m_description;
 }
 
+/* -----------------------------------------------------------------------
+set the argOption object if it may contain param or not.
+----------------------------------------------------------------------- */
 bool argSwitches::argOption::hasParam(bool b, const std::string& param)
 {
 	m_hasParam = b; 
@@ -308,7 +311,7 @@ bool argSwitches::scanArgs(int argc, char **argv, bool replaceCommand, const std
 	str2argOptionPtr::iterator testArg;
 
 	char *p;
-	bool found = false;
+	//bool found = false;
 	bool earlyBreak = false;
 	str2argOptionPtr::iterator testEarly = m_longArgs.end();
 	if (m_useLastForScan) {
@@ -316,34 +319,47 @@ bool argSwitches::scanArgs(int argc, char **argv, bool replaceCommand, const std
 		else testEarly = m_shortArgs.find(m_LastArgForScan);
 	}
 
-	for (int i = 1; i < argc; i++, found = false) {
+	testArg = m_longArgs.end();
+	for (int i = 1; i < argc; i++) 
+	{
 		if (earlyBreak)	 m_unusedArgs.push_back(std::string(argv[i]));
-		else {
-			if ((argv[i][1] == '-') && (argv[i][0] == '-')) { // look at 1 first to check for long form
+		else
+		{
+			// check if this argument is a long form
+			if ((argv[i][1] == '-') && (argv[i][0] == '-'))
+			{ 
 				p = argv[i]; p+= 2;
 				testArg = m_longArgs.find(p);
-				if (testArg != m_longArgs.end()) found = true;
-			} else if (argv[i][0] == '-') {	// Fast break from above could indicate short form.
+			} 			
+			// check if this argument is a short form
+			else if (argv[i][0] == '-') 
+			{	
 				p = argv[i]; p+= 1;
 				testArg = m_shortArgs.find(p);
-				if (testArg != m_shortArgs.end()) found = true;
 			}
 
-			if (!found)	m_unusedArgs.push_back(std::string(argv[i]));
-			else {
-				// We found the argument, see if we need to add a parameter.
-				if (testArg->second->hasParam()) {
-					i++;
-					if (i < argc) {	// Just to be sure
-						testArg->second->setArg(argv[i]);
+			// check if this argument is a parameter
+			else
+			{
+				// we have a valid arg that might be expecting a parameter...
+				if (testArg != m_longArgs.end() && testArg != m_shortArgs.end())
+				{
+					// does this arg wants a parameter?
+					if (testArg->second->hasParam()) 
+					{
+						testArg->second->addArg(argv[i]);
 						m_scannedCount++;
-					}
-				} else {
-					testArg->second->setArg();
-					m_scannedCount++;
-				}
+					} 
+					else 
+					{
+						testArg->second->setArg();
+						m_scannedCount++;
+					}				
+				} 
 			}
-			if (m_useLastForScan) {
+
+			if (m_useLastForScan) 
+			{
 				if (testEarly != m_longArgs.end()) earlyBreak = testEarly->second->isSet();
 			}
 		}
@@ -360,31 +376,52 @@ argSwitches::argOption *argSwitches::argOption::getThis(void)
 
 bool argSwitches::addArg(const std::string& shortOpt, const std::string& longOpt, const std::string& desc, bool expectParam, const std::string& paramName)
 {
-	if ((shortOpt.length() < 1) && (longOpt.length() < 1)) return false; // need some way to find the arg. 
+	// is argument valid?
+	if ((shortOpt.length() < 1) && (longOpt.length() < 1)) return false;  
+
+	// i'm assuming that if the argument being added has a short opt == '-', this argument is considered "hidden" and has no corresponding short opt
+	// not sure what this do but it's checking if short opt == '-', but why??
 	bool l_hidden = (shortOpt.compare("-") == 0);
 	str2argOptionPtr::iterator sopt = m_shortArgs.end();
+
+	// now if short opt != '-', it tries to find it from shortArgs list
 	if (!l_hidden) sopt = m_shortArgs.find(shortOpt);
+
+	// long opt is also searched in longArgs list
 	str2argOptionPtr::iterator lopt = m_longArgs.find(longOpt);
-	if (sopt != m_shortArgs.end()) { // Updating discription/has value
+
+	// if this short opt already exist in our list, 
+	if (sopt != m_shortArgs.end()) 
+	{ 
 		sopt->second->description(desc);
 		sopt->second->hasParam(expectParam, paramName);
-		if (lopt == m_longArgs.end()) {
+		if (lopt == m_longArgs.end()) 
+		{
 			// Add the new reference.
 			if (longOpt.length() > 0) m_longArgs[longOpt] = sopt->second->getThis();
 		}
-	} else if (lopt != m_longArgs.end()) { // Updating discription/has value
+	} 
+	else if (lopt != m_longArgs.end()) 
+	{ // Updating discription/has value
 		lopt->second->description(desc);
 		lopt->second->hasParam(expectParam, paramName);
-		if (sopt == m_longArgs.end()) {
+		if (sopt == m_longArgs.end()) 
+		{
 			// Add the new reference.
 			if (shortOpt.length() > 0) m_shortArgs[shortOpt] = lopt->second->getThis();
 		}
-	} else {// adding new arg
+	} 
+	// if this arg does not exist in both short and long opt...
+	else 
+	{
+		// this object is a list that holds all args. it references to the long and short pair opt
 		m_args.push_back(new argOption(shortOpt, longOpt, desc, expectParam, paramName, l_hidden));
 		size_t lastLoc = m_args.size() -1;
+
 		if ((shortOpt.length() > 0) && !l_hidden) m_shortArgs[shortOpt] = m_args[lastLoc]->getThis();
 		if (longOpt.length() > 0) m_longArgs[longOpt] = m_args[lastLoc]->getThis();
 	}
+
 	return true;
 }
 
@@ -481,6 +518,7 @@ argSwitches::argOption *argSwitches::getOption(const std::string& ref, bool useL
 	return iter->second->getThis();
 }
 
+/*
 bool argSwitches::getArg(const std::string& ref, bool& value, bool useLongArg)
 {
 	argOption *ap = getOption(ref, useLongArg);
@@ -488,16 +526,17 @@ bool argSwitches::getArg(const std::string& ref, bool& value, bool useLongArg)
 
 	return value;
 }
+*/
 
-
-const std::string&  argSwitches::getArg(const std::string& ref, bool useLongArg)
+const std::string&  argSwitches::getArg(const std::string& ref, unsigned int n, bool useLongArg)
 {
 	argOption *ap = getOption(ref, useLongArg);
 	if (ap == NULL)	return argSwitches::argOption::emptyString();
 
-	return ap->value();
+	return ap->value(n);
 }
 
+/*
 long argSwitches::getArg(const std::string& ref, long& value, bool useLongArg)
 {
 	argOption *ap = getOption(ref, useLongArg);
@@ -516,7 +555,7 @@ double argSwitches::getArg(const std::string& ref, double& value, bool useLongAr
 	if (sscanf(ap->value().c_str(), "%lf", &lf) == 1) value = lf;
 	return value;
 }
-
+*////////////////
 
 bool argSwitches::isSet(const std::string& ref, bool useLongArg)
 {
@@ -527,11 +566,11 @@ bool argSwitches::isSet(const std::string& ref, bool useLongArg)
 }
 
 
-const std::string& argSwitches::setArg(const std::string& ref, const std::string& value, bool useLongArg)
+const std::string& argSwitches::addArg(const std::string& ref, const std::string& value, bool useLongArg)
 {
 	argOption *ap = getOption(ref, useLongArg);
 	if (ap != NULL) {
-		if (ap->setArg(value)) return value;
+		if (ap->addArg(value)) return value;
 	}
 
 	return argSwitches::argOption::emptyString();

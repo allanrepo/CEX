@@ -13,7 +13,7 @@
 
 #include <evxa/ProgramControl.hxx>
 #include <evxa/StateNotification.hxx>
-#include <evxa/EvxioStreamsClient.hxx>
+#include <evxa/EvxioStreamsClient.hxx>  
 
 
 class BasicStateNotification;  //forward declaration of class

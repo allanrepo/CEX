@@ -1,27 +1,307 @@
 #include <cex.h>
-#include "argSwitches.h"
+#include <unistd.h>
+#include <pwd.h> 
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+#include <sys/types.h>
+#include <sys/time.h>   
+#include <sstream>   
+#include <sys/types.h>
+#include <pwd.h>
 
-int main(int argc, char **argv)
+#define SAFE_DELETE(p){ delete(p); p = 0; }
+ 
+#if 1
+
+/* ------------------------------------------------------------------------------------------
+class's constructor and destructor
+------------------------------------------------------------------------------------------ */
+CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_pState(0), m_pEvxio(0)
 {
-	utilities::args::argSwitches args;
+	// set head to default
+	m_nHead = 1;
 
-        args.addArg("t", "tester", "Specifies the target tester, if not set, the environment variable LTX_TESTER will be checked, followed by <username>_sim", true, "tester name");
-        args.addArg("d", "debug", "Enable debug logic", false, "debug");
-        args.addArg("v", "version", "Display the version and exit", false, "vversion");
-       
-	args.scanArgs(argc, argv);
+	// specify known/expected arguments. prefer to use xml file and parse it for list
+	m_Args.add("t", "Specifies the target tester, if not set, the environment variable LTX_TESTER will be checked, followed by <username>_sim", true, "tester name");
+	m_Args.add("tester", "Specifies the target tester, if not set, the environment variable LTX_TESTER will be checked, followed by <username>_sim", true, "tester name");
 
-	std::string ss = args.getArg("tester"); 
-	std::cout << "tester: " << ss << std::endl;
+	// parse command line argument
+	m_Args.scan(argc, argv);
 
-	// if longopt flag = true (default), only longopt is check for state
-	bool debug = args.isSet("debug");
-	std::cout << "debug: " << (debug? "yes" : "no") << std::endl;
+	//m_Args.display();
 
-	// if longopt flag = false, only shortopt is check for state
-	bool version = args.isSet("v", false);
-	std::cout << "version: " << (version? "yes" : "no") << std::endl;
+	// check if tester name is specified in the argument. if not, set to default
+	if (m_Args.get("t").empty() && m_Args.get("tester").empty())
+	{
+        	uid_t uid = getuid();
+        	char buf_passw[1024];   
+        	struct passwd password;
+        	struct passwd *passwd_info;
 
-	args.displayHelp(std::cout);
+        	getpwuid_r(uid, &password, buf_passw, 1024, &passwd_info);
+		if (!passwd_info) m_Args.add("t", "sim");
+		else
+		{
+			std::stringstream ss;
+			ss << passwd_info->pw_name << "_sim";
+			m_Args.add(	"t", ss.str());
+	
+		}
+	}
+}
+ 
+CCex::~CCex()
+{
+
+} 
+
+/* ------------------------------------------------------------------------------------------
+connects to tester by first creating EVXA tester objects and then hooking up to tester's IO
+------------------------------------------------------------------------------------------ */
+bool CCex::connect()
+{
+	std::string strTesterName = m_Args.get("t");
+
+	// let's keep looping until all our tester objects are created
+  	while(true) 
+	{
+		disconnect();
+		m_Log.print("Attempting to connect to tester <", false);
+		m_Log.print(strTesterName.c_str(), false);
+		m_Log.print(">...");
+
+		// connect to tester
+    		m_pTester = new TesterConnection(strTesterName.c_str());
+    		if(m_pTester->getStatus() != EVXA::OK){ m_Log.print("ERROR TesterConnection constructor"); sleep(1); continue; }
+		m_Log.print("TesterConnection object created...");
+		
+		// connect to test head
+    		m_pConn = new TestheadConnection(strTesterName.c_str(), m_nHead);
+    		if(m_pConn->getStatus() !=  EVXA::OK){ m_Log.print("ERROR in TestheadConnection constructor"); sleep(1); continue; }
+		m_Log.print("TestheadConnection bject created...");
+
+		// create program control object, does not check if program is loaded
+    		m_pProgCtrl = new ProgramControl(*m_pConn);
+    		if(m_pProgCtrl->getStatus() !=  EVXA::OK){ m_Log.print("ERROR in Program constructor"); sleep(1); continue; }
+		m_Log.print("ProgramControl object created...");
+
+		// create notification object
+    		m_pState = new CStateNotification(*m_pConn);
+    		if(m_pState->getStatus() !=  EVXA::OK) { m_Log.print("ERROR in statePtr constructor"); sleep(1); continue; }
+		m_Log.print("CStateNotification object created...");
+
+		// lets convert our tester name from std::string to crappy old C style string because the stupid software team 
+		// who designed EVXA libraries sucks so bad and too lazy to set string arguments as constants...
+		char szTesterName[1024] = "";
+		sprintf(szTesterName, "%s", strTesterName.c_str());
+
+		// create stream client
+    		m_pEvxio = new CEvxioStreamClient(szTesterName, m_nHead);
+    		if(m_pEvxio->getStatus() != EVXA::OK){ m_Log.print("ERROR in EvxioStreamClient constructor"); sleep(1); continue; }
+		m_Log.print("CEvxioStreamClient object created...");
+
+		// if we reached this point, we are able connect to tester. let's connect to evx stream now...
+		// same issue here... i could have used stringstream but forced to use C style string because the damn EVXA class
+		// wants a C style string argument that is not a constant!!!
+		char szPid[1024] = "";
+		sprintf(szPid, "client_%d", getpid());
+
+    		if(m_pEvxio->ConnectEvxioStreams(m_pConn, szPid) != EVXA::OK){ m_Log.print("ERROR Connecting to evxio"); sleep(1); continue; }
+    		else break; 
+  	}
+
+	// once the tester objects are created, let's wait until tester is ready
+  	while(!m_pTester->isTesterReady(m_nHead)) 
+	{
+		m_Log.print("Tester NOT yet ready...");
+		sleep(1);
+	}
+	m_Log.print("Tester ready for use.");
+  	return true; 	 
+}
+
+/* ------------------------------------------------------------------------------------------
+destroys the EVXA tester objects
+------------------------------------------------------------------------------------------ */
+void CCex::disconnect()
+{
+	SAFE_DELETE( m_pTester );
+	SAFE_DELETE( m_pConn );
+	SAFE_DELETE( m_pProgCtrl );
+	SAFE_DELETE( m_pState );
+	SAFE_DELETE( m_pEvxio );
+}
+
+/* ------------------------------------------------------------------------------------------
+application's loop
+------------------------------------------------------------------------------------------ */
+void CCex::loop()
+{
+	while(1)
+	{
+		std::string strInput;
+		std::cout << "cex>";
+		std::getline( std::cin, strInput); 
+		handleTesterInput(strInput);
+	}
+
+	while(0) 
+	{
+		fd_set readfd;
+		FD_ZERO(&readfd);
+ 		FD_SET(fileno(stdin), &readfd); //add input to select
+
+		if((select(1, &readfd, NULL, NULL, NULL)) < 0) {  }
+
+		if(FD_ISSET(fileno(stdin), &readfd))
+		{
+
+ 			char buf[BUFSIZ] = "";
+  			read(fileno(stdin), buf, BUFSIZ);
+
+			handleTesterInput(buf);
+		}
+	}
 
 }
+
+/* ------------------------------------------------------------------------------------------
+handle user input
+------------------------------------------------------------------------------------------ */
+void CCex::handleTesterInput(const std::string& strInput)
+{	
+	m_Log.print(strInput.c_str());
+}
+
+
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+CTester::CTester(): m_pTester(NULL), m_pConn(NULL), m_pProgCtrl(NULL), m_pState(NULL), m_pEvxio(NULL)
+{
+	head(1); // set this as default for now. arg object must provide this
+	m_pTesterInputListener = 0; // by default, we are not using any input listener
+}
+
+CTester::~CTester()
+{
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CTester::connect(const std::string& strTesterName)
+{
+	// let's keep looping until all our tester objects are created
+  	while(true) 
+	{
+		disconnect();
+		m_Log.print("Attempting to connect to tester ", false);
+		m_Log.print(strTesterName.c_str(), false);
+		m_Log.print("...");
+
+		// connect to tester
+    		m_pTester = new TesterConnection("localuser_DMDx_sim");
+    		if(m_pTester->getStatus() != EVXA::OK){ m_Log.print("ERROR TesterConnection constructor"); sleep(1); continue; }
+		m_Log.print("TesterConnection object created...");
+		
+		// connect to test head
+    		m_pConn = new TestheadConnection(strTesterName.c_str(), m_nHead);
+    		if(m_pConn->getStatus() !=  EVXA::OK){ m_Log.print("ERROR in TestheadConnection constructor"); sleep(1); continue; }
+		m_Log.print("TestheadConnection bject created...");
+
+		// create program control object, does not check if program is loaded
+    		m_pProgCtrl = new ProgramControl(*m_pConn);
+    		if(m_pProgCtrl->getStatus() !=  EVXA::OK){ m_Log.print("ERROR in Program constructor"); sleep(1); continue; }
+		m_Log.print("ProgramControl object created...");
+
+		// create notification object
+    		m_pState = new CStateNotification(*m_pConn);
+    		if(m_pState->getStatus() !=  EVXA::OK) { m_Log.print("ERROR in statePtr constructor"); sleep(1); continue; }
+		m_Log.print("CStateNotification object created...");
+
+		// lets convert our tester name from std::string to crappy old C style string because the stupid software team 
+		// who designed EVXA libraries sucks so bad and too lazy to set string arguments as constants...
+		char szTesterName[1024] = "";
+		sprintf(szTesterName, "%s", strTesterName.c_str());
+
+		// create stream client
+    		m_pEvxio = new CEvxioStreamClient(szTesterName, m_nHead);
+    		if(m_pEvxio->getStatus() != EVXA::OK){ m_Log.print("ERROR in EvxioStreamClient constructor"); sleep(1); continue; }
+		m_Log.print("CEvxioStreamClient object created...");
+
+		// if we reached this point, we are able connect to tester. let's connect to evx stream now...
+		// same issue here... i could have used stringstream but forced to use C style string because the damn EVXA class
+		// wants a C style string argument that is not a constant!!!
+		// std::stringstream pid;
+		// pid << "client_" << (int)getpid();
+		char szPid[1024] = "";
+		sprintf(szPid, "client_%d", getpid());
+
+    		if(m_pEvxio->ConnectEvxioStreams(m_pConn, szPid) != EVXA::OK){ m_Log.print("ERROR Connecting to evxio"); sleep(1); continue; }
+    		else break; 
+  	}
+
+	// once the tester objects are created, let's wait until tester is ready
+  	while(!m_pTester->isTesterReady(m_nHead)) 
+	{
+		m_Log.print("Tester NOT yet ready...");
+		sleep(1);
+	}
+	m_Log.print("Tester ready for use.");
+  	return true; 	 
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+void CTester::disconnect()
+{
+	SAFE_DELETE( m_pTester );
+	SAFE_DELETE( m_pConn );
+	SAFE_DELETE( m_pProgCtrl );
+	SAFE_DELETE( m_pState );
+	SAFE_DELETE( m_pEvxio );
+}
+
+/* ------------------------------------------------------------------------------------------
+application's loop
+------------------------------------------------------------------------------------------ */
+void CTester::loop()
+{
+ 
+	while(1) 
+	{
+		fd_set readfd;
+		FD_ZERO(&readfd);
+ 		FD_SET(fileno(stdin), &readfd); //add input to select
+
+		//int num_fds = ((stateSockId > evxioSockId) ? stateSockId : evxioSockId);
+	//	num_fds = ((num_fds > errorSockId) ? num_fds + 1 : errorSockId +1);
+
+  ///int num_ready;
+  //if((num_ready = select(num_fds, &read_fd, NULL, NULL, NULL)) < 0) {
+  //  perror("main_serverLoop select failed ");
+ // }
+
+		if((select(1, &readfd, NULL, NULL, NULL)) < 0) {  }
+
+		if(FD_ISSET(fileno(stdin), &readfd))
+		{
+
+ 			char buf[BUFSIZ] = "";
+  			read(fileno(stdin), buf, BUFSIZ);
+
+			m_pTesterInputListener(buf);
+
+			//std::cout << "hello "<< buf;
+		}
+	}
+
+}
+
+
+#endif
+

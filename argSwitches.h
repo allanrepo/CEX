@@ -6,16 +6,21 @@
 #include <map>
 #include <vector>
 
-namespace utilities {
-	namespace args {
-		class argSwitches {	// May move into configClass later.
+namespace utilities 
+{
+	namespace args 
+	{
+		class argSwitches 
+		{	// May move into configClass later.
 		private:
-			class argOption {
+			// this class holds the argument options passed 
+			class argOption 
+			{
 			private:
 				std::string m_shortOption;
 				std::string m_longOption;
 				std::string m_description;
-				std::string m_strValue;
+				//std::string m_strValue;
 				std::string m_paramName;
 				bool m_isSet;
 				bool m_hasParam;
@@ -24,33 +29,75 @@ namespace utilities {
 				static unsigned long m_longOptWidth;
 				static unsigned long m_paramDescWidth;
 				static const std::string m_emptyStr;
+
+				std::vector< std::string > m_strValues;
+
 			public:
 				argOption();
 				argOption(const std::string& shortOpt, const std::string& longOpt, const std::string& desc, bool m_hasParam = false, const std::string& paramName = std::string(""), bool hiddenArg = false);
 				virtual ~argOption();
 
-				void clear(void) {
+				void clear() 
+				{
 					m_isSet = false;
-					m_strValue = "";
+					//m_strValue = "";
+					m_strValues.clear();
 				}
 
-				bool setArg(void) {
+				bool setArg() {
 					if (m_hasParam)	return false; // Cannot use this method to set an arg that needs a value
 					m_isSet = true;
 					return m_isSet;
 				}
 
+				/*
 				bool setArg(const std::string& value) {
 					m_hasParam = true;
 					m_strValue = value;
 					m_isSet = true;
 					return m_isSet;
 				}
+				*/
+
+				bool addArg(const std::string& value)
+				{
+					// check if this value already exist in list. 
+					bool bList = false;
+					for (unsigned int i = 0; i < m_strValues.size(); i++)
+					{
+						if (!m_strValues[i].compare(value))
+						{
+							bList = true;
+							break;
+						}
+					}
+
+					// if not, add it
+					if (!bList)
+					{
+						m_strValues.push_back(value);
+						// set flags 
+						m_hasParam = true;
+						m_isSet = true;
+					}
+
+					return m_isSet;					
+				}
+
+				//const std::string& value(void) { if (m_hasParam && m_isSet)	return m_strValue;return m_emptyStr;}
+				const std::string& value(unsigned int n = 0)
+				{			
+					// has param, is set, and param index is within our list?
+					if (m_hasParam && m_isSet && n < m_strValues.size()){ return m_strValues[n]; }
+
+					// if not, return an empty string
+					else{ return m_emptyStr; }	
+				
+				}
 
 				const std::string& description(void) { return m_description;}
 				const std::string& description(const std::string& desc);
 
-				const std::string& value(void) { if (m_hasParam && m_isSet)	return m_strValue;return m_emptyStr;}
 				bool               bValue(void) { if (!m_hasParam) return m_isSet;return false;}
 				bool               isSet(void) { return m_isSet;}
 
@@ -112,16 +159,16 @@ namespace utilities {
 			// the short form argument name. Reference should not include any "-" or "--"
 			bool isSet(const std::string& ref, bool useLongArg = true);	// Command was set as a switch on the command line
 			// If not set, the empty string "" will be returned.
-			const std::string& getArg(const std::string& ref, bool useLongArg = true);
+			const std::string& getArg(const std::string& ref, unsigned int n = 0, bool useLongArg = true);
 			// In the event of the argument not being set or found, the "value" parameter will be returned.
-			bool getArg(const std::string& ref, bool& value, bool useLongArg);
-			long getArg(const std::string& ref, long& value, bool useLongArg = true);
-			double getArg(const std::string& ref, double& value, bool useLongArg = true);
+			//bool getArg(const std::string& ref, bool& value, bool useLongArg);
+			//long getArg(const std::string& ref, long& value, bool useLongArg = true);
+			//double getArg(const std::string& ref, double& value, bool useLongArg = true);
 			const std::string& getCommand(void) { return m_cmd;}
 
 
-			const std::string& setArg(const std::string& ref, const char *value, bool useLongArg = true) { return setArg(ref, std::string(value), useLongArg);}
-			const std::string& setArg(const std::string& ref, const std::string& value, bool useLongArg = true);
+			const std::string& addArg(const std::string& ref, const char *value, bool useLongArg = true) { return addArg(ref, std::string(value), useLongArg);}
+			const std::string& addArg(const std::string& ref, const std::string& value, bool useLongArg = true);
 			bool setArg(const std::string& ref, bool useLongArg = true);
 
 

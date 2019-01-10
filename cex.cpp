@@ -1,38 +1,53 @@
 #include <cex.h>
 #include <unistd.h>
 #include <pwd.h> 
-#include <stdlib.h>
+#include <stdlib.h> 
 #include <stdio.h>
 #include <string.h>
-#include <sys/types.h>
+#include <sys/types.h>  
 #include <sys/time.h>   
-#include <sstream>   
+#include <sstream>      
 #include <sys/types.h>
 #include <pwd.h>
 
 #define SAFE_DELETE(p){ delete(p); p = 0; }
  
-#if 1
+#if 1 
 
 /* ------------------------------------------------------------------------------------------
 class's constructor and destructor
 ------------------------------------------------------------------------------------------ */
 CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_pState(0), m_pEvxio(0)
 {
+	// error logger is enabled always
+	m_Error.enable();
+
 	// set head to default
 	m_nHead = 1;
 
 	// specify known/expected arguments. prefer to use xml file and parse it for list
-	m_Args.add("t", "Specifies the target tester, if not set, the environment variable LTX_TESTER will be checked, followed by <username>_sim", true, "tester name");
-	m_Args.add("tester", "Specifies the target tester, if not set, the environment variable LTX_TESTER will be checked, followed by <username>_sim", true, "tester name");
+	m_Args.add("tester", true, "Specifies the target tester, if not set, the environment variable LTX_TESTER will be checked, followed by <username>_sim");
+	m_Args.add("timeout", true, "Time out in <seconds>");
+	m_Args.add("command", true, "command line");
+	m_Args.add("head", true, "<head num>");
+	m_Args.add("hd", true, "<head num>");
+	m_Args.add("version", false, "software release version");
+	m_Args.add("help", false, "help");
+	m_Args.add("debug", false, "debug");
+	m_Args.add("dm", false, "debug");
+	m_Args.add("attempt", true, "Number of attempts to try and connect");
+	m_Args.add("verbose", false, "log events in detail");
 
 	// parse command line argument
 	m_Args.scan(argc, argv);
 
-	//m_Args.display();
+	// check if we are running noisy
+	m_Log.enable( m_Args.enabled("verbose") );
+
+
 
 	// check if tester name is specified in the argument. if not, set to default
-	if (m_Args.get("t").empty() && m_Args.get("tester").empty())
+	if (m_Args.get("tester").empty())
 	{
         	uid_t uid = getuid();
         	char buf_passw[1024];   
@@ -40,14 +55,32 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
         	struct passwd *passwd_info;
 
         	getpwuid_r(uid, &password, buf_passw, 1024, &passwd_info);
-		if (!passwd_info) m_Args.add("t", "sim");
+		if (!passwd_info) m_Args.add("tester", "sim");
 		else
 		{
 			std::stringstream ss;
 			ss << passwd_info->pw_name << "_sim";
-			m_Args.add(	"t", ss.str());
-	
+			m_Args.add("tester", ss.str());	
 		}
+	}
+
+	// try to connect to tester
+	if (!connect()) return;
+
+	// if command line has 'command' argument and has param
+	if (!m_Args.get("command").empty())
+	{
+		if (m_Args.size( "command" ))
+		{
+			/// execute command, disconnect and...
+			m_Error << "CEX Error: " << m_Arg.fwefewfwff: 'fwefewfwff' is not a CEX command. << CLog::endl;
+			// disconnect
+			disconnect();
+		}		
+	}
+	else
+	{
+		loop();
 	}
 }
  
@@ -61,10 +94,14 @@ connects to tester by first creating EVXA tester objects and then hooking up to 
 ------------------------------------------------------------------------------------------ */
 bool CCex::connect()
 {
-	std::string strTesterName = m_Args.get("t");
+	// get number of attempts we'll try to connect
+	long n = m_Args.getAsLong("attempt");
+	if (!n) n = 1;
 
-	// let's keep looping until all our tester objects are created
-  	while(true) 
+	std::string strTesterName = m_Args.get("tester");
+
+	// let's attempt n number of times to connect
+  	while(n--) 
 	{
 		disconnect();
 		m_Log.print("Attempting to connect to tester <", false);
@@ -108,17 +145,23 @@ bool CCex::connect()
 		sprintf(szPid, "client_%d", getpid());
 
     		if(m_pEvxio->ConnectEvxioStreams(m_pConn, szPid) != EVXA::OK){ m_Log.print("ERROR Connecting to evxio"); sleep(1); continue; }
-    		else break; 
+    		else
+		{
+			// once the tester objects are created, let's wait until tester is ready
+		  	while(!m_pTester->isTesterReady(m_nHead)) 
+			{
+				m_Log.print("Tester NOT yet ready...");
+				sleep(1);
+			}
+			m_Log.print("Tester ready for use.");
+		  	return true; 	 
+		}
   	}
 
-	// once the tester objects are created, let's wait until tester is ready
-  	while(!m_pTester->isTesterReady(m_nHead)) 
-	{
-		m_Log.print("Tester NOT yet ready...");
-		sleep(1);
-	}
-	m_Log.print("Tester ready for use.");
-  	return true; 	 
+	// if we reach this point, we failed to connect to tester after n number of attempts...
+	std::stringstream ss; ss << "Can't connect to tester: Tester " << strTesterName << " does not exist.";
+	m_Error.print(ss.str());
+  	return false; 	 
 }
 
 /* ------------------------------------------------------------------------------------------
@@ -278,15 +321,15 @@ void CTester::loop()
 		FD_ZERO(&readfd);
  		FD_SET(fileno(stdin), &readfd); //add input to select
 
-		//int num_fds = ((stateSockId > evxioSockId) ? stateSockId : evxioSockId);
+	//	int num_fds = ((stateSockId > evxioSockId) ? stateSockId : evxioSockId);
 	//	num_fds = ((num_fds > errorSockId) ? num_fds + 1 : errorSockId +1);
 
-  ///int num_ready;
-  //if((num_ready = select(num_fds, &read_fd, NULL, NULL, NULL)) < 0) {
-  //  perror("main_serverLoop select failed ");
- // }
+  //int num_ready;
+  //if(/(num_ready = select(num_fds, &read_fd, NULL, NULL, NULL)) < 0) {
+    //perror("main_serverLoop select failed ");
+// }
 
-		if((select(1, &readfd, NULL, NULL, NULL)) < 0) {  }
+	//	if((select(1, &readfd, NULL, NULL, NULL)) < 0) {  }
 
 		if(FD_ISSET(fileno(stdin), &readfd))
 		{
@@ -296,7 +339,7 @@ void CTester::loop()
 
 			m_pTesterInputListener(buf);
 
-			//std::cout << "hello "<< buf;
+			std::cout << "hello "<< buf;
 		}
 	}
 

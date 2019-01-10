@@ -8,22 +8,9 @@
 #include <cstdio>
 #include "CmdLineArgs.h"
 #include <iostream>
+#include "utility.h"
   
 
-
-class CLog
-{
-private:
-public:
-	CLog(){}
-	virtual ~CLog(){}
-
-	void print(const char* p, bool bEOL = true)
-	{
-		std::cout << p;
-		if (bEOL) std::cout << std::endl;
-	}
-};
 
 class CStateNotification : public StateNotification
 {
@@ -74,6 +61,7 @@ class CCex
 private:
 	// logger
 	CLog m_Log;
+	CLog m_Error;
 	
 	// command line option manager
 	CCmdLineArgs m_Args;

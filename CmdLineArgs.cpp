@@ -1,4 +1,5 @@
 #include "CmdLineArgs.h"
+#include "utility.h"
 
 const std::string CCmdLineArgs::CArg::m_strEmpty("");
 
@@ -15,11 +16,40 @@ CCmdLineArgs::CArg::CArg(const std::string& opt, const std::string& desc, bool b
 	m_strOpt = opt;
 	m_strDesc = desc;
 	m_strParamDesc = paramDesc;
-
+	m_enable = false;
 }
 
 CCmdLineArgs::CArg::~CArg()
 {
+}
+
+/* ------------------------------------------------------------------------------------------
+check if this arg has this param
+------------------------------------------------------------------------------------------ */
+bool CCmdLineArgs::CArg::has(const std::string& param)	
+{
+	for (unsigned int i = 0; i < m_strParams.size(); i++)
+	{
+		if (m_strParams[i].compare(param) == 0) return true;
+	}
+	return false;
+}
+
+/* ------------------------------------------------------------------------------------------
+check if this is the arg we are looking for.
+
+------------------------------------------------------------------------------------------ */
+bool CCmdLineArgs::CArg::is(const std::string& opt)
+{ 
+	//return m_strOpt.compare(opt) == 0? true : false; 
+
+	// check if this opt matches the string 'opt' argument we looking for
+	size_t t = m_strOpt.find(opt);
+
+	// if there's a match, check if return value = 0. we expect to match the 
+	// first set of characters e.g. -co matches -command, but -omm does not.
+	if (t == 0) return true;
+	else return false;
 }
 
 /* ------------------------------------------------------------------------------------------
@@ -54,19 +84,18 @@ const std::string& CCmdLineArgs::CArg::get(unsigned int nParam)
 }
 
 
-
 /* ------------------------------------------------------------------------------------------
-search the arg list if there's any that contains this opt. return reference to its 
-iterator if found. otherwise, just return reference to list end
+search the arg list for the first one that matches the given opt at first character level.
+e.g. -te matches 'tester' but -este does not. also, if there's ambiguous matches, e.g. -t
+matches 'tester' and 'timeout', the first one in the list get selected. 
 ------------------------------------------------------------------------------------------ */
 std::vector< CCmdLineArgs::CArg* >::iterator CCmdLineArgs::find(const std::string& opt)
 {
-	// loop through args 
+	// loop through args and find the first match
 	for (std::vector< CArg* >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{
-		if ( (*it)->is(opt) ) return it;		
+		if ( (*it)->is(opt) ){ return it; }
 	}
-
 	return m_Args.end();
 }
 
@@ -112,13 +141,16 @@ bool CCmdLineArgs::scan(int argc, char **argv)
 	std::vector< CArg* >::iterator it = m_Args.end();
 	for (int i = 1; i < argc; i++) 
 	{
-		// arg option can have '-' or '--' prefix, we accept both
+		// arg can be option or param. if it has '-' prefix, it's an option
 		if (argv[i][0] == '-')
 		{ 
 			p = argv[i];
 			argv[i][1] == '-' ? p+= 2 : p+= 1;
 			// excluding the prefix, find this arg from our list and get reference for use later
 			it = find(p);
+			
+			// if this arg option is in our list, enable it so we know that it is active
+			if (it != m_Args.end())(*it)->enable();
 		} 			
 		// or is it param?
 		else
@@ -138,7 +170,7 @@ desc and paramDesc is primarily used only for display help
 note that if this opt already exists somewhere in the list, this will not
 be added
 ------------------------------------------------------------------------------------------ */
-bool CCmdLineArgs::add(const std::string& opt, const std::string& desc, bool bParam, const std::string& paramDesc)
+bool CCmdLineArgs::add(const std::string& opt, bool bParam, const std::string& desc, const std::string& paramDesc)
 {
 	// search if this opt already exist in our list
 	for (unsigned int i = 0; i < m_Args.size(); i++)
@@ -154,7 +186,7 @@ bool CCmdLineArgs::add(const std::string& opt, const std::string& desc, bool bPa
 /* ------------------------------------------------------------------------------------------
 returns the number of args 
 ------------------------------------------------------------------------------------------ */
-unsigned int CCmdLineArgs::count()
+unsigned long CCmdLineArgs::size()
 {
 	return m_Args.size();
 }
@@ -162,13 +194,13 @@ unsigned int CCmdLineArgs::count()
 /* ------------------------------------------------------------------------------------------
 returns the number of parameter this arg has 
 ------------------------------------------------------------------------------------------ */
-unsigned int CCmdLineArgs::count(const std::string& opt)
+unsigned long CCmdLineArgs::size(const std::string& opt)
 {
 	// find this opt (long or short) in our arg list
 	std::vector< CCmdLineArgs::CArg* >::iterator it = find(opt);
 
-	// if found, return its param count, otherwise return 0
-	if (it != m_Args.end()) return (*it)->count();
+	// if found, return its param size, otherwise return 0
+	if (it != m_Args.end()) return (*it)->size();
 	else return 0;
 }
 
@@ -181,11 +213,11 @@ bool CCmdLineArgs::has(const std::string& opt)
 	{
 		if (m_Args[i]->is(opt) ) return true;
 	}
-	return false;
-}
-
+	return false; 
+} 
+  
 /* ------------------------------------------------------------------------------------------
-check if this param exist in this arg option
+get the param value with the given option and index
 ------------------------------------------------------------------------------------------ */
 const std::string& CCmdLineArgs::get(const std::string& opt, unsigned int nParam)
 {
@@ -195,7 +227,25 @@ const std::string& CCmdLineArgs::get(const std::string& opt, unsigned int nParam
 	else return CCmdLineArgs::CArg::m_strEmpty;
 }
 
- 
+/* ------------------------------------------------------------------------------------------
+get the param value with the given option and index - as long
+------------------------------------------------------------------------------------------ */
+long CCmdLineArgs::getAsLong(const std::string& opt, unsigned int nParam)
+{
+	std::string s = get(opt, nParam);
+	if (s.compare(CCmdLineArgs::CArg::m_strEmpty) == 0) return 0;
+	else return toLong(s);
+}
+
+/* ------------------------------------------------------------------------------------------
+check if this option is in the scan list of arguments called during execution
+------------------------------------------------------------------------------------------ */
+bool CCmdLineArgs::enabled(const std::string& opt)
+{
+	std::vector< CArg* >::iterator it = find(opt);
+
+	if (it != m_Args.end()) return (*it)->enabled();	
+}
 
 
 bool CCmdLineArgs::display(/*std::ostream& os*/)
@@ -203,7 +253,7 @@ bool CCmdLineArgs::display(/*std::ostream& os*/)
 	for (unsigned int i = 0; i < m_Args.size(); i++)
 	{
 		std::cout << m_Args[i]->get() << " - ";
-		for (unsigned int j = 0; j < m_Args[i]->count(); j++) 
+		for (unsigned int j = 0; j < m_Args[i]->size(); j++) 
 		{
 			std::cout << m_Args[i]->get(j) << ", ";
 		}
@@ -217,61 +267,5 @@ bool CCmdLineArgs::display(/*std::ostream& os*/)
 
 
 
-
-#if 0
-
-/* ------------------------------------------------------------------------------------------
-arg object's constructor
------------------------------------------------------------------------------------------- */
-CArgs::CArg::CArg(const std::string& opt, const std::string& desc, bool bParam, const std::string& paramDesc)
-{
-	m_strOpt = opt;
-	m_strDesc = desc;
-	m_strParamDesc = paramDesc;
-
-}
-
-CArgs::CArg::~CArg()
-{
-}
-
-/* ------------------------------------------------------------------------------------------
-this function lets you add param to an arg object.
-arg object has a container that stores a list of param. this inserts it to the end
-it also ensures the param to be added does not exist in the list before it adds it
-making sure there's no duplicate
------------------------------------------------------------------------------------------- */
-bool CArgs::CArg::add(const std::string& param)
-{
-	// check if this param already exist in container
-	for (unsigned int i = 0; i < m_strParams.size(); i++)
-	{
-		if (m_strParams[i].compare(param) == 0) return false;
-	}
-
-	// add to end if not yet
-	m_strParams.push_back(param);
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
-this function lets you add param to an arg object.
-arg object has a container that stores a list of param. this inserts it to the end
-it also ensures the param to be added does not exist in the list before it adds it
-making sure there's no duplicate
------------------------------------------------------------------------------------------- */
-bool CArgs::CArg::addOption(const std::string& opt)
-{
-	// check if this param already exist in container
-	for (unsigned int i = 0; i < m_strOpts.size(); i++)
-	{
-		if (m_strOpts[i].compare(opt) == 0) return false;
-	}
-
-	// add to end if not yet
-	m_strOpts.push_back(opt);
-	return true;
-}
-#endif
 
 

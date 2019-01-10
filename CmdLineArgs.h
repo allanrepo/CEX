@@ -12,6 +12,7 @@ private:
 	class CArg
 	{
 	private:
+		bool m_enable;
 		std::string m_strOpt;
 		std::string m_strDesc;
 		std::string m_strParamDesc;
@@ -22,24 +23,14 @@ private:
 
 		const std::string& getDesc(){ return m_strDesc; }
 		const std::string& getParamDesc(){ return m_strParamDesc; }
-		bool is(const std::string& opt)		
-		{
-			return m_strOpt.compare(opt) == 0? true : false;
-		}		
-
-		bool has(const std::string& param)	
-		{
-			for (unsigned int i = 0; i < m_strParams.size(); i++)
-			{
-				if (m_strParams[i].compare(param) == 0) return true;
-			}
-			return false;
-		}
-
-		unsigned int count(){ return m_strParams.size(); }
+		bool is(const std::string& opt);
+		bool has(const std::string& param);
+		unsigned long size(){ return m_strParams.size(); }
 		bool add(const std::string& param);
 		const std::string& get(unsigned int nParam);
 		const std::string& get(){ return m_strOpt; }
+		bool enable(bool s = true){ m_enable = s; return s; }
+		bool enabled(){ return m_enable; }
 
 		static const std::string m_strEmpty;
 
@@ -48,22 +39,28 @@ private:
 	std::vector< CArg* > m_Args;
 	std::vector< CCmdLineArgs::CArg* >::iterator find(const std::string& opt);
 
+	
+	
+
 public:
 	CCmdLineArgs();
 	virtual ~CCmdLineArgs();
 
 	// arg list 
 	bool scan(int argc, char **argv);
-	bool add(const std::string& opt, const std::string& desc, bool bPara, const std::string& paramDes);
+	bool add(const std::string& opt, bool bPara, const std::string& desc = "", const std::string& paramDesc = "");
 	bool display(/*std::ostream& os*/);
-	unsigned int count();
+	unsigned long size();
 	bool has(const std::string& opt);
 
 	// param 
-	unsigned int count(const std::string& opt);
+	unsigned long size(const std::string& opt);
 	bool has(const std::string& opt, const std::string& param);
 	const std::string& get(const std::string& opt, unsigned int nParamIndex = 0);
 	bool add(const std::string& opt, const std::string& param);
+	long getAsLong(const std::string& opt, unsigned int nParamIndex = 0);
+	bool enabled(const std::string& opt);
+	
 };
 
 

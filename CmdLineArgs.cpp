@@ -35,6 +35,7 @@ bool CCmdLineArgs::CArg::has(const std::string& param)
 	return false;
 }
 
+
 /* ------------------------------------------------------------------------------------------
 check if this is the arg we are looking for.
 
@@ -216,6 +217,31 @@ bool CCmdLineArgs::has(const std::string& opt)
 	return false; 
 } 
   
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CCmdLineArgs::ambiguous(const std::string& opt)
+{
+	unsigned long n = 0;
+	for (unsigned int i = 0; i < m_Args.size(); i++)
+	{
+		if (m_Args[i]->is(opt) ) n++;
+	}
+	if (n>1) return false;
+	else return true;
+} 
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+void CCmdLineArgs::get(const std::string& opt, std::vector< std::string >& v)
+{
+	for (unsigned int i = 0; i < m_Args.size(); i++)
+	{
+		if (m_Args[i]->is(opt) ) v.push_back( m_Args[i]->get() );
+	}
+}
+
 /* ------------------------------------------------------------------------------------------
 get the param value with the given option and index
 ------------------------------------------------------------------------------------------ */

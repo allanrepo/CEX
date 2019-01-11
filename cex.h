@@ -27,41 +27,37 @@ public:
 	virtual ~CEvxioStreamClient(){}
 };
 
-class CTester
-{
-private:
-	// tester objects
-  	TesterConnection *m_pTester;
-  	TestheadConnection *m_pConn;
-	ProgramControl *m_pProgCtrl;
-  	CStateNotification *m_pState;
-  	CEvxioStreamClient *m_pEvxio;
-	int m_nHead;
-	
-	CLog m_Log;
-	void (* m_pTesterInputListener) (const std::string& strInput);
-
-public:
-	CTester();
-	virtual ~CTester();
-
-	bool connect(const std::string& strTesterName);
-	void disconnect();
-	void loop();
-
-	void setTesterInputListener( void (* p)(const std::string& strInput) ){ m_pTesterInputListener = p; }	
-
-	// set/get head
-	const int head(){ return m_nHead; }
-	void head(int h){ m_nHead = h; }
-};
-
 class CCex
 {
+private:
+	class CError
+	{
+	public:
+		std::stringstream m_sError;
+		CError(){ clear(); }
+		void clear(){ m_sError.str(std::string()); }
+		bool state(){ return m_sError.str().length(); }
+		void flush(){ std::cout << m_sError.str(); clear(); }
+
+		template <class T>
+		CError& operator << (const T& s)
+		{
+			m_sError << s;
+			return *this;
+		}
+
+		static std::ostream& endl(std::ostream &o)
+		{
+			o << std::endl;	
+			return o;
+		}
+
+	};
 private:
 	// logger
 	CLog m_Log;
 	CLog m_Error;
+	CError m_Err;
 	
 	// command line option manager
 	CCmdLineArgs m_Args;
@@ -74,6 +70,9 @@ private:
   	CEvxioStreamClient *m_pEvxio;
 	int m_nHead;
 
+	// argument properties and states
+	bool bHelp;
+
 
 public:
 	CCex(int argc = 0, char **argv = 0);
@@ -84,7 +83,19 @@ public:
 	void disconnect();
 	void loop();
 	void handleTesterInput(const std::string& strInput);
+	bool scan(int argc, char **argv);
 };
+
+/*
+Design Philosophy
+- properties of a command
+1. command name 
+	- argument option name
+2. command arguments 
+	- parameters passed a long 'command' option
+	- can have 1 or more 
+	
+*/
 
 #endif
 

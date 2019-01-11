@@ -5,10 +5,48 @@
 #include <string>
 #include <vector>
 
+/*
+rules:
+- can't have multiple -command
+
+
+- can have -t <tester> after -c load <test program>
+- can have -t <tester> after -c unload
+
+-t <tester>
+	- can only have 1 parameter
+	- can call other arguments before or after it
+
+-help
+	- if called before or after -c <command>
+		- it prints the help information about <command> 
+		- do nothing (<command> is not executed, does not connect to tester)
+		- any violation after -c <command> is ignored
+		- any violation before -c <command> is reported
+	- if called without -c command
+		- it prints command list 
+		- do nothing (does not connect to tester)
+
+-help
+	- no -c <command>
+		- prints general help
+
+	- before the -c <command>
+		- if -t <tester> anywhere
+			- connect <tester>
+			- prints <command> help
+		- else 
+			- ERROR: can't connect to tester
+	
+	- after the -c <command>
+		- prints <command> help
+
+*/
+
 
 class CCmdLineArgs
 {
-private:
+public:
 	class CArg
 	{
 	private:
@@ -52,6 +90,8 @@ public:
 	bool display(/*std::ostream& os*/);
 	unsigned long size();
 	bool has(const std::string& opt);
+	bool ambiguous(const std::string& opt);
+	void get(const std::string& opt, std::vector< std::string >& v);
 
 	// param 
 	unsigned long size(const std::string& opt);
@@ -62,6 +102,14 @@ public:
 	bool enabled(const std::string& opt);
 	
 };
+
+/*
+arg properties:
+1. arg (starts with '-')
+2. option (may not start with '-', comes after an arg
+3. 
+*/
+
 
 
 #endif

@@ -7,15 +7,8 @@ void onHandleTesterInput(const std::string&);
 
 int main(int argc, char **argv)
 {
-
 	CCex cex(argc, argv);
-	//if (cex.connect())
-	{
-	//	cex.loop(); 
-	}
-
 	return 0;
-
 }
 
 /* ------------------------------------------------------------------------------------------

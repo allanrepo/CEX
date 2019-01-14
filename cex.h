@@ -34,15 +34,16 @@ private:
 	{
 	public:
 		std::stringstream m_sError;
-		CError(){ clear(); }
+		CError(){ clear(); immediate = false; }
 		void clear(){ m_sError.str(std::string()); }
-		bool state(){ return m_sError.str().length(); }
 		void flush(){ std::cout << m_sError.str(); clear(); }
+		bool immediate;
 
 		template <class T>
 		CError& operator << (const T& s)
 		{
-			m_sError << s;
+			if (immediate){ std::cout << s; }
+			else{ m_sError << s; }
 			return *this;
 		}
 
@@ -56,7 +57,7 @@ private:
 private:
 	// logger
 	CLog m_Log;
-	CLog m_Error;
+	CError m_Error;
 	CError m_Err;
 	
 	// command line option manager
@@ -71,7 +72,11 @@ private:
 	int m_nHead;
 
 	// argument properties and states
-	bool bHelp;
+	bool m_bHelp;
+	bool m_bConnect;
+	bool m_bCommand;
+
+	void printHelp();
 
 
 public:

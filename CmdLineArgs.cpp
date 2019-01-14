@@ -236,6 +236,7 @@ bool CCmdLineArgs::ambiguous(const std::string& opt)
 ------------------------------------------------------------------------------------------ */
 void CCmdLineArgs::get(const std::string& opt, std::vector< std::string >& v)
 {
+	v.clear();
 	for (unsigned int i = 0; i < m_Args.size(); i++)
 	{
 		if (m_Args[i]->is(opt) ) v.push_back( m_Args[i]->get() );

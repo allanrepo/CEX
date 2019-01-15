@@ -17,13 +17,82 @@
 /* ------------------------------------------------------------------------------------------
  
 ------------------------------------------------------------------------------------------ */
+bool CCex::scanCommandParam(int start, int argc, char **argv)
+{
+	// quick exit if invalid args
+	if (argc == 0 || argv == NULL) return false;
+
+
+	// start checking arguments past '-command'
+	std::string szCurrOpt("");
+	for (int i = start; i < argc; i++)
+	{
+		std::string Arg(argv[i]);
+
+		// if previous arg is -t[ester] then we expect a param <tester>
+		if (szCurrOpt.compare("tester") == 0)
+		{
+			m_Args.add("tester", Arg);
+			szCurrOpt.clear();
+			continue;
+		}
+
+		// -t[ester] <tester> can be an argument after -command <command>. it can be in between multiple parameters of 
+		// <command>. therefore it's an exception that we have to handle. note that '-t' is a special case as per unison doc, 
+		// in which it always refer to '-tester' even if it's ambiguous to other opts such as '-timeout'.
+		if (Arg.compare("-t") == 0){ Arg = "-tester"; }
+		std::vector< std::string > v;
+		m_Args.get(Arg.substr(1), v);
+		if (v.size() == 1)
+		{
+			if (v[0].compare("tester") == 0)
+			{
+				szCurrOpt = "tester"; 
+				continue;	
+			}
+		}
+
+		// if we reach this, argument is one of the parameters of -command
+		m_CommandOptions.push_back(Arg);
+	}
+
+	// if there's a command, let's execute it
+	if (m_CommandOptions.size())
+	{
+		m_bCommand = true;
+
+		// if -help is an argument prior to -command
+		if (m_bHelp)
+		{
+			m_bHelp = false;
+			m_bCmdHelp = true;
+		}
+	}
+	// otherwise, go loop
+	else
+	{
+		m_bCommand = false;
+	}
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+ 
+------------------------------------------------------------------------------------------ */
 bool CCex::scan(int argc, char **argv)
 { 
 	// quick exit if invalid args
 	if (argc == 0 || argv == NULL) return false;
 
+	// if there's no command line args, just connect to tester with default tester name
+	if (argc <= 1)
+	{
+		m_bConnect = true; 
+		return true;
+	}
+
 	std::string szCurrOpt("");
-	unsigned int nArgsFound = 0;
 	for (int i = 1; i < argc; i++)
 	{
 		std::string Arg(argv[i]);
@@ -40,6 +109,10 @@ bool CCex::scan(int argc, char **argv)
 			}
 			else Arg = Arg.substr(1);
 
+			// handle '-t' exception. it's a special case as per unison doc, in which it always refer 
+			// to '-tester' even if it's ambiguous to other opts such as '-timeout'.
+			if (Arg.compare("t") == 0){ Arg = "tester"; }
+
 			// if argument is an option, let's check if it's one of the valid options 
 			std::vector< std::string > v;
 			m_Args.get(Arg, v);
@@ -47,18 +120,12 @@ bool CCex::scan(int argc, char **argv)
 			// is this arg option ambiguous?
 			if (v.size() > 1)
 			{
-				// handle '-t' exception. it's a special case as per unison doc, in which it always refer 
-				// to '-tester' even if it's ambiguous to other opts such as '-timeout'.
-				if (Arg.compare("t") == 0){ m_Args.get("tester", v); }
-				else
-				{
-					m_Err.clear();
-					m_Err << "CEX Error: CEX arguments: Ambiguous option '-" << Arg << "' choices are: ";
-					for (unsigned int i = 0; i < v.size(); i++) m_Err << "'-" << v[i] << "', ";
-					m_Err << CError::endl;
-					return false;
-				}
-			}		
+				m_Err.clear();
+				m_Err << "CEX Error: CEX arguments: Ambiguous option '-" << Arg << "' choices are: ";
+				for (unsigned int i = 0; i < v.size(); i++) m_Err << "'-" << v[i] << "', ";
+				m_Err << CError::endl;
+				return false;
+			}
 			// if this arg doesn't match any valid ones
 			else if (!v.size())
 			{
@@ -72,14 +139,8 @@ bool CCex::scan(int argc, char **argv)
 			// is it help?
 			if (v[0].compare("help") == 0)
 			{
-				// if command is called already, print help for command
-				if (m_bCommand)
-				{
-				}
-				else
-				{	
-				}
 				m_bHelp = true;
+				szCurrOpt.clear();
 			}
 
 			// is it tester?
@@ -91,9 +152,8 @@ bool CCex::scan(int argc, char **argv)
 			
 			// is it command?
 			else if (v[0].compare("command") == 0)
-			{
-				m_bCommand = true;
-				
+			{				
+				return scanCommandParam(i + 1, argc, argv);
 			}
 		}		
 		// or are we expecting param?
@@ -106,9 +166,6 @@ bool CCex::scan(int argc, char **argv)
 				szCurrOpt.clear();
 			}
 		}
-		
-		// if we reached this point, this argument must have been valid.
-		nArgsFound++;
 	}
 
 	// we're done perusing the args list. are we expecting a param at this point? let's handle it
@@ -122,12 +179,6 @@ bool CCex::scan(int argc, char **argv)
 		}
 	}
 
-	// if there's no command line args, just connect to tester with default tester name
-	if (!nArgsFound)
-	{
-		m_bConnect = true; 
-	}
-
 	return true;
 }
 
@@ -137,12 +188,13 @@ class's constructor and destructor
 CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_pState(0), m_pEvxio(0)
 {
 	// initialize flags, variables here
-	m_bConnect = false; // we're not connecting to tester on launch
+	m_bConnect = true; // we're connecting to tester on launch by default
 	m_bHelp = false; // we're not printing any help information on launch
 	m_Error.immediate = true; // hard error must be logged by default
 	m_Log.enable(false); // verbose to false by default so it's not noisy	
 	m_nHead = 1; // set head to default
 	m_bCommand = false; // not executing command by default
+	m_bCmdHelp = false; // not printing help command 
 
 	// specify known/expected arguments. prefer to use xml file and parse it for list
 	m_Args.add("command", true, "command line");
@@ -158,9 +210,6 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 
 	m_Args.add("attempt", true, "Number of attempts to try and connect");
 	m_Args.add("verbose", false, "log events in detail");
-
-	// parse command line argument 
-	//m_Args.scan(argc, argv);
 
 	// check if we are running noisy
 	m_Log.enable( m_Args.enabled("verbose") );
@@ -206,8 +255,8 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	// are we executing command?
 	if (m_bCommand)
 	{
-		disconnect();
-		return;
+		if (m_bCmdHelp){ printCmdHelp(); }
+		else{ executeCommand(); }
 	}
 	// if not, let's get into loop
 	else
@@ -215,29 +264,10 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 		loop();
 	}
 
-
-
+	m_Err.flush();
+	disconnect();
 
 	return;
-
-
-
-	// if command line has 'command' argument and has param
-	if (!m_Args.get("command").empty())
-	{
-		if (m_Args.size( "command" ))
-		{
-			//executeCommand();
-			/// execute command, disconnect and...
-			m_Error << "CEX Error: '" << m_Args.get("command") << "' is not a CEX command." << CLog::endl;
-			// disconnect
-			disconnect();
-		}		
-	}
-	else
-	{
-		loop();
-	}
 }
  
 CCex::~CCex()
@@ -266,6 +296,29 @@ void CCex::printHelp()
 }
 
 /* ------------------------------------------------------------------------------------------
+print help info
+------------------------------------------------------------------------------------------ */
+void CCex::printCmdHelp()
+{
+	m_Err.clear();
+	m_Err << "This is Command Help for " << m_CommandOptions[0] << CError::endl;
+	m_Err.flush();
+
+}
+
+/* ------------------------------------------------------------------------------------------
+execute command
+------------------------------------------------------------------------------------------ */
+void CCex::executeCommand()
+{
+	m_Err.clear();
+	m_Err << "Command -- ";
+	for (unsigned int i = 0; i < m_CommandOptions.size(); i++) m_Err << m_CommandOptions[i] << ", ";
+	m_Err << CError::endl;
+	m_Err.flush();
+}
+
+/* ------------------------------------------------------------------------------------------
 connects to tester by first creating EVXA tester objects and then hooking up to tester's IO
 ------------------------------------------------------------------------------------------ */
 bool CCex::connect()
@@ -283,7 +336,6 @@ bool CCex::connect()
 		m_Log.print("Attempting to connect to tester <", false);
 		m_Log.print(strTesterName.c_str(), false);
 		m_Log.print(">...");
-
 		// connect to tester
     		m_pTester = new TesterConnection(strTesterName.c_str());
     		if(m_pTester->getStatus() != EVXA::OK){ m_Log.print("ERROR TesterConnection constructor"); sleep(1); continue; }

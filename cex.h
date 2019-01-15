@@ -75,8 +75,12 @@ private:
 	bool m_bHelp;
 	bool m_bConnect;
 	bool m_bCommand;
+	bool m_bCmdHelp;
+	std::vector< std::string > m_CommandOptions;
 
 	void printHelp();
+	void printCmdHelp();
+	void executeCommand();
 
 
 public:
@@ -89,6 +93,7 @@ public:
 	void loop();
 	void handleTesterInput(const std::string& strInput);
 	bool scan(int argc, char **argv);
+	bool scanCommandParam(int start, int argc, char **argv);
 };
 
 /*

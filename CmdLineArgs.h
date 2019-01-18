@@ -105,26 +105,55 @@ public:
 	
 };
 
-/*
 
 
 class CArg
 {
 private:
 	std::string m_strValue;
-	std::vector< CArg > m_listValidArgs;
-	std::vector< CArg > m_listScaArgs;
+	std::vector< CArg > m_listValid;
+	std::vector< std::string > m_listParam;
 public:
-	CArg(const std::string strValue);
+	CArg(const std::string strValue = "");
 	virtual ~CArg();
 
-	bool addValidArgs(const CArg& validParam);
-	bool addScanArg(const CArg& scanParam);		
+	// get the string value
+	const std::string& get(){ return m_strValue; }
+	const CArg& get(const std::string& arg)
+	{
+		std::vector< CArg > v;
+		listValidMatch(arg, v);
+		return v.size() == 1? v[0] : m_ArgEmpty;
+	}
 
-	std::vector< CArg* >::iterator find(const std::string& arg, bool bExactMatch = false);
+	// check if this arg matches the given value, either exact match or partial
+	bool is(const CArg& arg, bool bExactMatch = false);	
+
+	// get list of args that matches the given value
+	void listValidMatch(const CArg& arg, std::vector< CArg >& v);
+
+	// add to list of valid arguments. if an arg with same value exists, does not get added instead
+	bool addValid(const CArg& valid);
+
+	unsigned int getNumValid(){ return m_listValid.size(); }
+
+	bool addParam(const std::string& param);
+
+	// returns the param of specified index. if index is invalid, returns empty string
+	const std::string& getParam(unsigned int i = 0) const;
+
+	void clearParam(){ m_listParam.clear(); }
+	unsigned int getNumParam(){ return m_listParam.size(); }
 	
+	static const std::string m_strEmpty;
+	static const CArg m_ArgEmpty;
+
+
+	bool isValid(const std::string& arg, bool bExactMatch = false);
+
+	std::vector< CArg >::iterator find(const std::string& arg, bool bExactMatch = false);
 };
-*/
+
 
 
 

@@ -7,7 +7,7 @@
 #include <cstdio>
 
 long toLong(const std::string& num);
-
+/*
 class CLog
 {
 private:
@@ -46,7 +46,7 @@ public:
 		return o;
 	}
 };
-
+*/
 
 
 #endif

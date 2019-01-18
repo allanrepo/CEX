@@ -30,20 +30,30 @@ public:
 class CCex
 {
 private:
-	class CError
+	class CLog
 	{
+	private:
+		std::stringstream m_sStream;
 	public:
-		std::stringstream m_sError;
-		CError(){ clear(); immediate = false; }
-		void clear(){ m_sError.str(std::string()); }
-		void flush(){ std::cout << m_sError.str(); clear(); }
+		CLog()
+		{ 
+			clear(); 
+			immediate = false; 
+			enable = true;
+		}
+		void clear(){ m_sStream.str(std::string()); }
+		void flush(){ std::cout << m_sStream.str(); clear(); }
 		bool immediate;
+		bool enable;
 
 		template <class T>
-		CError& operator << (const T& s)
+		CLog& operator << (const T& s)
 		{
-			if (immediate){ std::cout << s; }
-			else{ m_sError << s; }
+			if (enable)
+			{
+				if (immediate){ std::cout << s; }
+				else{ m_sStream << s; }
+			}
 			return *this;
 		}
 
@@ -52,18 +62,14 @@ private:
 			o << std::endl;	
 			return o;
 		}
-
 	};
 private:
 	// logger
 	CLog m_Log;
-	CError m_Error;
-	CError m_Err;
+	CLog m_Result;
 	
 	// command line option manager
-	CCmdLineArgs m_Args;
-	CCmdLineArgs m_CmdArgs;
-	CCmdLineArgs m_Commands;
+	CArg m_Arg;
 
 	// tester objects
   	TesterConnection *m_pTester;
@@ -93,21 +99,8 @@ public:
 	bool connect();
 	void disconnect();
 	void loop();
-	void handleTesterInput(const std::string& strInput);
 	bool scan(int argc, char **argv);
-	bool scanCommandParam(int start, int argc, char **argv);
 };
-
-/*
-Design Philosophy
-- properties of a command
-1. command name 
-	- argument option name
-2. command arguments 
-	- parameters passed a long 'command' option
-	- can have 1 or more 
-	
-*/
 
 #endif
 

@@ -318,7 +318,112 @@ bool CCmdLineArgs::display(/*std::ostream& os*/)
 
 
 
+const std::string CArg::m_strEmpty("");
+const CArg CArg::m_ArgEmpty("");
 
+/* ------------------------------------------------------------------------------------------
+constructor/desctructor
+------------------------------------------------------------------------------------------ */
+CArg::CArg(const std::string strValue)
+{
+	m_strValue = strValue;
+}
+
+CArg::~CArg()
+{
+}
+
+/* ------------------------------------------------------------------------------------------
+check if the given arg matches this arg. match can either be exact match or partial 
+------------------------------------------------------------------------------------------ */
+bool CArg::is(const CArg& arg, bool bExactMatch)
+{
+	if (bExactMatch) return m_strValue.compare(arg.m_strValue) == 0? true : false;
+
+	// find arg as part of value
+	size_t t = m_strValue.find(arg.m_strValue);
+
+	// if returns 0, a match occured on first character of value
+	if (t == 0) return true;
+	else return false;
+}
+
+/* ------------------------------------------------------------------------------------------
+add a valid param for reference. ensures the value is unique. if there's any arg in list
+that has same value as the arg to be added, the arg is not added anymore
+------------------------------------------------------------------------------------------ */
+bool CArg::addValid(const CArg& valid)
+{
+	// arg must have value that does not exist in list yet before it can be added
+	for (unsigned int i = 0; i < m_listValid.size(); i++)
+	{
+		if (m_listValid[i].m_strValue.compare(valid.m_strValue) == 0) 
+			return false;
+	}
+
+	// add to end if not yet
+	m_listValid.push_back(valid);
+	return true;
+}
+
+
+/* ------------------------------------------------------------------------------------------
+find valid args that partialy matches the given arg. 
+------------------------------------------------------------------------------------------ */
+void CArg::listValidMatch(const CArg& arg, std::vector< CArg >& v)
+{
+	v.clear();
+	for (unsigned int i = 0; i < m_listValid.size(); i++)
+	{
+		if (m_listValid[i].is(arg)) v.push_back( m_listValid[i] );
+	}
+}
+
+/* ------------------------------------------------------------------------------------------
+add param to list
+------------------------------------------------------------------------------------------ */
+bool CArg::addParam(const std::string& param)
+{
+	m_listParam.push_back(param);
+}
+
+/* ------------------------------------------------------------------------------------------
+get the param for corresponding index. returns empty string if index is invalid
+------------------------------------------------------------------------------------------ */
+const std::string& CArg::getParam(unsigned int i) const
+{
+	if (i >= m_listParam.size()) return m_strEmpty;
+	else return m_listParam[i];	
+} 
+
+
+
+/* ------------------------------------------------------------------------------------------
+add arg that was scanned. it makes sure first it's valid
+------------------------------------------------------------------------------------------ */
+bool addScanArg(const CArg& scanArg)
+{
+	// check if this is valid
+
+	// add
+	return true;
+}
+
+
+bool CArg::isValid(const std::string& arg, bool bExactMatch)
+{
+//	if (bExactMatch)
+	return true;
+}
+
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+std::vector< CArg >::iterator CArg::find(const std::string& arg, bool bExactMatch)
+{
+	return m_listValid.end();
+}
 
 
 

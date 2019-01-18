@@ -37,12 +37,12 @@ bool CCmdLineArgs::CArg::has(const std::string& param)
 
 
 /* ------------------------------------------------------------------------------------------
-check if this is the arg we are looking for.
+check if this is the arg we are looking for. either exact match or pattern match
 
 ------------------------------------------------------------------------------------------ */
-bool CCmdLineArgs::CArg::is(const std::string& opt)
+bool CCmdLineArgs::CArg::is(const std::string& opt, bool bExactMatch)
 { 
-	//return m_strOpt.compare(opt) == 0? true : false; 
+	if (bExactMatch) return m_strOpt.compare(opt) == 0? true : false; 
 
 	// check if this opt matches the string 'opt' argument we looking for
 	size_t t = m_strOpt.find(opt);
@@ -73,6 +73,17 @@ bool CCmdLineArgs::CArg::add(const std::string& param)
 }
 
 /* ------------------------------------------------------------------------------------------
+this function lets you set a param to an arg object.
+any existing param is removed and replaced by this single param
+------------------------------------------------------------------------------------------ */
+bool CCmdLineArgs::CArg::set(const std::string& param)
+{
+	m_strParams.clear();
+	m_strParams.push_back(param);
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
 this function lets you add param to an arg object.
 arg object has a container that stores a list of param. this inserts it to the end
 it also ensures the param to be added does not exist in the list before it adds it
@@ -90,7 +101,7 @@ search the arg list for the first one that matches the given opt at first charac
 e.g. -te matches 'tester' but -este does not. also, if there's ambiguous matches, e.g. -t
 matches 'tester' and 'timeout', the first one in the list get selected. 
 ------------------------------------------------------------------------------------------ */
-std::vector< CCmdLineArgs::CArg* >::iterator CCmdLineArgs::find(const std::string& opt)
+std::vector< CCmdLineArgs::CArg* >::iterator CCmdLineArgs::find(const std::string& opt, bool bExactMatch)
 {
 	// loop through args and find the first match
 	for (std::vector< CArg* >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
@@ -112,7 +123,8 @@ CCmdLineArgs::~CCmdLineArgs()
 }
 
 /* ------------------------------------------------------------------------------------------
-
+find the opt in list and add the param to it. if param already exists in list, it does
+nothing. otherwise it adds to end of the list
 ------------------------------------------------------------------------------------------ */
 bool CCmdLineArgs::add(const std::string& opt, const std::string& param)
 {
@@ -124,9 +136,23 @@ bool CCmdLineArgs::add(const std::string& opt, const std::string& param)
 		return (*it)->add(param);
 	}
 	else return false;
-
 }
 
+/* ------------------------------------------------------------------------------------------
+find the opt in list and set param to it. it removes any existing param in the opt
+and add this new one
+------------------------------------------------------------------------------------------ */
+bool CCmdLineArgs::set(const std::string& opt, const std::string& param)
+{
+	// find the opt in the list, if found, add this param
+	std::vector< CArg* >::iterator it = find(opt);
+
+	if (it != m_Args.end())
+	{
+		return (*it)->set(param);
+	}
+	else return false;
+}
 
 /* ------------------------------------------------------------------------------------------
 scan through the arguments passed and check if they in our argument list.

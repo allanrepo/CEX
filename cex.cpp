@@ -25,6 +25,7 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 
 	// start checking arguments past '-command'
 	std::string szCurrOpt("");
+	bool bTesterFound = false;
 	for (int i = start; i < argc; i++)
 	{
 		std::string Arg(argv[i]);
@@ -32,7 +33,7 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 		// if previous arg is -t[ester] then we expect a param <tester>
 		if (szCurrOpt.compare("tester") == 0)
 		{
-			m_Args.add("tester", Arg);
+			if (!bTesterFound){ m_Args.set("tester", Arg); bTesterFound = true; }
 			szCurrOpt.clear();
 			continue;
 		}
@@ -45,6 +46,7 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 		m_Args.get(Arg.substr(1), v);
 		if (v.size() == 1)
 		{
+			// if tester then we expect next arg to be tester name
 			if (v[0].compare("tester") == 0)
 			{
 				szCurrOpt = "tester"; 
@@ -52,12 +54,51 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 			}
 		}
 
-		// if we reach this, argument is one of the parameters of -command
-		m_CommandOptions.push_back(Arg);
+		// at this point, -t[ester] is now handled if there's any. any other arg that is first is considered a <command>
+		if (!m_CmdArgs.size("-command"))
+		{
+			// check if this command is valid. 
+			if (!m_Commands.has(Arg))
+			{
+				
+				
+			}
+			// invalid <command> log error
+			else
+			{
+				m_Err.clear();
+				m_Err << "CEX Error: " << Arg << ": '" << Arg << "' is not a CEX command. " << CError::endl;
+				return false;
+			}
+
+			m_CmdArgs.add("-command", Arg);
+			continue;
+		}
+
+		// at this point, we already got the <command> arg as well as -t[tester] <tester> if there's any.
+		// next argument we might expect that requires special attention is -h[elp]. after -c <command> -h is good enough
+		// and does not appear ambiguous with -head or -hd so we compare its ambiguity to a <command> argument list instead.
+		m_CmdArgs.get(Arg, v);
+		if (v.size() == 1)
+		{
+			// if it's -h[elp], we print help of the specific command
+			if (v[0].compare("-help") == 0)
+			{
+				// if -t[ester] is found prior to -h[elp], we will connect to tester before print help <command>
+				// otherwise, we will only print help <command>
+				m_bConnect = bTesterFound?  true : false; 
+				m_bHelp = false;
+				m_bCmdHelp = true;					
+				continue;	
+			}
+		}
+		
+		// if we reach this, argument is one of the parameters of -command <command>
+		m_CmdArgs.add("-command", Arg);
 	}
 
 	// if there's a command, let's execute it
-	if (m_CommandOptions.size())
+	if (m_CmdArgs.size("-command"))
 	{
 		m_bCommand = true;
 
@@ -162,7 +203,7 @@ bool CCex::scan(int argc, char **argv)
 			// if this is param for -tester, we take it and immediately expect an opt. -tester only takes 1 param
 			if (szCurrOpt.compare("tester") == 0)
 			{
-				m_Args.add("tester", Arg);
+				m_Args.set("tester", Arg);
 				szCurrOpt.clear();
 			}
 		}
@@ -210,6 +251,15 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 
 	m_Args.add("attempt", true, "Number of attempts to try and connect");
 	m_Args.add("verbose", false, "log events in detail");
+
+	// specify known/expected arguments for -command
+	m_CmdArgs.add("-help", false, "help");
+	m_CmdArgs.add("-command", false, "command");
+
+	m_Commands.add("load", true, "load");
+	m_Commands.add("get_head", true, "get_head");
+
+
 
 	// check if we are running noisy
 	m_Log.enable( m_Args.enabled("verbose") );
@@ -301,7 +351,7 @@ print help info
 void CCex::printCmdHelp()
 {
 	m_Err.clear();
-	m_Err << "This is Command Help for " << m_CommandOptions[0] << CError::endl;
+	m_Err << "This is Command Help for <" << m_CmdArgs.get("command") << ">" << CError::endl;
 	m_Err.flush();
 
 }
@@ -313,7 +363,7 @@ void CCex::executeCommand()
 {
 	m_Err.clear();
 	m_Err << "Command -- ";
-	for (unsigned int i = 0; i < m_CommandOptions.size(); i++) m_Err << m_CommandOptions[i] << ", ";
+	for (unsigned int i = 0; i < m_CmdArgs.size("command"); i++) m_Err << m_CmdArgs.get("command", i ) << ", ";
 	m_Err << CError::endl;
 	m_Err.flush();
 }

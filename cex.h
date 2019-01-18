@@ -62,6 +62,8 @@ private:
 	
 	// command line option manager
 	CCmdLineArgs m_Args;
+	CCmdLineArgs m_CmdArgs;
+	CCmdLineArgs m_Commands;
 
 	// tester objects
   	TesterConnection *m_pTester;
@@ -76,7 +78,7 @@ private:
 	bool m_bConnect;
 	bool m_bCommand;
 	bool m_bCmdHelp;
-	std::vector< std::string > m_CommandOptions;
+
 
 	void printHelp();
 	void printCmdHelp();

@@ -30,37 +30,47 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 
 	m_Result.immediate = false; // hard error must be logged by default
 	m_Result.enable = true; 
-	m_Log.enable = true; // verbose to false by default so it's not noisy	
+	m_Log.enable = false; // verbose to false by default so it's not noisy	
 	m_Log.immediate = true;
 
+	// add arguments valid after '-command'
+	CArg* pCmd = new CArg("-command");
+	pCmd->addValid( new CArg("-tester") );
+	pCmd->addValid( new CArg("-help") );
+	pCmd->addValid( new CArg("get_head") );
+	pCmd->addValid( new CArg("get_name") );
+
 	// add main argument to cex
-	m_Arg.addValid( CArg("-tester") );
-	m_Arg.addValid( CArg("-help") );
-	m_Arg.addValid( CArg("-command") );
-	m_Arg.addValid( CArg("-head") );
-	m_Arg.addValid( CArg("-hd") );
-	m_Arg.addValid( CArg("-version") );
-	m_Arg.addValid( CArg("-dm") );
-	m_Arg.addValid( CArg("-debug") );
-	m_Arg.addValid( CArg("-syntax_check") );
+	m_Arg.addValid( new CArg("-tester") );
+	m_Arg.addValid( new CArg("-help") );
+	m_Arg.addValid( pCmd );
+	m_Arg.addValid( new CArg("-head") );
+	m_Arg.addValid( new CArg("-hd") );
+	m_Arg.addValid( new CArg("-version") );
+	m_Arg.addValid( new CArg("-dm") );
+	m_Arg.addValid( new CArg("-debug") );
+	m_Arg.addValid( new CArg("-syntax_check") );
 
 	// analyze command line arguments to check what user wants to do and also verify any violation
 	if (!scan(argc, argv)){ m_Result.flush(); return; }
 
 
 	// set default value to tester name
-	if (m_Arg.get("-tester").getParam().empty())
+	if (m_Arg.get("-tester"))
 	{
-        	uid_t uid = getuid();
-        	char buf_passw[1024];   
-        	struct passwd password;
-        	struct passwd *passwd_info;
-
-        	getpwuid_r(uid, &password, buf_passw, 1024, &passwd_info);
-		std::stringstream ss;
-		if (!passwd_info) ss << "sim";
-		else ss << passwd_info->pw_name << "_sim";
-		m_Arg.get("-tester").addParam(ss.str());
+		if (m_Arg.get("-tester")->getParam().empty())
+		{
+        		uid_t uid = getuid();
+        		char buf_passw[1024];   
+        		struct passwd password;
+        		struct passwd *passwd_info;
+	
+        		getpwuid_r(uid, &password, buf_passw, 1024, &passwd_info);
+			std::stringstream ss;
+			if (!passwd_info) ss << "sim";
+			else ss << passwd_info->pw_name << "_sim";
+			m_Arg.get("-tester")->addParam(ss.str());
+		}
 	}
 
 	// if help is enabled, print it
@@ -120,17 +130,16 @@ bool CCex::scan(int argc, char **argv)
 		return true;
 	}
 
-	std::string szCurrOpt("");
 	for (int i = 1; i < argc; i++)
 	{
 		std::string arg(argv[i]);
 
 		// handle '-t' exception. it's a special case as per unison doc, in which it always refer 
 		// to '-tester' even if it's ambiguous to other opts such as '-timeout'.
-		if (arg.compare("-t") == 0){ arg = "-tester"; }
+		if (arg.compare("-t") == 0) arg = "-tester"; 
 
 		// get a list of matching args in the valid list of args
-		std::vector< CArg > v;
+		std::vector< CArg* > v;
 		m_Arg.listValidMatch( CArg(argv[i]), v);
 		
 		// is it ambiguous?
@@ -138,7 +147,7 @@ bool CCex::scan(int argc, char **argv)
 		{
 			m_Result.clear();
 			m_Result << "CEX Error: CEX arguments: Ambiguous option '" << arg << "' choices are: ";
-			for (unsigned int i = 0; i < v.size(); i++) m_Result << "'" << v[i].get() << "', ";
+			for (unsigned int i = 0; i < v.size(); i++) m_Result << "'" << v[i]->get() << "', ";
 			m_Result << CLog::endl;
 			return false;
 		}
@@ -154,7 +163,7 @@ bool CCex::scan(int argc, char **argv)
 		// or did we find a match?
 		
 		// is it -t[ester]?
-		if (v[0].get().compare("-tester") == 0)
+		if (v[0]->get().compare("-tester") == 0)
 		{
 			// expect another argument after this as <tester>
 			if (i + 1 >= argc)
@@ -165,100 +174,147 @@ bool CCex::scan(int argc, char **argv)
 			}
 			else
 			{
-				v[0].clearParam();
-				v[0].addParam(argv[i + 1]);
+				v[0]->clearParam();
+				v[0]->addParam(argv[++i]);
 				m_bConnect = true;
 			}
 		}
 
-		
+		// is it -h[elp]?
+		if (v[0]->get().compare("-help") == 0){	m_bHelp = true;	}		
 
-		// check if this is a valid
-
-		// if -t[ester] let's handle it
-		/*
-		// if we're expecting opt
-		if (!szCurrOpt.length())
+		// is it -c[ommand]?
+		if (v[0]->get().compare("-command") == 0)
 		{
-			// opts must have '-' prefix. remove it now if valid opt
-			if (Arg[0] != '-')
-			{
-				m_Result.clear();
-				m_Result << "CEX Error: CEX arguments: Bad argument to cex '" << Arg << "'" << CLog::endl;
-				return false;
-			}
-			else Arg = Arg.substr(1);
+			return scanCommandParam(i + 1, argc, argv);
+		}	
+	}	
+	
+	return true;
+}
 
-			// handle '-t' exception. it's a special case as per unison doc, in which it always refer 
-			// to '-tester' even if it's ambiguous to other opts such as '-timeout'.
-			if (Arg.compare("t") == 0){ Arg = "tester"; }
+/* ------------------------------------------------------------------------------------------
+ 
+------------------------------------------------------------------------------------------ */
+bool CCex::scanCommandParam(int start, int argc, char **argv)
+{
+	// quick exit if invalid args
+	if (argc == 0 || argv == 0) return false;
 
-			// if argument is an option, let's check if it's one of the valid options 
-			std::vector< std::string > v;
-			m_Args.get(Arg, v);
-			// is this arg option ambiguous?
+	bool bTesterFound = false;
+	for (int i = start; i < argc; i++)
+	{
+		std::string arg(argv[i]);
+
+		// handle '-t' exception. it's a special case as per unison doc, in which it always refer 
+		// to '-tester' even if it's ambiguous to other opts such as '-timeout'.
+		if (arg.compare("-t") == 0) arg = "-tester"; 
+
+		// get a list of (partial) matching args in the valid list of args available on '-command'
+		std::vector< CArg* > v;
+		m_Arg.get("-command")->listValidMatch(CArg(argv[i]), v);
+		
+		// is there no match?
+		if (!v.size())
+		{
+			m_Result.clear();
+			m_Result << "CEX Error: " << arg << ": '" << arg << "' is not a CEX command. " << CLog::endl;
+			return false;			
+		}
+
+		// is it ambiguous?
+		if (v.size() > 1)
+		{
+			// in our first attempt to search, we did a partial match. this time, let's do an exact match
+			// because this arg might be a <command>
+			m_Arg.get("-command")->listValidMatch(CArg(argv[i]), v, true);
+
+			// is it still ambiguous?
 			if (v.size() > 1)
-			{
+			{			
 				m_Result.clear();
-				m_Result << "CEX Error: CEX arguments: Ambiguous option '-" << Arg << "' choices are: ";
-				for (unsigned int i = 0; i < v.size(); i++) m_Result << "'-" << v[i] << "', ";
+				m_Result << "CEX Error: CEX arguments: Ambiguous option '" << arg << "' choices are: ";
+				for (unsigned int i = 0; i < v.size(); i++) m_Result << "'" << v[i]->get() << "', ";
 				m_Result << CLog::endl;
 				return false;
 			}
-			// if this arg doesn't match any valid ones
-			else if (!v.size())
+			
+			// is there no exact match?
+			if (!v.size())
 			{
 				m_Result.clear();
-				m_Result << "CEX Error: CEX arguments: Bad argument to cex '" << Arg << "'" << CLog::endl;
+				m_Result << "CEX Error: " << arg << ": '" << arg << "' is not a CEX command. " << CLog::endl;
+				return false;					
+			}
+
+			// at this point, we found a single exact match. let's handle it in the next codes
+		}
+
+		// is it -t[ester]?
+		if (v[0]->get().compare("-tester") == 0)
+		{
+			// expect another argument after this as <tester>
+			if (i + 1 >= argc)
+			{
+				m_Result.clear();
+				m_Result << "CEX Error: CEX arguments: -tester option found but tester name missing." << CLog::endl;
 				return false;
 			}
-
-			// at this point, argument is a valid and unique opt. 
-
-			// is it help?
-			if (v[0].compare("help") == 0)
+			else
 			{
-				m_bHelp = true;
-				szCurrOpt.clear();
-			}
+				// for some strange reason, the behavior of cex when dealing with multiple -t[ester] argument 
+				// requires me to do this...
+				bTesterFound = !bTesterFound;
 
-			// is it tester?
-			else if (v[0].compare("tester") == 0)
-			{
-				m_bConnect = true;
-				szCurrOpt = v[0];
-			}
-			
-			// is it command?
-			else if (v[0].compare("command") == 0)
-			{				
-				return scanCommandParam(i + 1, argc, argv);
-			}
-		}		
-		// or are we expecting param?
-		else
-		{
-			// if this is param for -tester, we take it and immediately expect an opt. -tester only takes 1 param
-			if (szCurrOpt.compare("tester") == 0)
-			{
-				m_Args.set("tester", Arg);
-				szCurrOpt.clear();
+				// increment arg index as we want to get the <tester>
+				i++; 
+				
+				// set this <tester> to '-tester' arg object, not the arg object from '-command' 
+				if (bTesterFound)
+				{ 					
+					m_Arg.get("-tester")->clearParam();
+					m_Arg.get("-tester")->addParam(argv[i]);
+					m_bConnect = m_bCmdHelp? m_bConnect : true;
+				}
+				continue;
 			}
 		}
-*/
+
+		// is it -h[elp]?
+		if (v[0]->get().compare("-help") == 0)
+		{	
+			//if (m_bCmdHelp) continue;
+
+			// if -t[ester] is found prior to -h[elp], we will connect to tester before print help <command>
+			// otherwise, we will only print help <command>
+			m_bConnect = bTesterFound? true : false; 
+			m_bHelp = false;
+			m_bCmdHelp = true;					
+			continue;
+		}	
+
+		// at this point, it must be the <command>
+		m_Arg.get("-command")->addParam(argv[i]);		
 	}
-/*
-	// we're done perusing the args list. are we expecting a param at this point? let's handle it
-	if (szCurrOpt.length())
+
+	// after scanning all args after '-command', let's check if there's a valid <command>
+	if (m_Arg.get("-command")->getNumParam())
 	{
-		if (szCurrOpt.compare("tester") == 0)
+		m_bCommand = true;
+
+		// if -help is an argument prior to -command
+		if (m_bHelp)
 		{
-			m_Result.clear();
-			m_Result << "CEX Error: CEX arguments: '-tester' option found but tester name missing. " << CLog::endl;
-			return false;
+			m_bHelp = false;
+			m_bCmdHelp = true;
 		}
 	}
-*/
+	// otherwise, go loop
+	else
+	{
+		m_bCommand = false;
+	}
+
 	return true;
 }
 
@@ -288,7 +344,7 @@ print help info
 void CCex::printCmdHelp()
 {
 	m_Result.clear();
-//	m_Result << "This is Command Help for <" << m_CmdArgs.get("command") << ">" << CLog::endl;
+	m_Result << "This is Command Help for <" << m_Arg.get("-command")->getParam() << ">" << CLog::endl;
 	m_Result.flush();
 
 }
@@ -314,7 +370,7 @@ bool CCex::connect()
 	long n = 1;
 	if (!n) n = 1;
 
-	std::string strTesterName = m_Arg.get("-tester").getParam();
+	std::string strTesterName = m_Arg.get("-tester")? m_Arg.get("-tester")->getParam() : "";
 
 	// let's attempt n number of times to connect
   	while(n--) 

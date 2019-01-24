@@ -319,7 +319,6 @@ bool CCmdLineArgs::display(/*std::ostream& os*/)
 
 
 const std::string CArg::m_strEmpty("");
-const CArg CArg::m_ArgEmpty("");
 
 /* ------------------------------------------------------------------------------------------
 constructor/desctructor
@@ -352,12 +351,12 @@ bool CArg::is(const CArg& arg, bool bExactMatch)
 add a valid param for reference. ensures the value is unique. if there's any arg in list
 that has same value as the arg to be added, the arg is not added anymore
 ------------------------------------------------------------------------------------------ */
-bool CArg::addValid(const CArg& valid)
+bool CArg::addValid(CArg* valid)
 {
 	// arg must have value that does not exist in list yet before it can be added
 	for (unsigned int i = 0; i < m_listValid.size(); i++)
 	{
-		if (m_listValid[i].m_strValue.compare(valid.m_strValue) == 0) 
+		if (m_listValid[i]->m_strValue.compare(valid->m_strValue) == 0) 
 			return false;
 	}
 
@@ -370,12 +369,12 @@ bool CArg::addValid(const CArg& valid)
 /* ------------------------------------------------------------------------------------------
 find valid args that partialy matches the given arg. 
 ------------------------------------------------------------------------------------------ */
-void CArg::listValidMatch(const CArg& arg, std::vector< CArg >& v)
+void CArg::listValidMatch(const CArg& arg, std::vector< CArg* >& v, bool bExactMatch)
 {
 	v.clear();
 	for (unsigned int i = 0; i < m_listValid.size(); i++)
 	{
-		if (m_listValid[i].is(arg)) v.push_back( m_listValid[i] );
+		if (m_listValid[i]->is(arg, bExactMatch)) v.push_back( m_listValid[i] );
 	}
 }
 
@@ -397,33 +396,6 @@ const std::string& CArg::getParam(unsigned int i) const
 } 
 
 
-
-/* ------------------------------------------------------------------------------------------
-add arg that was scanned. it makes sure first it's valid
------------------------------------------------------------------------------------------- */
-bool addScanArg(const CArg& scanArg)
-{
-	// check if this is valid
-
-	// add
-	return true;
-}
-
-
-bool CArg::isValid(const std::string& arg, bool bExactMatch)
-{
-//	if (bExactMatch)
-	return true;
-}
-
-
-/* ------------------------------------------------------------------------------------------
-
------------------------------------------------------------------------------------------- */
-std::vector< CArg >::iterator CArg::find(const std::string& arg, bool bExactMatch)
-{
-	return m_listValid.end();
-}
 
 
 

@@ -100,6 +100,7 @@ public:
 	void disconnect();
 	void loop();
 	bool scan(int argc, char **argv);
+	bool scanCommandParam(int start, int argc, char **argv);
 };
 
 #endif

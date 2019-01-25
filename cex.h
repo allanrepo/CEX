@@ -67,6 +67,7 @@ private:
 	// logger
 	CLog m_Log;
 	CLog m_Result;
+	CLog m_Debug;
 	
 	// command line option manager
 	CArg m_Arg;
@@ -82,13 +83,18 @@ private:
 	// argument properties and states
 	bool m_bHelp;
 	bool m_bConnect;
-	bool m_bCommand;
 	bool m_bCmdHelp;
 
-
+	// primary command executions
 	void printHelp();
 	void printCmdHelp();
 	void executeCommand();
+
+	// specific command executions
+	bool cmdGetHead(const CArg* pCmd);
+	bool cmdLoad(const CArg* pCmd);
+	bool cmdUnload(const CArg* pCmd);
+	bool cmdCexVersion(const CArg* pCmd);
 
 
 public:

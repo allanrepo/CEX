@@ -48,5 +48,8 @@ public:
 };
 */
 
+bool isNumber(const std::string& n);
+bool isInteger(const std::string& n);
+
 
 #endif

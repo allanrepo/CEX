@@ -369,7 +369,7 @@ bool CArg::addValid(CArg* valid)
 /* ------------------------------------------------------------------------------------------
 find valid args that partialy matches the given arg. 
 ------------------------------------------------------------------------------------------ */
-void CArg::listValidMatch(const CArg& arg, std::vector< CArg* >& v, bool bExactMatch)
+void CArg::listValidMatch(const CArg& arg, std::vector< CArg* >& v, bool bExactMatch) const
 {
 	v.clear();
 	for (unsigned int i = 0; i < m_listValid.size(); i++)
@@ -394,6 +394,18 @@ const std::string& CArg::getParam(unsigned int i) const
 	if (i >= m_listParam.size()) return m_strEmpty;
 	else return m_listParam[i];	
 } 
+
+/* ------------------------------------------------------------------------------------------
+check if this arg has this param. finds an exact match
+------------------------------------------------------------------------------------------ */
+bool CArg::hasParam(const std::string& param) const
+{
+	for (unsigned int i = 0; i < m_listParam.size(); i++) 
+	{
+		if (m_listParam[i].compare(param) == 0) return true;
+	}
+	return false;
+}
 
 
 

@@ -25,24 +25,44 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	// initialize software behavior
 	m_bConnect = true; // we're connecting to tester on launch by default
 	m_bHelp = false; // we're not printing any help information on launch
-	m_bCommand = false; // not executing command by default
 	m_bCmdHelp = false; // not printing help command 
 
+	// configure loggers
 	m_Result.immediate = false; // hard error must be logged by default
 	m_Result.enable = true; 
-	m_Log.enable = false; // verbose to false by default so it's not noisy	
+	m_Log.enable = true; 	
 	m_Log.immediate = true;
+	m_Debug.enable = false;
+	m_Debug.immediate = true;
+
+	// create argument objects for common arguments
+	CArg* pTester = new CArg("-tester");
+	CArg* pHelp = new CArg("-help");
+
+	// add arguments for -command <load>
+	CArg* pLoad = new CArg("load");
+	pLoad->addValid( new CArg("-display") );
+
+	// add arguments for -command <unload>
+	CArg* pUnload = new CArg("unload");
+	pUnload->addValid( new CArg("-wait") );
+	pUnload->addValid( new CArg("-nowait") );
+	pUnload->addValid( new CArg("-dontsave") );
 
 	// add arguments valid after '-command'
 	CArg* pCmd = new CArg("-command");
-	pCmd->addValid( new CArg("-tester") );
-	pCmd->addValid( new CArg("-help") );
+	pCmd->addValid( pTester );
+	pCmd->addValid( pHelp );
 	pCmd->addValid( new CArg("get_head") );
 	pCmd->addValid( new CArg("get_name") );
+	pCmd->addValid( pLoad );
+	pCmd->addValid( pUnload );
+	pCmd->addValid( new CArg("cex_help") );
+	pCmd->addValid( new CArg("cex_version") );
 
 	// add main argument to cex
-	m_Arg.addValid( new CArg("-tester") );
-	m_Arg.addValid( new CArg("-help") );
+	m_Arg.addValid( pTester );
+	m_Arg.addValid( pHelp );
 	m_Arg.addValid( pCmd );
 	m_Arg.addValid( new CArg("-head") );
 	m_Arg.addValid( new CArg("-hd") );
@@ -91,8 +111,9 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	}
 
 	// are we executing command?
-	if (m_bCommand)
+	if (m_Arg.get("-command")->getNumParam())
 	{
+		// either we print <help> for <command>, or execute it
 		if (m_bCmdHelp){ printCmdHelp(); }
 		else{ executeCommand(); }
 	}
@@ -217,9 +238,20 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 		// is there no match?
 		if (!v.size())
 		{
-			m_Result.clear();
-			m_Result << "CEX Error: " << arg << ": '" << arg << "' is not a CEX command. " << CLog::endl;
-			return false;			
+			// if there's no partial match and we haven't found <command> yet then this is error
+			if (!m_Arg.get("-command")->getNumParam())
+			{
+				m_Result.clear();
+				m_Result << "CEX Error: " << arg << ": '" << arg << "' is not a CEX command. " << CLog::endl;
+				return false;			
+			}
+			// otherwise, this can be possibly one of the parameters for <command>. we don't deal with that.
+			// instead, we let <command> deal with it so we just pass it to <command> as one of its parameters
+			else
+			{
+				m_Arg.get("-command")->get( m_Arg.get("-command")->getParam() )->addParam(argv[i]);
+				continue;
+			}
 		}
 
 		// is it ambiguous?
@@ -249,6 +281,8 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 
 			// at this point, we found a single exact match. let's handle it in the next codes
 		}
+
+		// at this point, we found a unique match. it can be -t[ester], -h[elp], or <command>
 
 		// is it -t[ester]?
 		if (v[0]->get().compare("-tester") == 0)
@@ -300,8 +334,6 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 	// after scanning all args after '-command', let's check if there's a valid <command>
 	if (m_Arg.get("-command")->getNumParam())
 	{
-		m_bCommand = true;
-
 		// if -help is an argument prior to -command
 		if (m_bHelp)
 		{
@@ -312,7 +344,6 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 	// otherwise, go loop
 	else
 	{
-		m_bCommand = false;
 	}
 
 	return true;
@@ -354,10 +385,34 @@ execute command
 ------------------------------------------------------------------------------------------ */
 void CCex::executeCommand()
 {
-	m_Result.clear();
-	m_Result << "Command -- ";
-//	for (unsigned int i = 0; i < m_CmdArgs.size("command"); i++) m_Result << m_CmdArgs.get("command", i ) << ", ";
-	m_Result << CLog::endl;
+	// do we actually have <command>
+	if (!m_Arg.get("-command")->getNumParam())
+	{
+		loop();
+		return;
+	}
+
+	// if we do have <command>, let's check if it's valid
+	CArg* pCmd = m_Arg.get("-command")->get( m_Arg.get("-command")->getParam() );
+	if (!pCmd)
+	{
+		loop();
+		return;
+	}
+	
+	// let's execute the appropriate function for the selected command
+	std::stringstream ss;
+	if ( pCmd->get().compare("get_head") == 0 ) cmdGetHead(pCmd);
+	if ( pCmd->get().compare("load") == 0 ) cmdLoad(pCmd);
+	if ( pCmd->get().compare("unload") == 0 ) cmdUnload(pCmd);
+	if ( pCmd->get().compare("cex_version") == 0 ) cmdCexVersion(pCmd);
+
+
+	return;
+	m_Result << "Executing '" << pCmd->get() << "' command with params: ";
+	//CArg* pCmd = m_Arg.get("-command")->get( m_Arg.get("-command")->getParam() );
+	for (unsigned int i = 0; i < pCmd->getNumParam(); i++){ m_Result << pCmd->getParam(i) << ", "; }
+	m_Result << CLog::endl;		
 	m_Result.flush();
 }
 
@@ -376,26 +431,26 @@ bool CCex::connect()
   	while(n--) 
 	{
 		disconnect();
-		m_Log << "Attempting to connect to tester <" << strTesterName.c_str() << ">..." << CLog::endl;
+		m_Debug << "Attempting to connect to tester <" << strTesterName.c_str() << ">..." << CLog::endl;
 		// connect to tester
     		m_pTester = new TesterConnection(strTesterName.c_str());
-    		if(m_pTester->getStatus() != EVXA::OK){ m_Log << "ERROR TesterConnection constructor" << CLog::endl; sleep(1); continue; }
-		m_Log << "TesterConnection object created..." << CLog::endl;
+    		if(m_pTester->getStatus() != EVXA::OK){ m_Debug << "ERROR TesterConnection constructor" << CLog::endl; /*sleep(1)*/; continue; }
+		m_Debug << "TesterConnection object created..." << CLog::endl;
 		
 		// connect to test head
     		m_pConn = new TestheadConnection(strTesterName.c_str(), m_nHead);
-    		if(m_pConn->getStatus() !=  EVXA::OK){ m_Log << "ERROR in TestheadConnection constructor" << CLog::endl; sleep(1); continue; }
-		m_Log << "TestheadConnection bject created..." << CLog::endl;
+    		if(m_pConn->getStatus() !=  EVXA::OK){ m_Debug << "ERROR in TestheadConnection constructor" << CLog::endl; /*sleep(1)*/; continue; }
+		m_Debug << "TestheadConnection bject created..." << CLog::endl;
 
 		// create program control object, does not check if program is loaded
     		m_pProgCtrl = new ProgramControl(*m_pConn);
-    		if(m_pProgCtrl->getStatus() !=  EVXA::OK){ m_Log << "ERROR in Program constructor" << CLog::endl; sleep(1); continue; }
-		m_Log << "ProgramControl object created..." << CLog::endl;
+    		if(m_pProgCtrl->getStatus() !=  EVXA::OK){ m_Debug << "ERROR in Program constructor" << CLog::endl; /*sleep(1)*/; continue; }
+		m_Debug << "ProgramControl object created..." << CLog::endl;
 
 		// create notification object
     		m_pState = new CStateNotification(*m_pConn);
-    		if(m_pState->getStatus() !=  EVXA::OK) { m_Log<< "ERROR in statePtr constructor" << CLog::endl; sleep(1); continue; }
-		m_Log << "CStateNotification object created..." << CLog::endl;
+    		if(m_pState->getStatus() !=  EVXA::OK) { m_Debug<< "ERROR in statePtr constructor" << CLog::endl; /*sleep(1)*/; continue; }
+		m_Debug << "CStateNotification object created..." << CLog::endl;
 
 		// lets convert our tester name from std::string to crappy old C style string because the stupid software team 
 		// who designed EVXA libraries sucks so bad and too lazy to set string arguments as constants...
@@ -404,8 +459,8 @@ bool CCex::connect()
 
 		// create stream client
     		m_pEvxio = new CEvxioStreamClient(szTesterName, m_nHead);
-    		if(m_pEvxio->getStatus() != EVXA::OK){ m_Log << "ERROR in EvxioStreamClient constructor" << CLog::endl; sleep(1); continue; }
-		m_Log << "CEvxioStreamClient object created..." << CLog::endl;
+    		if(m_pEvxio->getStatus() != EVXA::OK){ m_Debug << "ERROR in EvxioStreamClient constructor" << CLog::endl; /*sleep(1)*/; continue; }
+		m_Debug << "CEvxioStreamClient object created..." << CLog::endl;
 
 		// if we reached this point, we are able connect to tester. let's connect to evx stream now...
 		// same issue here... i could have used stringstream but forced to use C style string because the damn EVXA class
@@ -413,16 +468,16 @@ bool CCex::connect()
 		char szPid[1024] = "";
 		sprintf(szPid, "client_%d", getpid());
 
-    		if(m_pEvxio->ConnectEvxioStreams(m_pConn, szPid) != EVXA::OK){ m_Log << "ERROR Connecting to evxio" << CLog::endl; sleep(1); continue; }
+    		if(m_pEvxio->ConnectEvxioStreams(m_pConn, szPid) != EVXA::OK){ m_Debug << "ERROR Connecting to evxio" << CLog::endl; /*sleep(1)*/; continue; }
     		else
 		{
 			// once the tester objects are created, let's wait until tester is ready
 		  	while(!m_pTester->isTesterReady(m_nHead)) 
 			{
-				m_Log << "Tester NOT yet ready..." << CLog::endl;
-				sleep(1);
+				m_Debug << "Tester NOT yet ready..." << CLog::endl;
+				/*sleep(1)*/;
 			}
-			m_Log << "Tester ready for use." << CLog::endl;
+			m_Debug << "Tester ready for use." << CLog::endl;
 		  	return true; 	 
 		}
   	}
@@ -473,7 +528,195 @@ void CCex::loop()
 
 		}
 	}
+ 
+}
 
+/* ------------------------------------------------------------------------------------------
+handle get_head command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdGetHead(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	if (pCmd->getNumParam())
+	{
+		m_Result << "CEX Error: " << pCmd->get() << ": Unknown option '" << pCmd->getParam() << "'." << CLog::endl;
+		return false;
+	}
+
+	m_Log << "CEX: Head number " << m_nHead << CLog::endl;
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+handle load command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdLoad(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	std::vector< std::string > v;
+	bool bDisplay = false;
+	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
+	{
+		// is param not a valid arg? then it might be the test program path to load
+		if (!pCmd->get( pCmd->getParam(i), true ))
+		{
+			v.push_back( pCmd->getParam(i) );
+		}
+		// or it can be a valid arg. valid arg must be exact match
+		else
+		{
+			if (pCmd->get( pCmd->getParam(i), true )->get().compare("-display") == 0) bDisplay = true;
+		}		
+	}	
+
+	// if multiple programs are specified
+	if (v.size() > 1)
+	{
+		m_Result << "CEX Error: load: Multiple program names found, ";
+		for (unsigned int i = 0; i < v.size(); i++){ m_Result << "'" << v[i] << "', "; }
+		m_Result << CLog::endl;
+		return false;
+	}
+	// if no program is specified
+	else if (!v.size())
+	{
+		m_Result << "CEX Error: load: Missing test program name (ltx/cex)" << CLog::endl;
+		return false;
+	}
+	// let's load program
+	else
+	{
+		m_Log << "CEX: Program " << v[0] << " is loading " << (bDisplay? "with" : "without") << " display..." << CLog::endl;
+		m_pProgCtrl->load( v[0].c_str(), EVXA::WAIT );
+		if ( m_pProgCtrl->getStatus() != EVXA::OK )
+		{
+			m_Result << "CEX Error: Error in loading " << v[0] << CLog::endl;
+			return false;
+		}
+		if ( m_pProgCtrl->isProgramLoaded() )
+		{
+			m_Log << "CEX: Loaded program " << m_pProgCtrl->getProgramName() << "." << CLog::endl;
+			return true;
+		}
+		else
+		{
+			m_Result << "CEX Error: There is no program loaded." << CLog::endl;
+			return false;
+		}
+	}
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+handle unload command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdUnload(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+	
+	//EVXA::WAIT_MODE _wait = EVXA::WAIT;
+	//_wait = EVXA::NO_WAIT;
+	//bool bWaitFound = false;
+	//bool bNoWaitFound = false;
+	bool bSave = true;
+	long nWait = 0;	
+	bool bWait = true;
+	
+	// let's find any invalid arg
+	std::vector< std::string > v;
+	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
+	{
+		// is param not valid? error then...
+		if (!pCmd->get( pCmd->getParam(i), true ))
+		{
+			v.push_back( pCmd->getParam(i) );
+		}
+
+		// or it can be a valid arg. valid arg must be exact match
+		else
+		{
+			// if -wait is found, let's take the next param as the <wait> value.
+			if (pCmd->getParam(i).compare("-wait") == 0)
+			{
+				// is there no more argument after '-wait'?
+				if (i + 1 >= pCmd->getNumParam())
+				{
+					m_Result << "CEX Error: unload: 'end of line' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+					return false;
+				}
+				// is the argument after '-wait' a number?
+				if ( !isInteger( pCmd->getParam(i + 1) ) )
+				{
+					m_Result << "CEX Error: unload: '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+					return false;
+				}		
+				// let's get the number
+				nWait = toLong( pCmd->getParam(++i) );										
+			}
+			
+			// found '-nowait' param
+			if (pCmd->getParam(i).compare("-nowait") == 0)
+			{
+				// if '-wait' is also a param then it's an error
+				if (pCmd->hasParam("-wait"))
+				{
+					m_Result << "CEX Error: unload: No-wait with wait interval not available." << CLog::endl;
+					return false;
+				}
+				bWait = false;							
+			}
+			// found -dontsave param
+			if (pCmd->getParam(i).compare("-dontsave") == 0)
+			{
+				bSave = false;
+			}
+		}		
+	}
+
+	// did we find invalid args?
+	if (v.size())
+	{
+		m_Result << "CEX Error: unload: Unknown parameter '" << v[0] << "'." << CLog::endl;
+		return false;
+	}	
+
+	// unload the program
+	if ( !m_pProgCtrl->isProgramLoaded() )
+	{
+		m_Result << "CEX Error: There is no program loaded." << CLog::endl;
+		return false;
+	}
+
+	const char* szProgramName =  m_pProgCtrl->getProgramName();
+	m_Log << "CEX: Program " << szProgramName << " is unloading. This may take a few moments...." << CLog::endl;
+	m_pProgCtrl->unload( bWait? EVXA::WAIT : EVXA::NO_WAIT, nWait, !bSave );
+	if ( m_pProgCtrl->getStatus() != EVXA::OK )
+	{
+		m_Result << "CEX Error: Error in unloading " << szProgramName << CLog::endl;
+		return false;
+	}
+
+	if ( !m_pProgCtrl->isProgramLoaded() || !bWait)
+	{
+		m_Log << "CEX: Unloaded program " << szProgramName << "." << CLog::endl;
+		return true;
+	}
+	else
+	{
+		m_Result << "CEX Error: Program " << m_pProgCtrl->getProgramName() << " is still loaded." << CLog::endl;
+		return false;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+handle cex_version command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdCexVersion(const CArg* pCmd)
+{
 }
 
 

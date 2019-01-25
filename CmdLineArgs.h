@@ -119,20 +119,21 @@ public:
 	virtual ~CArg();
 
 	// get the string value
-	const std::string& get(){ return m_strValue; }
+	const std::string& get() const { return m_strValue; }
 
-	CArg* get(const std::string& arg, bool bExactMatch = false)
+	CArg* get(const std::string& arg, bool bExactMatch = false) const 
 	{
 		std::vector< CArg* > v;
 		listValidMatch(arg, v, bExactMatch);
 		return v.size() == 1? v[0] : 0;
 	}	
 
+
 	// check if this arg matches the given value, either exact match or partial
 	bool is(const CArg& arg, bool bExactMatch = false);	
 
 	// get list of args that matches the given value
-	void listValidMatch(const CArg& arg, std::vector< CArg* >& v, bool bExactMatch = false);
+	void listValidMatch(const CArg& arg, std::vector< CArg* >& v, bool bExactMatch = false) const;
 
 	// add to list of valid arguments. if an arg with same value exists, does not get added instead
 	bool addValid(CArg* valid);
@@ -146,7 +147,8 @@ public:
 	const std::string& getParam(unsigned int i = 0) const;
 
 	void clearParam(){ m_listParam.clear(); }
-	unsigned int getNumParam(){ return m_listParam.size(); }
+	unsigned int getNumParam() const { return m_listParam.size(); }
+	bool hasParam(const std::string& param) const;
 
 	static const std::string m_strEmpty;
 

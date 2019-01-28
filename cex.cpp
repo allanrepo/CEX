@@ -49,14 +49,22 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pUnload->addValid( new CArg("-nowait") );
 	pUnload->addValid( new CArg("-dontsave") );
 
+	// add arguments for -command <start>
+	CArg* pStart = new CArg("start");
+	pStart->addValid( new CArg("-ntimes") );
+	pStart->addValid( new CArg("-nowait") );
+	pStart->addValid( new CArg("-wait") );
+
 	// add arguments valid after '-command'
 	CArg* pCmd = new CArg("-command");
 	pCmd->addValid( pTester );
 	pCmd->addValid( pHelp );
-	pCmd->addValid( new CArg("get_head") );
-	pCmd->addValid( new CArg("get_name") );
 	pCmd->addValid( pLoad );
 	pCmd->addValid( pUnload );
+	pCmd->addValid( pStart );
+	pCmd->addValid( new CArg("get_head") );
+	pCmd->addValid( new CArg("get_name") );
+	pCmd->addValid( new CArg("get_username") );
 	pCmd->addValid( new CArg("cex_help") );
 	pCmd->addValid( new CArg("cex_version") );
 
@@ -398,7 +406,7 @@ void CCex::executeCommand()
 	{
 		loop();
 		return;
-	}
+	} 
 	
 	// let's execute the appropriate function for the selected command
 	std::stringstream ss;
@@ -406,9 +414,12 @@ void CCex::executeCommand()
 	if ( pCmd->get().compare("load") == 0 ) cmdLoad(pCmd);
 	if ( pCmd->get().compare("unload") == 0 ) cmdUnload(pCmd);
 	if ( pCmd->get().compare("cex_version") == 0 ) cmdCexVersion(pCmd);
+	if ( pCmd->get().compare("get_name") == 0 ) cmdGetName(pCmd);
+	if ( pCmd->get().compare("get_username") == 0 ) cmdGetUserName(pCmd);
 
 
 	return;
+
 	m_Result << "Executing '" << pCmd->get() << "' command with params: ";
 	//CArg* pCmd = m_Arg.get("-command")->get( m_Arg.get("-command")->getParam() );
 	for (unsigned int i = 0; i < pCmd->getNumParam(); i++){ m_Result << pCmd->getParam(i) << ", "; }
@@ -617,13 +628,9 @@ bool CCex::cmdUnload(const CArg* pCmd)
 {
 	if (!pCmd) return false; 
 	
-	//EVXA::WAIT_MODE _wait = EVXA::WAIT;
-	//_wait = EVXA::NO_WAIT;
-	//bool bWaitFound = false;
-	//bool bNoWaitFound = false;
-	bool bSave = true;
-	long nWait = 0;	
-	bool bWait = true;
+	bool bSave = true; // option to allow user to save program before unloading
+	long nWait = 0;	 // 0 by default. if -wait 0, we wait forever
+	bool bWait = true; // -wait or -nowait
 	
 	// let's find any invalid arg
 	std::vector< std::string > v;
@@ -692,7 +699,12 @@ bool CCex::cmdUnload(const CArg* pCmd)
 
 	const char* szProgramName =  m_pProgCtrl->getProgramName();
 	m_Log << "CEX: Program " << szProgramName << " is unloading. This may take a few moments...." << CLog::endl;
+
+	// execute evxa command to unload program
+	// if nWait = 0, it will wait forever
+	// bSave is ignored by evxa and original CEX command so must figure a work around to implement this behavior
 	m_pProgCtrl->unload( bWait? EVXA::WAIT : EVXA::NO_WAIT, nWait, !bSave );
+
 	if ( m_pProgCtrl->getStatus() != EVXA::OK )
 	{
 		m_Result << "CEX Error: Error in unloading " << szProgramName << CLog::endl;
@@ -717,7 +729,143 @@ handle cex_version command
 ------------------------------------------------------------------------------------------ */
 bool CCex::cmdCexVersion(const CArg* pCmd)
 {
+	if (!pCmd) return false; 
+
+	if (pCmd->getNumParam())
+	{
+		m_Result << "CEX Error: cex_version: does not accept parameters. Found '" << pCmd->getParam() << "'." << CLog::endl;
+		return false;
+	}
+
+	m_Result.clear();
+	m_Result << "CEX Apps Version Developed by Allan Asis. Rev 0.1" << CLog::endl;
+	m_Result.flush();
+	return true;
 }
+
+/* ------------------------------------------------------------------------------------------
+handle get_name command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdGetName(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	if (pCmd->getNumParam())
+	{
+		m_Result << "CEX Error: get_name: Unknown parameter '" << pCmd->getParam() << "'." << CLog::endl;
+		return false;
+	}
+
+	m_Result.clear();
+	m_Result << "CEX: Name of Tester : " << m_pTester->getName() << CLog::endl;
+	m_Result.flush();
+	return true;
+}
+
+
+/* ------------------------------------------------------------------------------------------
+handle get_user_name command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdGetUserName(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	if (pCmd->getNumParam())
+	{
+		m_Result << "CEX Error: get_name: Unknown parameter '" << pCmd->getParam() << "'." << CLog::endl;
+		return false;
+	}
+
+	m_Result.clear();
+	m_Result << "CEX: Current session owner: " << m_pProgCtrl->getUserName() << CLog::endl;
+	m_Result.flush();
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+handle start command
+- 	default is -wait <0>
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdStart(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	int nWait = 0;
+	bool bWait = true; 
+
+	// let's find any invalid arg
+	std::vector< std::string > v;
+	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
+	{
+		// is param not valid? error then...
+		if (!pCmd->get( pCmd->getParam(i), true ))
+		{
+			v.push_back( pCmd->getParam(i) );
+		}
+		// or it can be a valid arg. valid arg must be exact match
+		else
+		{
+			// if -wait is found, let's take the next param as the <wait> value.
+			if (pCmd->getParam(i).compare("-wait") == 0)
+			{
+				// is there no more argument after '-wait'?
+				if (i + 1 >= pCmd->getNumParam())
+				{
+					m_Result << "CEX Error: start: 'end of line' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+					return false;
+				}
+
+				// if '-nowait' is also a param then it's an error
+				if (pCmd->hasParam("-nowait"))
+				{
+					m_Result << "CEX Error: unload: No-wait with wait interval not available." << CLog::endl;
+					return false;
+				}
+
+				// is the argument after '-wait' a number?
+				if ( !isInteger( pCmd->getParam(i + 1) ) )
+				{
+					m_Result << "CEX Error: start: '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+					return false;
+				}		
+				// let's get the number
+				nWait = toLong( pCmd->getParam(++i) );	
+
+				// enable wait
+				bWait = true;									
+			}
+			
+			// found '-nowait' param
+			if (pCmd->getParam(i).compare("-nowait") == 0)
+			{
+				// if '-wait' is also a param then it's an error
+				if (pCmd->hasParam("-wait"))
+				{
+					m_Result << "CEX Error: unload: No-wait with wait interval not available." << CLog::endl;
+					return false;
+				}
+				bWait = false;							
+			}
+			// found -dontsave param
+			if (pCmd->getParam(i).compare("-dontsave") == 0)
+			{
+				bSave = false;
+			}
+		}		
+
+	}
+
+	// did we find invalid args?
+	if (v.size())
+	{
+		m_Result << "CEX Error: unload: Unknown parameter '" << v[0] << "'." << CLog::endl;
+		return false;
+	}	
+
+	return true;
+}
+
+
 
 
 

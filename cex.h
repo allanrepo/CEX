@@ -1,3 +1,27 @@
+/*
+
+load <program> -display
+- 	'-display' option not implemented yet. it is supposed to either show or hide bintool 
+
+unload -wait <t> -nowait -dontsave
+- 	if '-wait' is set to 0 (default), command waits forever when unloading program
+- 	all test cases are done on -wait and they are fine
+- 	all test cases are done on -nowait and they are fine
+- 	'-dontsave' not working because both evxa and cex unload command ignores this flag find work around to implement this
+
+[done] get_head 
+
+[done] cex_version
+
+[done] get_name
+
+[done] get_username
+
+start
+
+
+*/
+
 #ifndef __CEX__
 #define __CEX__
 
@@ -95,6 +119,9 @@ private:
 	bool cmdLoad(const CArg* pCmd);
 	bool cmdUnload(const CArg* pCmd);
 	bool cmdCexVersion(const CArg* pCmd);
+	bool cmdGetName(const CArg* pCmd);
+	bool cmdGetUserName(const CArg* pCmd);
+	bool cmdStart(const CArg* pCmd);
 
 
 public:

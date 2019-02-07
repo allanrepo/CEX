@@ -600,7 +600,7 @@ bool CCex::cmdLoad(const CArg* pCmd)
 	else
 	{
 		m_Log << "CEX: Program " << v[0] << " is loading " << (bDisplay? "with" : "without") << " display..." << CLog::endl;
-		m_pProgCtrl->load( v[0].c_str(), EVXA::WAIT );
+		m_pProgCtrl->load( v[0].c_str(), EVXA::WAIT, bDisplay? EVXA::DISPLAY : EVXA::NO_DISPLAY );
 		if ( m_pProgCtrl->getStatus() != EVXA::OK )
 		{
 			m_Result << "CEX Error: Error in loading " << v[0] << CLog::endl;
@@ -787,7 +787,7 @@ handle start command
 - 	default is -wait <0>
 ------------------------------------------------------------------------------------------ */
 bool CCex::cmdStart(const CArg* pCmd)
-{
+{/*
 	if (!pCmd) return false; 
 
 	int nWait = 0;
@@ -861,7 +861,7 @@ bool CCex::cmdStart(const CArg* pCmd)
 		m_Result << "CEX Error: unload: Unknown parameter '" << v[0] << "'." << CLog::endl;
 		return false;
 	}	
-
+*/
 	return true;
 }
 

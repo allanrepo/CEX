@@ -1,7 +1,7 @@
 /*
 
-load <program> -display
-- 	'-display' option not implemented yet. it is supposed to either show or hide bintool 
+[done] load <program> -display
+- 	'-display' option either shows bintool or not
 
 unload -wait <t> -nowait -dontsave
 - 	if '-wait' is set to 0 (default), command waits forever when unloading program

@@ -89,9 +89,9 @@ private:
 	};
 private:
 	// logger
-	CLog m_Log;
-	CLog m_Result;
-	CLog m_Debug;
+	CLog m_Log; // immediate logs that is displayed by default in CEX
+	CLog m_Result; // result logs such as error or failure that occured
+	CLog m_Debug; // debug logs that makes app more verbose
 	
 	// command line option manager
 	CArg m_Arg;
@@ -121,7 +121,7 @@ private:
 	bool cmdCexVersion(const CArg* pCmd);
 	bool cmdGetName(const CArg* pCmd);
 	bool cmdGetUserName(const CArg* pCmd);
-	bool cmdStart(const CArg* pCmd);
+	bool cmdStart(const CArg* pCmd);   
 
 
 public:

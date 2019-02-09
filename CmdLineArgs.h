@@ -5,44 +5,6 @@
 #include <string>
 #include <vector>
 
-/*
-rules:
-- can't have multiple -command
-
-
-- can have -t <tester> after -c load <test program>
-- can have -t <tester> after -c unload
-
--t <tester>
-	- can only have 1 parameter
-	- can call other arguments before or after it
-
--help
-	- if called before or after -c <command>
-		- it prints the help information about <command> 
-		- do nothing (<command> is not executed, does not connect to tester)
-		- any violation after -c <command> is ignored
-		- any violation before -c <command> is reported
-	- if called without -c command
-		- it prints command list 
-		- do nothing (does not connect to tester)
-
--help
-	- no -c <command>
-		- prints general help
-
-	- before the -c <command>
-		- if -t <tester> anywhere
-			- connect <tester>
-			- prints <command> help
-		- else 
-			- ERROR: can't connect to tester
-	
-	- after the -c <command>
-		- prints <command> help
-
-*/
-
 
 class CCmdLineArgs
 {
@@ -121,13 +83,13 @@ public:
 	// get the string value
 	const std::string& get() const { return m_strValue; }
 
+	// find this arg in the list of valid args. if more than one is found, return null
 	CArg* get(const std::string& arg, bool bExactMatch = false) const 
 	{
 		std::vector< CArg* > v;
 		listValidMatch(arg, v, bExactMatch);
 		return v.size() == 1? v[0] : 0;
 	}	
-
 
 	// check if this arg matches the given value, either exact match or partial
 	bool is(const CArg& arg, bool bExactMatch = false);	

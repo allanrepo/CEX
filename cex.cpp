@@ -400,7 +400,7 @@ void CCex::executeCommand()
 		return;
 	}
 
-	// if we do have <command>, let's check if it's valid
+	// if we do have <command>, let's check if it's valid. if not, let's just enter loop
 	CArg* pCmd = m_Arg.get("-command")->get( m_Arg.get("-command")->getParam() );
 	if (!pCmd)
 	{
@@ -416,6 +416,7 @@ void CCex::executeCommand()
 	if ( pCmd->get().compare("cex_version") == 0 ) cmdCexVersion(pCmd);
 	if ( pCmd->get().compare("get_name") == 0 ) cmdGetName(pCmd);
 	if ( pCmd->get().compare("get_username") == 0 ) cmdGetUserName(pCmd);
+	if ( pCmd->get().compare("start") == 0 ) cmdStart(pCmd);
 
 
 	return;
@@ -785,13 +786,18 @@ bool CCex::cmdGetUserName(const CArg* pCmd)
 /* ------------------------------------------------------------------------------------------
 handle start command
 - 	default is -wait <0>
+- 	default is execute start only once and will not log loop count message
 ------------------------------------------------------------------------------------------ */
 bool CCex::cmdStart(const CArg* pCmd)
-{/*
+{
 	if (!pCmd) return false; 
 
-	int nWait = 0;
-	bool bWait = true; 
+	// defaults
+	bool bLoop = false; // no loop
+	int nLoop = 1; // execute once	
+	int nWaitAfterExec = 0; // wait time in <sec> after each execution
+	bool bExitAfterExec = false; // -nowait flag; 
+	bool bWaitAfterExec = false; // -wait flag
 
 	// let's find any invalid arg
 	std::vector< std::string > v;
@@ -815,44 +821,65 @@ bool CCex::cmdStart(const CArg* pCmd)
 					return false;
 				}
 
-				// if '-nowait' is also a param then it's an error
-				if (pCmd->hasParam("-nowait"))
-				{
-					m_Result << "CEX Error: unload: No-wait with wait interval not available." << CLog::endl;
-					return false;
-				}
-
 				// is the argument after '-wait' a number?
 				if ( !isInteger( pCmd->getParam(i + 1) ) )
 				{
 					m_Result << "CEX Error: start: '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
 					return false;
-				}		
-				// let's get the number
-				nWait = toLong( pCmd->getParam(++i) );	
+				}
 
-				// enable wait
-				bWait = true;									
+				// let's now disable  -nowait flag if it was set prior to this
+				bExitAfterExec = false;
+
+				// let's also get the number as wait in <sec>, ensure it's min as 0
+				nWaitAfterExec = toLong( pCmd->getParam(++i) );	
+				nWaitAfterExec = nWaitAfterExec < 0 ? 0 : nWaitAfterExec;
+
+				// enable wait after execution
+				bWaitAfterExec = true;									
 			}
 			
 			// found '-nowait' param
 			if (pCmd->getParam(i).compare("-nowait") == 0)
 			{
-				// if '-wait' is also a param then it's an error
-				if (pCmd->hasParam("-wait"))
+				// if -wait <sec> is already found prior to this,it's error
+				if ( bWaitAfterExec )
 				{
 					m_Result << "CEX Error: unload: No-wait with wait interval not available." << CLog::endl;
 					return false;
 				}
-				bWait = false;							
+				// otherwise, let's do a -nowait execution
+				bExitAfterExec = true;							
 			}
-			// found -dontsave param
-			if (pCmd->getParam(i).compare("-dontsave") == 0)
+
+			// found -ntimes param
+			if (pCmd->getParam(i).compare("-ntimes") == 0)
 			{
-				bSave = false;
+				// is there no more argument after '-ntimes'?
+				if (i + 1 >= pCmd->getNumParam())
+				{
+					m_Result << "CEX Error: start: 'end of line' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+					return false;
+				}
+
+				// is the argument after '-ntimes' a number?
+				if ( !isInteger( pCmd->getParam(i + 1) ) )
+				{
+					m_Result << "CEX Error: start: '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+					return false;
+				}
+
+				// let's now disable -nowait flag if it was set prior to this
+				bExitAfterExec = false;
+
+				// let's set loop to true 
+				bLoop = true;
+
+				// let's also get the number as number of loops, ensure it's min as 1
+				nLoop = toLong( pCmd->getParam(++i) );	
+				nLoop = nLoop < 1 ? 1 : nLoop;				
 			}
 		}		
-
 	}
 
 	// did we find invalid args?
@@ -861,7 +888,19 @@ bool CCex::cmdStart(const CArg* pCmd)
 		m_Result << "CEX Error: unload: Unknown parameter '" << v[0] << "'." << CLog::endl;
 		return false;
 	}	
-*/
+
+	// execute the program now
+	for (int i = 0; i < nLoop; i++)
+	{
+		if (bLoop) m_Log << "Looping (" << i + 1 << "/" << nLoop << ")" << CLog::endl;
+
+		m_pProgCtrl->start( bExitAfterExec? EVXA::NO_WAIT : EVXA::WAIT );
+
+		if (bExitAfterExec) return true;
+		
+		if (nWaitAfterExec) sleep(nWaitAfterExec);
+	}
+
 	return true;
 }
 

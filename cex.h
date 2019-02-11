@@ -122,6 +122,8 @@ private:
 	bool cmdGetName(const CArg* pCmd);
 	bool cmdGetUserName(const CArg* pCmd);
 	bool cmdStart(const CArg* pCmd);   
+	bool cmdProgramLoaded(const CArg* pCmd);   
+	bool cmdProgramLoadDone(const CArg* pCmd);   
 
 
 public:

@@ -67,6 +67,8 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pCmd->addValid( new CArg("get_username") );
 	pCmd->addValid( new CArg("cex_help") );
 	pCmd->addValid( new CArg("cex_version") );
+	pCmd->addValid( new CArg("program_loaded") );
+	pCmd->addValid( new CArg("program_load_done") );
 
 	// add main argument to cex
 	m_Arg.addValid( pTester );
@@ -417,6 +419,8 @@ void CCex::executeCommand()
 	if ( pCmd->get().compare("get_name") == 0 ) cmdGetName(pCmd);
 	if ( pCmd->get().compare("get_username") == 0 ) cmdGetUserName(pCmd);
 	if ( pCmd->get().compare("start") == 0 ) cmdStart(pCmd);
+	if ( pCmd->get().compare("program_loaded") == 0 ) cmdProgramLoaded(pCmd);
+	if ( pCmd->get().compare("program_load_done") == 0 ) cmdProgramLoadDone(pCmd);
 
 
 	return;
@@ -892,15 +896,49 @@ bool CCex::cmdStart(const CArg* pCmd)
 	// execute the program now
 	for (int i = 0; i < nLoop; i++)
 	{
-		if (bLoop) m_Log << "Looping (" << i + 1 << "/" << nLoop << ")" << CLog::endl;
+		if (bLoop) m_Log << "Looping (" << i + 1 << "/" << nLoop << ")" << CLog::endl; // replicate original CEX printing this on loop
 
 		m_pProgCtrl->start( bExitAfterExec? EVXA::NO_WAIT : EVXA::WAIT );
 
+		// if -nowait, we immediately exit after executing
 		if (bExitAfterExec) return true;
 		
+		// -wait <sec> occurs AFTER every execution
 		if (nWaitAfterExec) sleep(nWaitAfterExec);
 	}
 
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+handle program_loaded command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdProgramLoaded(const CArg* pCmd)
+{
+	if (pCmd->getNumParam())
+	{
+		m_Result << "CEX Error: " << pCmd->get() << ": Unknown option '" << pCmd->getParam() << "'." << CLog::endl;
+		return false;
+	}
+
+	if (m_pProgCtrl->isProgramLoaded()) m_Log << "CEX: Program " << m_pProgCtrl->getProgramName() << " is currently loaded." << CLog::endl;
+	else m_Log << "CEX: There is currently no program loaded." << CLog::endl;
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+handle program_load_done command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdProgramLoadDone(const CArg* pCmd)
+{
+	if (pCmd->getNumParam())
+	{
+		m_Result << "CEX Error: " << pCmd->get() << ": Unknown option '" << pCmd->getParam() << "'." << CLog::endl;
+		return false;
+	}
+
+	if (m_pProgCtrl->isProgramLoadDone()) m_Log << "CEX: Program " << m_pProgCtrl->getProgramName() << " is done loading." << CLog::endl;
+	else m_Log << "CCEX: Program is not done loading." << CLog::endl;
 	return true;
 }
 

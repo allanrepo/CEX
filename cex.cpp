@@ -55,6 +55,16 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pStart->addValid( new CArg("-nowait") );
 	pStart->addValid( new CArg("-wait") );
 
+	// add arguments for -command <get_exp>
+	CArg* pGetExp = new CArg("get_exp");
+	pGetExp->addValid( new CArg("expression") );
+	pGetExp->addValid( new CArg("value") );
+	pGetExp->addValid( new CArg("multi_value") );
+	pGetExp->addValid( new CArg("multi_range") );
+
+	// add arguments for -command <set_exp>
+	CArg* pSetExp = new CArg("set_exp");
+
 	// add arguments valid after '-command'
 	CArg* pCmd = new CArg("-command");
 	pCmd->addValid( pTester );
@@ -62,6 +72,8 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pCmd->addValid( pLoad );
 	pCmd->addValid( pUnload );
 	pCmd->addValid( pStart );
+	pCmd->addValid( pGetExp );
+	pCmd->addValid( pSetExp );
 	pCmd->addValid( new CArg("get_head") );
 	pCmd->addValid( new CArg("get_name") );
 	pCmd->addValid( new CArg("get_username") );
@@ -421,6 +433,8 @@ void CCex::executeCommand()
 	if ( pCmd->get().compare("start") == 0 ) cmdStart(pCmd);
 	if ( pCmd->get().compare("program_loaded") == 0 ) cmdProgramLoaded(pCmd);
 	if ( pCmd->get().compare("program_load_done") == 0 ) cmdProgramLoadDone(pCmd);
+	if ( pCmd->get().compare("get_exp") == 0 ) cmdGetExp(pCmd);
+	if ( pCmd->get().compare("set_exp") == 0 ) cmdSetExp(pCmd);
 
 
 	return;
@@ -915,6 +929,8 @@ handle program_loaded command
 ------------------------------------------------------------------------------------------ */
 bool CCex::cmdProgramLoaded(const CArg* pCmd)
 {
+	if (!pCmd) return false; 
+
 	if (pCmd->getNumParam())
 	{
 		m_Result << "CEX Error: " << pCmd->get() << ": Unknown option '" << pCmd->getParam() << "'." << CLog::endl;
@@ -931,6 +947,8 @@ handle program_load_done command
 ------------------------------------------------------------------------------------------ */
 bool CCex::cmdProgramLoadDone(const CArg* pCmd)
 {
+	if (!pCmd) return false; 
+
 	if (pCmd->getNumParam())
 	{
 		m_Result << "CEX Error: " << pCmd->get() << ": Unknown option '" << pCmd->getParam() << "'." << CLog::endl;
@@ -942,7 +960,66 @@ bool CCex::cmdProgramLoadDone(const CArg* pCmd)
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+handle get_exp command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdGetExp(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
 
+	// if there's no param after this command then it's error. we're expecting <expression> to immediately follow -c <get_exp>
+	if (!pCmd->getNumParam())
+	{
+		m_Result << "CEX Error: " << pCmd->get() << ": Missing expression name." << CLog::endl;
+		return false;
+	}
+
+	// if there's no param  after <expression> then it's error. we're expecting one of the -display options
+	if (pCmd->getNumParam() < 2)
+	{
+		m_Result << "CEX Error: " << pCmd->get() << ": Missing mode name." << CLog::endl;
+		return false;
+	}
+
+	// we strictly expect only 2 arguments after this command - <expression> and -display. anything else is error.
+	if (pCmd->getNumParam() > 2)
+	{
+		m_Result << "CEX Error: " << pCmd->get() << ": Multiple mode names found - ";
+		for (unsigned int i = 1; i < pCmd->getNumParam(); i++)
+		{
+			m_Result << "'" << pCmd->getParam(i) << "', ";
+		}
+		m_Result << CLog::endl;
+		return false;
+	}
+
+	// check if mode name is valid
+	CArg* pMode = pCmd->get( pCmd->getParam(1), true );
+	if (!pMode)
+	{
+		m_Result << "CEX Error: Unknown display mode type. " << pCmd->getParam(1) <<  CLog::endl;
+		return false;
+	}
+	else
+	{
+		EVX_EXPR_DISPLAY_MODE nDisplayMode;
+		if ( pCmd->getParam(1).compare("expression") == 0 ) nDisplayMode = EVX_SHOW_EXPRESSION;
+		if ( pCmd->getParam(1).compare("value") == 0 ) nDisplayMode = EVX_SHOW_VALUE;
+		if ( pCmd->getParam(1).compare("multi_value") == 0 ) nDisplayMode = EVX_SHOW_MULTI_VALUE;
+		if ( pCmd->getParam(1).compare("multi_range") == 0 ) nDisplayMode = EVX_SHOW_MULTI_RANGE;
+		m_Log << m_pProgCtrl->getExpression( pCmd->getParam(0).c_str(), nDisplayMode) << CLog::endl;
+	}
+	return true;
+}
+
+
+/* ------------------------------------------------------------------------------------------
+handle set_exp command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdSetExp(const CArg* pCmd)
+{
+	return true;
+}
 
 
 

@@ -17,7 +17,15 @@ unload -wait <t> -nowait -dontsave
 
 [done] get_username
 
-start
+[done] start [-ntimes <loop_count> [-wait <seconds>]] [-nowait]
+
+[done] program_loaded
+
+[done] program_load_done
+
+[done] get_exp <expression> <display mode>
+
+set_exp
 
 
 */
@@ -124,6 +132,8 @@ private:
 	bool cmdStart(const CArg* pCmd);   
 	bool cmdProgramLoaded(const CArg* pCmd);   
 	bool cmdProgramLoadDone(const CArg* pCmd);   
+	bool cmdGetExp(const CArg* pCmd);   
+	bool cmdSetExp(const CArg* pCmd);   
 
 
 public:

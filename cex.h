@@ -46,9 +46,18 @@ set_exp
 
 class CStateNotification : public StateNotification
 {
+private:
+	CLog m_Log;
 public:
-  	CStateNotification(const TestheadConnection &thc):StateNotification(thc) {}
+  	CStateNotification(const TestheadConnection &thc):StateNotification(thc) 
+	{
+		m_Log.immediate = true;
+		m_Log.enable = true;
+	}
 	virtual ~CStateNotification(){}
+	virtual void gemStateChange(const bool linkState, const bool controlState, const bool spoolState, const char *text_msg);
+	virtual void programChange(const EVX_PROGRAM_STATE state, const char *text_msg);
+	virtual void gemTerminalMessage(const char *pcMessage);	 
 };
 
 
@@ -134,6 +143,9 @@ private:
 	bool cmdProgramLoadDone(const CArg* pCmd);   
 	bool cmdGetExp(const CArg* pCmd);   
 	bool cmdSetExp(const CArg* pCmd);   
+	bool cmdSummary(const CArg* pCmd);   
+	bool cmdGem(const CArg* pCmd);   
+
 
 
 public:

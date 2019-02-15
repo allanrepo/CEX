@@ -7,49 +7,44 @@
 #include <cstdio>
 
 long toLong(const std::string& num);
-/*
+bool isNumber(const std::string& n);
+bool isInteger(const std::string& n);
+
 class CLog
 {
 private:
-	bool m_enable;
+	std::stringstream m_sStream;
 public:
-	CLog(){ m_enable = true; }
-	virtual ~CLog(){}
-
-	bool enable(bool s = true){ m_enable = s; return s; }
-
-	void print(const char* p, bool bEOL = true)
-	{
-		if (!m_enable) return; 
-		std::cout << p;
-		if (bEOL) std::cout << std::endl;
+	CLog()
+	{ 
+		clear(); 
+		immediate = false; 
+		enable = true;
 	}
-	void print(const std::string& s, bool bEOL = true)
-	{
-		print(s.c_str(), bEOL);
-	}
+	void clear(){ m_sStream.str(std::string()); }
+	void flush(){ std::cout << m_sStream.str(); clear(); }
+	bool immediate;
+	bool enable;
 
 	template <class T>
 	CLog& operator << (const T& s)
 	{
-		if (!m_enable) return *this;
-		std::stringstream ss; 
-		ss << s;
-		std::cout << ss.str(); 
-
+		if (enable)
+		{
+			if (immediate){ std::cout << s; }
+			else{ m_sStream << s; }
+		}
 		return *this;
 	}
 
-	static std::ostream &endl(std::ostream &o)
+	static std::ostream& endl(std::ostream &o)
 	{
-		std::cout << std::endl;	
+		o << std::endl;	
 		return o;
 	}
 };
-*/
 
-bool isNumber(const std::string& n);
-bool isInteger(const std::string& n);
+
 
 
 #endif

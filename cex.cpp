@@ -14,6 +14,24 @@
  
 #if 1 
 
+void CStateNotification::gemStateChange(const bool linkState, const bool controlState, const bool spoolState, const char *text_msg)
+{
+	m_Log << "linkState: " << linkState << CLog::endl;
+	m_Log << "controlState: " << controlState << CLog::endl;
+	m_Log << "spoolState: " << spoolState << CLog::endl;
+	m_Log << "Message: " << text_msg << CLog::endl;
+}
+
+void CStateNotification::programChange(const EVX_PROGRAM_STATE state, const char *text_msg) 
+{
+	m_Log << "Message: " << text_msg << CLog::endl;
+}
+
+void CStateNotification::gemTerminalMessage(const char *pcMessage)
+{
+	m_Log << "gemTerminalMessage: " << pcMessage << CLog::endl;
+}
+
 /* ------------------------------------------------------------------------------------------
 class's constructor and destructor
 ------------------------------------------------------------------------------------------ */
@@ -65,6 +83,50 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	// add arguments for -command <set_exp>
 	CArg* pSetExp = new CArg("set_exp");
 
+	// cofigure arguments for -command <evx_summary> <site>
+	CArg* pSite = new CArg("site");
+	pSite->addValid( new CArg("on") );
+	pSite->addValid( new CArg("off") );
+
+	// cofigure arguments for -command <evx_summary> <partial>
+	CArg* pPartial = new CArg("partial");
+	CArg* pFull = new CArg("full");	
+	pFull->addValid( new CArg("on") );
+	pFull->addValid( new CArg("off") );
+	CArg* pClear = new CArg("clear");	
+	pClear->addValid( new CArg("on") );
+	pClear->addValid( new CArg("off") );
+	pPartial->addValid( pFull );
+	pPartial->addValid( pClear );
+
+	// cofigure arguments for -command <evx_summary> <final>
+	CArg* pFinal = new CArg("final");
+	pClear = new CArg("clear");	
+	pClear->addValid( new CArg("on") );
+	pClear->addValid( new CArg("off") );
+	pFinal->addValid( pClear );
+
+	// add arguments for -command <evx_summary>
+	CArg* pSummary = new CArg("evx_summary");
+	pSummary->addValid( pSite );
+	pSummary->addValid( pPartial );
+	pSummary->addValid( pFinal );
+
+/*
+	pSummary->addValid( new CArg("site") );
+	pSummary->addValid( new CArg("on") );
+	pSummary->addValid( new CArg("off") );
+*/
+/*
+
+	pSummary->addValid( new CArg("details") );
+	pSummary->addValid( new CArg("output") );
+	pSummary->addValid( new CArg("lot") );
+	pSummary->addValid( new CArg("sublot") );
+	pSummary->addValid( new CArg("type") );
+	pSummary->addValid( new CArg("prod") );
+	pSummary->addValid( new CArg("ilqa") );
+*/
 	// add arguments valid after '-command'
 	CArg* pCmd = new CArg("-command");
 	pCmd->addValid( pTester );
@@ -74,6 +136,7 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pCmd->addValid( pStart );
 	pCmd->addValid( pGetExp );
 	pCmd->addValid( pSetExp );
+	pCmd->addValid( pSummary );
 	pCmd->addValid( new CArg("get_head") );
 	pCmd->addValid( new CArg("get_name") );
 	pCmd->addValid( new CArg("get_username") );
@@ -81,8 +144,9 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pCmd->addValid( new CArg("cex_version") );
 	pCmd->addValid( new CArg("program_loaded") );
 	pCmd->addValid( new CArg("program_load_done") );
+	pCmd->addValid( new CArg("gem") );
 
-	// add main argument to cex
+	// add main arguments to cex
 	m_Arg.addValid( pTester );
 	m_Arg.addValid( pHelp );
 	m_Arg.addValid( pCmd );
@@ -96,8 +160,7 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	// analyze command line arguments to check what user wants to do and also verify any violation
 	if (!scan(argc, argv)){ m_Result.flush(); return; }
 
-
-	// set default value to tester name
+	// set default value to tester name if -tester argument is not used
 	if (m_Arg.get("-tester"))
 	{
 		if (m_Arg.get("-tester")->getParam().empty())
@@ -115,7 +178,7 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 		}
 	}
 
-	// if help is enabled, print it
+	// if general help is enabled, print it and do nothing
 	if (m_bHelp)
 	{
 		printHelp();
@@ -435,6 +498,8 @@ void CCex::executeCommand()
 	if ( pCmd->get().compare("program_load_done") == 0 ) cmdProgramLoadDone(pCmd);
 	if ( pCmd->get().compare("get_exp") == 0 ) cmdGetExp(pCmd);
 	if ( pCmd->get().compare("set_exp") == 0 ) cmdSetExp(pCmd);
+	if ( pCmd->get().compare("evx_summary") == 0 ) cmdSummary(pCmd);
+	if ( pCmd->get().compare("gem") == 0 ) cmdGem(pCmd);
 
 
 	return;
@@ -535,6 +600,7 @@ application's loop
 ------------------------------------------------------------------------------------------ */
 void CCex::loop()
 {
+/*
 	while(1)
 	{
 		std::string strInput;
@@ -558,7 +624,67 @@ void CCex::loop()
 
 		}
 	}
- 
+*/
+	while(true)
+	{
+		fd_set read_fd;
+		int stateSockId = m_pState->getSocketId();
+		int evxioSockId = m_pEvxio->getEvxioSocketId();
+		int errorSockId = m_pEvxio->getErrorSocketId();
+
+		FD_ZERO(&read_fd);
+		FD_SET(fileno(stdin), &read_fd); //add input to select
+		FD_SET(stateSockId, &read_fd); //add state notifications to select
+		FD_SET(evxioSockId, &read_fd); // add evxio notifications to select
+		FD_SET(errorSockId, &read_fd); // add error notifications to select
+
+		int num_fds = ((stateSockId > evxioSockId) ? stateSockId : evxioSockId);
+		num_fds = ((num_fds > errorSockId) ? num_fds + 1 : errorSockId +1);
+
+		int num_ready;
+		if((num_ready = select(num_fds, &read_fd, NULL, NULL, NULL)) < 0) 
+		{
+			perror("main_serverLoop select failed ");
+		}
+
+		if(FD_ISSET(fileno(stdin), &read_fd)) // handle requests from stdin
+		{
+			char buf[1024] = "";
+			read(fileno(stdin), buf, 1024);
+			fprintf(stdout, ">> %s\n", buf);
+		}
+
+
+		if((stateSockId > 0) && (FD_ISSET(stateSockId, &read_fd))) 
+		{//handle requests for state notifications.
+			if(m_pState->respond(stateSockId) != EVXA::OK) 
+			{
+				const char *errbuf = m_pState->getStatusBuffer();
+				fprintf(stdout, "ERROR state respond: %s\n", errbuf);
+				return ;
+			}  
+		}
+		if((evxioSockId > 0) && (FD_ISSET(evxioSockId, &read_fd))) 
+		{//handle requests for evxio notifications.
+			if(m_pEvxio->streamsRespond() != EVXA::OK) 
+			{
+		//    const char *errbuf = TesterObjects.evxioPtr->getStatusBuffer();
+		//    fprintf(stdout, "ERROR stream respond: %s\n", errbuf);
+		//     testerReconnect = 1;
+				return ;
+			}
+		}
+		if((errorSockId > 0) && (FD_ISSET(errorSockId, &read_fd))) 
+		{//handle requests for evxio notifications.
+			if(m_pEvxio->ErrorRespond() != EVXA::OK) 
+			{
+		//     const char *errbuf = TesterObjects.evxioPtr->getStatusBuffer();
+		//     fprintf(stdout, "ERROR error respond: %s\n", errbuf);
+		//     testerReconnect = 1;
+			return ;
+			}
+		}
+	}
 }
 
 /* ------------------------------------------------------------------------------------------
@@ -1021,6 +1147,125 @@ bool CCex::cmdSetExp(const CArg* pCmd)
 	return true;
 }
 
+
+/* ------------------------------------------------------------------------------------------
+handle evx_summary command
+note:
+-	we're returning true after processing <site> because original CEX does not process 
+	other options anymore after processing <site>. even if there's an invalid option, 
+	it just ignores it.
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdSummary(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	// if there's no param after this command then it's just a query
+	if (!pCmd->getNumParam())
+	{
+		m_Result << "evx_summary status:" << CLog::endl;
+
+		// print site state
+		EVXA::ON_OFF_TYPE state = m_pProgCtrl->getSummary(EVX_UpdateBreakout);
+		m_Result << "    site     " << (state == EVXA::ON? "on" : "off") << CLog::endl;
+
+		// print lot type
+		EVX_LOT_TYPE_SUMMARY lot = m_pProgCtrl->getLotTypeSummary();
+		m_Result << "    lot_type " << (lot == EVX_SUBLOT_SUMMARY? "sublot" : "lot") << CLog::endl;
+
+		// print partial status
+		m_Result << "    partial  full " << (m_pProgCtrl->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
+		m_Result << ",  clear " << (m_pProgCtrl->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") <<  CLog::endl;
+
+		// print final status
+		m_Result << "    final    clear " << (m_pProgCtrl->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CLog::endl;
+		return true;
+	}
+
+	// if you reach this point, we have param, let's check what it is
+	CArg* pSummaryType = 0;
+	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
+	{
+		// if found <site> here, it means <site> is called after other options. let's handle it immediately
+		if (pCmd->getParam(i).compare("site") == 0)
+		{
+			// if there's no more argument after <site> let's toggle site state
+			if (i + 1 >= pCmd->getNumParam())
+			{
+				m_pProgCtrl->setSummary(EVX_UpdateBreakout, m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
+				m_Result << "CEX: evx_summary site option has been toggled to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF")<< "." << CLog::endl;
+			}
+			// if there's another argument after <site>, then it must be only on||off		
+			else
+			{
+				if (pCmd->getParam(i + 1).compare("on") == 0)
+				{	
+					m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::ON);
+					m_Result << "CEX: evx_summary site option has been set to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
+					i++;
+				}
+				else if (pCmd->getParam(i + 1).compare("off") == 0)
+				{
+					m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::OFF);
+					m_Result << "CEX: evx_summary site option has been set to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
+					i++;
+				}
+				else
+				{
+					m_pProgCtrl->setSummary(EVX_UpdateBreakout, m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
+					m_Result << "CEX: evx_summary site option has been toggled to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
+				}
+			}	
+			if (!pSummaryType) return true;
+			else continue;	
+		} 
+
+		// the first option is always gonna be pointed to by this pointer. let's find a valid option and have this point to it
+		if (!pSummaryType)
+		{
+			pSummaryType = pCmd->get( pCmd->getParam(i), true );
+			if (!pSummaryType)
+			{
+				m_Result << "CEX Error: evx_summary: " << pCmd->getParam(i) << " is not a valid option." << CLog::endl;
+				return false;
+			}
+			continue;
+		}
+
+		// at this point, summary type might be partial or final, so we check if suceeding options are valid
+		if ( pSummaryType->get( pCmd->getParam(i), true ) )
+		{
+			
+		}
+		else
+		{
+			m_Result << "CEX Error: evx_summary: " << pCmd->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CLog::endl;
+			return false;
+		}
+
+	}
+
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+handle gem command
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdGem(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	// if no command
+	if (!pCmd->getNumParam())
+	{
+		m_Result << "CEX Error: " << pCmd->get() << ": Missing expression name." << CLog::endl;
+		return false;
+	}
+	m_Result << "GEM command: " << pCmd->getParam(0) << CLog::endl;
+	
+	m_pProgCtrl->gemSendMsgToHost(pCmd->getParam(0));
+	return true;
+}
 
 
 #endif

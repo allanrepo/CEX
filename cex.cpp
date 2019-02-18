@@ -1212,51 +1212,43 @@ bool CCex::cmdSummary(const CArg* pCmd)
 		// if we didn't find this param as valid arg, it might be a param for the last param added to summary type
 		else
 		{
-			// handle exception where summary type is <site>, we ignore invalid options
-			if (pSummaryType->get().compare("site") == 0) continue;
-
+			// add this param to the last param of summary option
 			if (pSummaryType->getNumParam())
-			{
-				CArg* pSummaryOption = pSummaryType->get( pCmd->getParam(pSummaryType->getNumParam() - 1), true );
-				if (pSummaryOption->get( pCmd->getParam(i), true ))
+			{					
+				// try to get the summary option from summary type that is listed as last param 
+				CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(pSummaryType->getNumParam() - 1), true );
+				if (pSummaryOption) 
 				{
-					pSummaryOption->addParam( pCmd->getParam(i) );
+					// if summary option matches (on, off), we set it
+					if (pSummaryOption->get( pCmd->getParam(i), true )) pSummaryOption->addParam( pCmd->getParam(i) );
+
+					// if it's still not valid with summary type's option, then it's ERROR but we don't handle it here. we handle when we're about to 
+					// execute command. that's how original CEX behaves
+					else pSummaryType->addParam( pCmd->getParam(i) ); 
 				}
-				// if it's still not valid with summary type's option, then it's ERROR
-				else
-				{
-					m_Result << "CEX Error: evx_summary: " << pCmd->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CLog::endl;
-					return false;
-				} 
+				else pSummaryType->addParam( pCmd->getParam(i) );
 			}
-			// if summary type does not even have any valid param, it's ERROR
-			else
-			{
-				m_Result << "CEX Error: evx_summary: " << pCmd->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CLog::endl;
-				return false;
-			} 
+			// if summary type does not even have any valid param, it's ERROR but we don't handle it here. we handle when we're about to 
+			// execute command. that's how original CEX behaves
+			else pSummaryType->addParam( pCmd->getParam(i) ); 
 		}
 	}
 
 	if (pSummaryType->get().compare("site") == 0)
 	{
-		if ( pSummaryType->hasParam("on") )
-		{
-			m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::ON);
-			m_Result << "CEX: evx_summary site option has been set to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
-		}
-		else if ( pSummaryType->hasParam("off") )
-		{
-			m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::OFF);
-			m_Result << "CEX: evx_summary site option has been set to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
-		}
-		else
-		{
-			m_pProgCtrl->setSummary(EVX_UpdateBreakout, m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
-			m_Result << "CEX: evx_summary site option has been toggled to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
-		}
+		// do the job
+		if ( pSummaryType->hasParam("on") ) m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::ON);		
+		else if ( pSummaryType->hasParam("off") ) m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::OFF);
+		else m_pProgCtrl->setSummary(EVX_UpdateBreakout, m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
+
+		// display results 
+		m_Result << "CEX: evx_summary ";
+		m_Result << pSummaryType->get();
+		m_Result << " option has been " << ( (pSummaryType->hasParam("on") || pSummaryType->hasParam("off"))? "set":"toggled") << " to ";
+		m_Result << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
 	}
-	else if (pSummaryType->get().compare("partial") == 0)
+
+	else
 	{
 		// if there's no param, it's ERROR
 		if (!pSummaryType->getNumParam())
@@ -1266,114 +1258,36 @@ bool CCex::cmdSummary(const CArg* pCmd)
 		}
 		for (unsigned int i = 0; i < pSummaryType->getNumParam(); i++)
 		{
-			
-		}
-	}
-
-	return true;
-#if 0	
-
-	// if there's no param after this command then it's just a query
-	if (!pCmd->getNumParam())
-	{
-		m_Result << "evx_summary status:" << CLog::endl;
-
-		// print site state
-		EVXA::ON_OFF_TYPE state = m_pProgCtrl->getSummary(EVX_UpdateBreakout);
-		m_Result << "    site     " << (state == EVXA::ON? "on" : "off") << CLog::endl;
-
-		// print lot type
-		EVX_LOT_TYPE_SUMMARY lot = m_pProgCtrl->getLotTypeSummary();
-		m_Result << "    lot_type " << (lot == EVX_SUBLOT_SUMMARY? "sublot" : "lot") << CLog::endl;
-
-		// print partial status
-		m_Result << "    partial  full " << (m_pProgCtrl->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
-		m_Result << ",  clear " << (m_pProgCtrl->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") <<  CLog::endl;
-
-		// print final status
-		m_Result << "    final    clear " << (m_pProgCtrl->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CLog::endl;
-		return true;
-	}
-
-	// if you reach this point, we have param, let's check what it is
-	CArg* pSummaryType = 0;
-	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
-	{
-/*
-		// if found <site> here, it means <site> is called after other options. let's handle it immediately
-		if (pCmd->getParam(i).compare("site") == 0)
-		{
-			// if there's no more argument after <site> let's toggle site state
-			if (i + 1 >= pCmd->getNumParam())
+			// get the summary option for this param
+			CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(i), true );		
+	
+			if (!pSummaryOption)
 			{
-				m_pProgCtrl->setSummary(EVX_UpdateBreakout, m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
-				m_Result << "CEX: evx_summary site option has been toggled to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF")<< "." << CLog::endl;
-			}
-			// if there's another argument after <site>, then it must be only on||off		
-			else
-			{
-				if (pCmd->getParam(i + 1).compare("on") == 0)
-				{	
-					m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::ON);
-					m_Result << "CEX: evx_summary site option has been set to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
-					i++;
-				}
-				else if (pCmd->getParam(i + 1).compare("off") == 0)
-				{
-					m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::OFF);
-					m_Result << "CEX: evx_summary site option has been set to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
-					i++;
-				}
-				// if argument is neither on||off, then it is likely option of the previous argument. let's just toggle <site>
-				else
-				{
-					m_pProgCtrl->setSummary(EVX_UpdateBreakout, m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
-					m_Result << "CEX: evx_summary site option has been toggled to " << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
-				}
-			}	
-			// if there's no other arguments prior to <site>, let's call it a day
-			if (!pSummaryType) return true;
-			else continue;	
-		} 
-*/
-		// the first option is always gonna be pointed to by this pointer. let's find a valid option and have this point to it
-		if (!pSummaryType)
-		{
-			pSummaryType = pCmd->get( pCmd->getParam(i), true );
-			if (!pSummaryType)
-			{
-				m_Result << "CEX Error: evx_summary: " << pCmd->getParam(i) << " is not a valid option." << CLog::endl;
+				m_Result << "CEX Error: evx_summary: " << pSummaryType->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CLog::endl;
 				return false;
 			}
 
-			// if there are no more succeeding options and summary type is <site>, toggle site and exit gracefully
-
-			// if summary type is either <final> or <partial> we expect a second option, e.g. <full>, <clear>, or <site>. if there's no second option, it's ERROR
-	
-			continue;
-		}
-
-		// check if this option is valid with summary type
-
-		// if it's not valid and summary type is <site>, just toggle <site> and exit gracefully
-
-		// if it's not valid and summary type is <site>, just toggle <site> and exit gracefully
-
-
-		// at this point, summary type might be partial or final, so we check if suceeding options are valid
-		if ( pSummaryType->get( pCmd->getParam(i), true ) )
-		{
+			// let's specify which summary type are we going to process			
+			EVX_SUMMARY_TYPE st;
+			if ( pSummaryType->get().compare("partial") == 0 && pSummaryOption->get().compare("full") == 0) st = EVX_UpdateFinal; // UpdateFinal - partial full
+			else if ( pSummaryType->get().compare("partial") == 0 && pSummaryOption->get().compare("clear") == 0) st = EVX_ClearPartial; // ClearPartial - partial clear
+			else if ( pSummaryType->get().compare("final") == 0 && pSummaryOption->get().compare("clear") == 0) st = EVX_ClearFinal; // ClearFinal - final clear
+			else if ( pSummaryOption->get().compare("site") == 0 ) st = EVX_UpdateBreakout; // UpdateBreakout - site
+			else continue;
 			
-		}
-		else
-		{
-			m_Result << "CEX Error: evx_summary: " << pCmd->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CLog::endl;
-			return false;
-		}
+			// do the job
+			if ( pSummaryOption->hasParam("on") ) m_pProgCtrl->setSummary(st, EVXA::ON);
+			else if ( pSummaryOption->hasParam("off") ) m_pProgCtrl->setSummary(st, EVXA::OFF);
+			else m_pProgCtrl->setSummary(st, m_pProgCtrl->getSummary(st) == EVXA::ON? EVXA::OFF : EVXA::ON);
 
+			// display results 
+			m_Result << "CEX: evx_summary ";
+			m_Result << (pSummaryOption->get().compare("site") == 0? "": pSummaryType->get());
+			m_Result << (pSummaryOption->get().compare("site") == 0? "": " ") << pSummaryOption->get();
+			m_Result << " option has been " << ( (pSummaryOption->hasParam("on") || pSummaryOption->hasParam("off"))? "set":"toggled") << " to ";
+			m_Result << (m_pProgCtrl->getSummary(st) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
+		}
 	}
-#endif
-
 	return true;
 }
 

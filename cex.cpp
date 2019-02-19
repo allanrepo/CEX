@@ -143,6 +143,7 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pCmd->addValid( new CArg("program_loaded") );
 	pCmd->addValid( new CArg("program_load_done") );
 	pCmd->addValid( new CArg("gem") );
+	pCmd->addValid( new CArg("debug") );
 
 	// add main arguments to cex
 	m_Arg.addValid( pTester );
@@ -509,7 +510,7 @@ void CCex::executeCommand()
 	if ( pCmd->get().compare("set_exp") == 0 ) cmdSetExp(pCmd);
 	if ( pCmd->get().compare("evx_summary") == 0 ) cmdSummary(pCmd);
 	if ( pCmd->get().compare("gem") == 0 ) cmdGem(pCmd);
-
+	if ( pCmd->is("debug") ) cmdDebug(pCmd);
 
 	return;
 
@@ -1356,6 +1357,42 @@ bool CCex::cmdGem(const CArg* pCmd)
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+use this for testing stuff...
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdDebug(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	m_Log << "Num Datalogs: " << m_pProgCtrl->getNumDatalogs() << CLog::endl;
+	for (int i = 0; i < m_pProgCtrl->getNumDatalogs(); i++)
+	{
+		m_Log << "    [" << i << "] Attributes: " << m_pProgCtrl->getNumDatalogAttributes(i) << CLog::endl;
+		for (int j = 0; j < m_pProgCtrl->getNumDatalogAttributes(i); j++)
+		{
+			m_Log << "        [" << j << "] " << m_pProgCtrl->getDlogAttributeString(i, j) << CLog::endl;
+		}
+	}
+	m_Log << CLog::endl << "Num Datalogs: " << m_pProgCtrl->getNumDatalogs() << CLog::endl;
+//	for (int i = 0; i < m_pProgCtrl->getNumDatalogs(); i++)
+	for (int i = 0; i < 5; i++)
+	{
+		
+		//m_Log << "    [" << i << "] " << m_pProgCtrl->getDatalogFormat(i) << CLog::endl;
+		m_Log << "----[" << i  << "] " << m_pProgCtrl->getDatalogString(i, -1, 0) << CLog::endl;
+		m_Log << "    [" << i  << "] " << m_pProgCtrl->getDatalogString(i, 0, 0) << CLog::endl;
+		m_Log << "    [" << i  << "] " << m_pProgCtrl->getDatalogString(i, 1, 0) << CLog::endl;
+		m_Log << "    [" << i  << "] " << m_pProgCtrl->getDatalogString(i, 2, 0) << CLog::endl;
+		m_Log << "    [" << i  << "] " << m_pProgCtrl->getDatalogString(i, 3, 0) << CLog::endl;
+		m_Log << "    [" << i  << "] " << m_pProgCtrl->getDatalogString(i, 4, 0) << CLog::endl;
+		m_Log << "    [" << i  << "] " << m_pProgCtrl->getTestIdForStream(i, 1) << CLog::endl;
+
+//		int nDlogFormat = m_pProgCtrl->getNumDatalogFormats();
+
+	}
+
+	return true;
+}
 
 #endif
 

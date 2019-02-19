@@ -150,7 +150,7 @@ private:
 	bool cmdSetExp(const CArg* pCmd);   
 	bool cmdSummary(const CArg* pCmd);   
 	bool cmdGem(const CArg* pCmd);   
-
+	bool cmdDebug(const CArg* pCmd);
 
 
 public:

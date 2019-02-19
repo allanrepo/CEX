@@ -28,7 +28,8 @@ unload -wait <t> -nowait -dontsave
 [done] evx_summary 
 [done] evx_summary <site> [on||off]
 [done] evx_summary <site, partial, final> <full [on||off]> <clear [on||off]>
-
+[done] evx_summary [clearfinal || clearpartial]
+[done] evx_summary output [sublot|lot] [partial|final]
 set_exp
 
 

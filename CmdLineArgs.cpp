@@ -348,6 +348,21 @@ bool CArg::is(const CArg& arg, bool bExactMatch)
 }
 
 /* ------------------------------------------------------------------------------------------
+check if the given string matches this arg's value. match can be exact match or partial 
+------------------------------------------------------------------------------------------ */
+bool CArg::is(const std::string& value, bool bExactMatch)
+{
+	if (bExactMatch) return (m_strValue.compare(value) == 0)? true : false;
+
+	// find arg as part of value
+	size_t t = m_strValue.find(value);
+
+	// if returns 0, a match occured on first character of value
+	if (t == 0) return true;
+	else return false;
+}
+
+/* ------------------------------------------------------------------------------------------
 add a valid param for reference. ensures the value is unique. if there's any arg in list
 that has same value as the arg to be added, the arg is not added anymore
 ------------------------------------------------------------------------------------------ */
@@ -405,6 +420,14 @@ bool CArg::hasParam(const std::string& param) const
 		if (m_listParam[i].compare(param) == 0) return true;
 	}
 	return false;
+}
+
+/* ------------------------------------------------------------------------------------------
+// checks if this param matches the given string. 
+------------------------------------------------------------------------------------------ */
+bool CArg::isParam(const std::string& param, unsigned int i) const
+{
+	return getParam(i).compare(param) == 0? true : false;
 }
 
 

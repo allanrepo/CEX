@@ -93,6 +93,7 @@ public:
 
 	// check if this arg matches the given value, either exact match or partial
 	bool is(const CArg& arg, bool bExactMatch = false);	
+	bool is(const std::string& value, bool bExactMatch = false);	
 
 	// get list of args that matches the given value
 	void listValidMatch(const CArg& arg, std::vector< CArg* >& v, bool bExactMatch = false) const;
@@ -107,6 +108,9 @@ public:
 
 	// returns the param of specified index. if index is invalid, returns empty string
 	const std::string& getParam(unsigned int i = 0) const;
+
+	// checks if this param matches the given string. 
+	bool isParam(const std::string& param, unsigned int i = 0) const;
 
 	void clearParam(){ m_listParam.clear(); }
 	unsigned int getNumParam() const { return m_listParam.size(); }

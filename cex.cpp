@@ -108,27 +108,23 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pFinal->addValid( pClear );
 	pFinal->addValid( pSite );
 
+	// configure arguments for -command <evx_summary> <final>
+	CArg* pOutput = new CArg("output");
+	pOutput->addValid( new CArg("lot") );
+	pOutput->addValid( new CArg("sublot") );
+	pOutput->addValid( new CArg("final") );
+	pOutput->addValid( new CArg("partial") );
+
 	// add arguments for -command <evx_summary>
 	CArg* pSummary = new CArg("evx_summary");
 	pSummary->addValid( pSite );
 	pSummary->addValid( pPartial );
 	pSummary->addValid( pFinal );
-
-/*
-	pSummary->addValid( new CArg("site") );
-	pSummary->addValid( new CArg("on") );
-	pSummary->addValid( new CArg("off") );
-*/
-/*
-
+	pSummary->addValid( pOutput );
+	pSummary->addValid( new CArg("clearpartial") );
+	pSummary->addValid( new CArg("clearfinal") );
 	pSummary->addValid( new CArg("details") );
-	pSummary->addValid( new CArg("output") );
-	pSummary->addValid( new CArg("lot") );
-	pSummary->addValid( new CArg("sublot") );
-	pSummary->addValid( new CArg("type") );
-	pSummary->addValid( new CArg("prod") );
-	pSummary->addValid( new CArg("ilqa") );
-*/
+
 	// add arguments valid after '-command'
 	CArg* pCmd = new CArg("-command");
 	pCmd->addValid( pTester );
@@ -1247,18 +1243,55 @@ bool CCex::cmdSummary(const CArg* pCmd)
 	}
 
 	// if summary type is <site>
-	if (pSummaryType->get().compare("site") == 0)
+	if (pSummaryType->is("site", true))
 	{
-		// do the job
-		if ( pSummaryType->hasParam("on") ) m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::ON);		
-		else if ( pSummaryType->hasParam("off") ) m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::OFF);
+		// do the job. note that we only care about first option of <site>
+		if ( pSummaryType->isParam("on") ) m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::ON);		
+		else if ( pSummaryType->isParam("off") ) m_pProgCtrl->setSummary(EVX_UpdateBreakout, EVXA::OFF);
 		else m_pProgCtrl->setSummary(EVX_UpdateBreakout, m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
 
 		// display results 
 		m_Result << "CEX: evx_summary ";
 		m_Result << pSummaryType->get();
-		m_Result << " option has been " << ( (pSummaryType->hasParam("on") || pSummaryType->hasParam("off"))? "set":"toggled") << " to ";
+		m_Result << " option has been " << ( (pSummaryType->isParam("on") || pSummaryType->isParam("off"))? "set":"toggled") << " to ";
 		m_Result << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
+	}
+	// if summary type is <clearfinal> or <clearpartial>
+	else if ( pSummaryType->get().compare("clearfinal") == 0 || pSummaryType->get().compare("clearpartial") == 0)
+	{
+		if (pSummaryType->get().compare("clearfinal") == 0) m_pProgCtrl->clearFinalSummary();
+		else m_pProgCtrl->clearPartialSummary();
+		m_Result << "CEX: cleared "<< (pSummaryType->get().compare("clearfinal") == 0? "final":"partial") << " summary." << CLog::endl;
+	}
+	// if summary type is <output>
+	else if ( pSummaryType->is("output", true) )
+	{		
+		bool bFinal = m_pProgCtrl->getSummary(EVX_ClearFinal) == EVXA::ON? true:false;
+		for (unsigned int i = 0; i < pSummaryType->getNumParam(); i++)
+		{
+			// get the summary option for this param
+			CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(i), true );		
+			if (!pSummaryOption)
+			{
+				m_Result << "CEX Error: evx_summary: " << pSummaryType->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CLog::endl;
+				return false;
+			}		 
+			// we set lot/sublot option here because in CEX, the last one gets the dibs
+			if (pSummaryOption->is("lot")) m_pProgCtrl->setLotTypeSummary(EVX_LOT_SUMMARY);
+			if (pSummaryOption->is("sublot")) m_pProgCtrl->setLotTypeSummary(EVX_SUBLOT_SUMMARY);
+			if (pSummaryOption->is("final")) bFinal = true; 
+			if (pSummaryOption->is("partial")) bFinal = false; 
+		}
+		// do the job
+		bFinal? m_pProgCtrl->outputFinalSummary() : m_pProgCtrl->outputPartialSummary();
+
+		// display results
+		m_Result << CLog::endl << "CEX: evx_summary output -- " << (bFinal? "Final" : "Partial") << "/" << (m_pProgCtrl->getLotTypeSummary() == EVX_LOT_SUMMARY? "Lot":"Sublot") << CLog::endl;
+		if (bFinal)
+		{
+			m_Result << "     Clearing results: Sublot" << (m_pProgCtrl->getLotTypeSummary() == EVX_LOT_SUMMARY? ", Lot":"") << CLog::endl;
+			m_Result << "     Reseting NextSerial to '1'." << CLog::endl << CLog::endl;
+		}
 	}
 	// if summary type is <partial> or <final>
 	else

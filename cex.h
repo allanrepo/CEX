@@ -25,6 +25,10 @@ unload -wait <t> -nowait -dontsave
 
 [done] get_exp <expression> <display mode>
 
+[done] evx_summary 
+[done] evx_summary <site> [on||off]
+[done] evx_summary <site, partial, final> <full [on||off]> <clear [on||off]>
+
 set_exp
 
 

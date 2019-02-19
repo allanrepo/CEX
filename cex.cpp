@@ -1163,10 +1163,20 @@ bool CCex::cmdSetExp(const CArg* pCmd)
 
 /* ------------------------------------------------------------------------------------------
 handle evx_summary command
-note:
--	we're returning true after processing <site> because original CEX does not process 
-	other options anymore after processing <site>. even if there's an invalid option, 
-	it just ignores it.
+-	it's default response is to print out unison summary states
+-	this command has several option:
+	-	details, site, partial, final, output, type
+	- 	the first arg after evx_summary must be one of the above
+	-	succeeding arg is an option and the next one after that (if exists)
+		is either param for the previous option or another option
+	-	e.g. evx_summary <partial <clear> <full> <on> 
+		-	<partial> is evx_summary option
+		-	<clear> is one of <partial>'s option
+		-	<full> is one of <partial>'s option
+		-	<on> is <full>'s option
+	-	some options must have option such as <partial> 
+		while others don't e.g. <site>	
+
 ------------------------------------------------------------------------------------------ */
 bool CCex::cmdSummary(const CArg* pCmd)
 {
@@ -1202,38 +1212,41 @@ bool CCex::cmdSummary(const CArg* pCmd)
 		return false;
 	}
 
+	// analyze succeeding args if any
 	for (unsigned int i = 1; i < pCmd->getNumParam(); i++)
 	{
-		// search our summary type if this param is one of its valid args. add it as its param
+		// search our summary type if this param is one of its valid options. add it in its list
 		if (pSummaryType->get( pCmd->getParam(i), true ))
 		{
 			pSummaryType->addParam( pCmd->getParam(i) );
 		}
-		// if we didn't find this param as valid arg, it might be a param for the last param added to summary type
+		// if this arg is not a valid option for our current summary type, it might be a option for the current summary type's latest option
 		else
 		{
-			// add this param to the last param of summary option
+			// let's check first if current summary type even has options
 			if (pSummaryType->getNumParam())
 			{					
-				// try to get the summary option from summary type that is listed as last param 
+				// try to get the summary option from current summary type's latest option 
 				CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(pSummaryType->getNumParam() - 1), true );
 				if (pSummaryOption) 
 				{
-					// if summary option matches (on, off), we set it
-					if (pSummaryOption->get( pCmd->getParam(i), true )) pSummaryOption->addParam( pCmd->getParam(i) );
-
-					// if it's still not valid with summary type's option, then it's ERROR but we don't handle it here. we handle when we're about to 
-					// execute command. that's how original CEX behaves
-					else pSummaryType->addParam( pCmd->getParam(i) ); 
+					// if summary option matches (e.g. on, off, etc...), we set it
+					if (pSummaryOption->get( pCmd->getParam(i), true )) 
+					{
+						pSummaryOption->addParam( pCmd->getParam(i) );
+						continue;
+					}
 				}
-				else pSummaryType->addParam( pCmd->getParam(i) );
 			}
-			// if summary type does not even have any valid param, it's ERROR but we don't handle it here. we handle when we're about to 
-			// execute command. that's how original CEX behaves
-			else pSummaryType->addParam( pCmd->getParam(i) ); 
+			// if we reached this point, either this arg is not a valid option for current summary type's latest option or current 
+			// summary type doesn't even have an option at all. it might be an ERROR for certain summary options but we don't handle it here. 
+			// instead we handle when we're about to execute command so we just pass it as summary type's option. that's how original CEX behaves
+			pSummaryType->addParam( pCmd->getParam(i) ); 
+		
 		}
 	}
 
+	// if summary type is <site>
 	if (pSummaryType->get().compare("site") == 0)
 	{
 		// do the job
@@ -1247,7 +1260,7 @@ bool CCex::cmdSummary(const CArg* pCmd)
 		m_Result << " option has been " << ( (pSummaryType->hasParam("on") || pSummaryType->hasParam("off"))? "set":"toggled") << " to ";
 		m_Result << (m_pProgCtrl->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CLog::endl;
 	}
-
+	// if summary type is <partial> or <final>
 	else
 	{
 		// if there's no param, it's ERROR

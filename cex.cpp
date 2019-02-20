@@ -129,6 +129,10 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	CArg* pDlogFileFreq = new CArg("evx_dlog_file_freq");
 	pDlogFileFreq->addValid( new CArg("-n") );
 	pDlogFileFreq->addValid( new CArg("-m") );
+	pDlogFileFreq->addValid( new CArg("Lot") );
+	pDlogFileFreq->addValid( new CArg("SubLot") );
+	pDlogFileFreq->addValid( new CArg("Wafer") );
+	pDlogFileFreq->addValid( new CArg("Session") );
 
 	// add arguments for -command <dlog_sample_rate>
 	CArg* pDlogSampleRate = new CArg("evx_dlog_sample_rate");
@@ -1515,10 +1519,11 @@ bool CCex::cmdDlogFileFreq(const CArg* pCmd)
 	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
 	if (!pCmd->getNumParam())
 	{
-		m_Log << "CEX Error: Must specify either a valid method or dlog index." << CLog::endl;
+		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
 		return false;
 	}
 	
+	std::string strFileFreq;
 	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
 	{
 		// is the argument -n? then next argument must be an integer
@@ -1543,18 +1548,22 @@ bool CCex::cmdDlogFileFreq(const CArg* pCmd)
 				return false;
 			}	
 
-			// at this point, we have valid value for -n, we save it
-			CArg* pOption =	pCmd->get("-n", true);
-			if (!pOption)
+			// at this point, we have valid value for -n, but check if -m is also used before
+			if ( pCmd->get("-m", true)->getNumParam() )
 			{
-				m_Log << "CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+				m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
 				return false;
 			}
-			else pOption->addParam( pCmd->getParam(i + 1) );
+			// if this is the only option, we save it. any previous call to this option is removed
+			else
+			{
+				pCmd->get("-n", true)->clearParam();
+				pCmd->get("-n", true)->addParam( pCmd->getParam(++i) );
+			}
 		}
 
 		// is the argument -m? there must be a next argument
-		if (pCmd->isParam("-m", i))
+		else if (pCmd->isParam("-m", i))
 		{
 			// if no arg after -m, ERROR
 			if (i + 1 >= pCmd->getNumParam())
@@ -1562,28 +1571,93 @@ bool CCex::cmdDlogFileFreq(const CArg* pCmd)
 				m_Log << "CEX Error: Must specify a valid dlog method with '" << pCmd->get() << "'." << CLog::endl;
 				return false;
 			}
-			// check if next arg is not an integer, ERROR
-			if (!isInteger( pCmd->getParam(i + 1) ) )
-			{
-				m_Log << "CEX Error: "  << pCmd->get() << ": '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
-				return false;
-			}
-			// check if next arg's value is within dlog method's range
-			if ( toLong( pCmd->getParam(i + 1) ) < 0 || toLong( pCmd->getParam(i + 1) ) >= m_pProgCtrl->getNumDatalogs() )
-			{
-				m_Log << "CEX Error: valid dlog index is from 0 to " << (m_pProgCtrl->getNumDatalogs() - 1) << "." << CLog::endl;
-				return false;
-			}	
 
-			// at this point, we have valid value for -n, we save it
-			CArg* pOption =	pCmd->get("-n", true);
-			if (!pOption)
+			// at this point, we have valid value for -m, but check if -n is also used before
+			if ( pCmd->get("-n", true)->getNumParam() )
 			{
-				m_Log << "CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+				m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
 				return false;
 			}
-			else pOption->addParam( pCmd->getParam(i + 1) );
+			// if this is the only option, we save it. any previous call to this option is removed
+			else
+			{
+				pCmd->get("-m", true)->clearParam();
+				pCmd->get("-m", true)->addParam( pCmd->getParam(++i) );
+			}
 		}
+		// it might be any of the valid file frequency values - Lot, SubLot, Wafer, Session
+		else if ( pCmd->get( pCmd->getParam(i), true ) )
+		{
+			// if there's more arg after this, ERROR
+			if ( i + 1 < pCmd->getNumParam())
+			{
+				m_Log << "CEX Error: " << pCmd->get() << ": Too many arguments. "<< CLog::endl;
+				return false;
+			}
+			else strFileFreq = pCmd->getParam(i);
+		}
+		// this arg does not match any of the valid options for this command
+		else
+		{
+			m_Log <<"CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+			return false;
+		}
+	}
+
+	// let's check if neither -n nor -m were used at all
+	if ( !pCmd->get("-n", true)->getNumParam() && !pCmd->get("-m", true)->getNumParam() )
+	{
+		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
+		return false;
+	}
+
+	// did we have a valid file frequency value?
+	if ( !pCmd->get( strFileFreq, true ) )
+	{
+		m_Log <<"CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+		return false;
+	}
+
+	if (pCmd->get("-n", true)->getNumParam())
+	{
+		int i = toLong( pCmd->get("-n", true)->getParam() );
+		strFileFreq.insert(0, "DlogFreq:");
+
+		// check if this is valid dlog method
+		std::stringstream val;
+		val << m_pProgCtrl->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << m_pProgCtrl->getDatalogString(i, 2, 0);
+
+		if (!val.str().size())
+		{
+			m_Log << "CEX Error: Dlog index " << i << " is not associated with any methods." << CLog::endl;
+			return false;
+		}
+		else 
+		{
+			m_pProgCtrl->setDatalogFileFreq (i, strFileFreq.c_str() );
+			m_Log << "CEX: File frequency for dlog" << i << " set to " << strFileFreq << "." << CLog::endl;
+			return true;
+		}
+	}
+	else 
+	{
+		for (int i = 0; i < m_pProgCtrl->getNumDatalogs(); i++)
+		{
+			std::stringstream val;
+			val << m_pProgCtrl->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << m_pProgCtrl->getDatalogString(i, 2, 0);
+			
+			if (val.str().compare( pCmd->get("-m", true)->getParam() ) == 0)
+			{
+				strFileFreq.insert(0, "DlogFreq:");
+				m_pProgCtrl->setDatalogFileFreq (i, strFileFreq.c_str());
+				m_Log << "CEX: File Frequency for method "<<  pCmd->get("-m", true)->getParam() << " [dlog" << i << "] set to " << strFileFreq << "." <<CLog::endl;
+				return true;
+			}
+		}
+		m_Log << "CEX Error: The datalogging method " << pCmd->get("-m", true)->getParam() << " was not found." << CLog::endl;
+		return false;
 	}
 
 	return true;

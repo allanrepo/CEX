@@ -10,21 +10,13 @@ unload -wait <t> -nowait -dontsave
 - 	'-dontsave' not working because both evxa and cex unload command ignores this flag find work around to implement this
 
 [done] get_head 
-
 [done] cex_version
-
 [done] get_name
-
 [done] get_username
-
 [done] start [-ntimes <loop_count> [-wait <seconds>]] [-nowait]
-
 [done] program_loaded
-
 [done] program_load_done
-
 [done] get_exp <expression> <display mode>
-
 [done] evx_summary 
 [done] evx_summary <site> [on||off]
 [done] evx_summary <site, partial, final> <full [on||off]> <clear [on||off]>
@@ -151,7 +143,12 @@ private:
 	bool cmdSummary(const CArg* pCmd);   
 	bool cmdGem(const CArg* pCmd);   
 	bool cmdDebug(const CArg* pCmd);
-
+	bool cmdDlogFileDest(const CArg* pCmd);
+	bool cmdDlogFileFreq(const CArg* pCmd);
+	bool cmdDlogMethods(const CArg* pCmd);
+	bool cmdDlogSampleRate(const CArg* pCmd);
+	bool cmdDlogTestID(const CArg* pCmd);
+	bool cmdDlogType(const CArg* pCmd);
 
 public:
 	CCex(int argc = 0, char **argv = 0);

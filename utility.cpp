@@ -66,8 +66,7 @@ bool isInteger(const std::string& n)
 				break;
 			}
 			default:
-			{
-				
+			{				
 				if (n[i] < '0' || n[i] > '9') return false; // any character that is not a number is found
 				bDigit = true; // already found a valid digit				
 			}

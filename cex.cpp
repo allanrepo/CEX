@@ -125,6 +125,26 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pSummary->addValid( new CArg("clearfinal") );
 	pSummary->addValid( new CArg("details") );
 
+	// add arguments for -command <dlog_file_freq>
+	CArg* pDlogFileFreq = new CArg("evx_dlog_file_freq");
+	pDlogFileFreq->addValid( new CArg("-n") );
+	pDlogFileFreq->addValid( new CArg("-m") );
+
+	// add arguments for -command <dlog_sample_rate>
+	CArg* pDlogSampleRate = new CArg("evx_dlog_sample_rate");
+	pDlogSampleRate->addValid( new CArg("-n") );
+	pDlogSampleRate->addValid( new CArg("-m") );
+
+	// add arguments for -command <dlog_testID>
+	CArg* pDlogTestID = new CArg("evx_dlog_testID");
+	pDlogTestID->addValid( new CArg("-n") );
+	pDlogTestID->addValid( new CArg("-m") );
+
+	// add arguments for -command <dlog_type>
+	CArg* pDlogType = new CArg("evx_dlog_type");
+	pDlogType->addValid( new CArg("-n") );
+	pDlogType->addValid( new CArg("-m") );
+
 	// add arguments valid after '-command'
 	CArg* pCmd = new CArg("-command");
 	pCmd->addValid( pTester );
@@ -144,6 +164,12 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	pCmd->addValid( new CArg("program_load_done") );
 	pCmd->addValid( new CArg("gem") );
 	pCmd->addValid( new CArg("debug") );
+	pCmd->addValid( new CArg("evx_dlog_file_destination") );
+	pCmd->addValid( new CArg("evx_dlog_methods") );
+	pCmd->addValid( pDlogFileFreq );
+	pCmd->addValid( pDlogSampleRate );
+	pCmd->addValid( pDlogTestID );
+	pCmd->addValid( pDlogType );
 
 	// add main arguments to cex
 	m_Arg.addValid( pTester );
@@ -155,6 +181,7 @@ CCex::CCex(int argc, char **argv): m_pTester(0), m_pConn(0), m_pProgCtrl(0), m_p
 	m_Arg.addValid( new CArg("-dm") );
 	m_Arg.addValid( new CArg("-debug") );
 	m_Arg.addValid( new CArg("-syntax_check") );
+	m_Arg.addValid( new CArg("-timeout") );
 
 	// analyze command line arguments to check what user wants to do and also verify any violation
 	if (!scan(argc, argv)){ m_Result.flush(); return; }
@@ -245,7 +272,7 @@ bool CCex::scan(int argc, char **argv)
 
 		// get a list of matching args in the valid list of args
 		std::vector< CArg* > v;
-		m_Arg.listValidMatch( CArg(argv[i]), v);
+		m_Arg.listValidMatch( CArg(arg), v);
 		
 		// is it ambiguous?
 		if (v.size() > 1)
@@ -317,7 +344,7 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 
 		// get a list of (partial) matching args in the valid list of args available on '-command'
 		std::vector< CArg* > v;
-		m_Arg.get("-command")->listValidMatch(CArg(argv[i]), v);
+		m_Arg.get("-command")->listValidMatch(CArg(arg), v);
 		
 		// is there no match?
 		if (!v.size())
@@ -343,7 +370,7 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 		{
 			// in our first attempt to search, we did a partial match. this time, let's do an exact match
 			// because this arg might be a <command>
-			m_Arg.get("-command")->listValidMatch(CArg(argv[i]), v, true);
+			m_Arg.get("-command")->listValidMatch(CArg(arg), v, true);
 
 			// is it still ambiguous?
 			if (v.size() > 1)
@@ -369,7 +396,7 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 				// instead, we let <command> deal with it so we just pass it to <command> as one of its parameters
 				else
 				{
-					m_Arg.get("-command")->get( m_Arg.get("-command")->getParam() )->addParam(argv[i]);
+					m_Arg.get("-command")->get( m_Arg.get("-command")->getParam() )->addParam(arg);
 					continue;
 				}				
 			}
@@ -420,10 +447,21 @@ bool CCex::scanCommandParam(int start, int argc, char **argv)
 			m_bHelp = false;
 			m_bCmdHelp = true;					
 			continue;
-		}	
-
-		// at this point, it must be the <command>
-		m_Arg.get("-command")->addParam(argv[i]);		
+		}
+	
+		// at this point, it might be the <command> but it might have been a partial match only.
+		// <command> must be an exact match. let's test it
+		m_Arg.get("-command")->listValidMatch(CArg(arg), v, true);
+		
+		// since we already know that partial search returns unique match, we only test for non match on exact search
+		if (!v.size())
+		{
+			m_Result.clear();
+			m_Result << "CEX Error: " << arg << ": '" << arg << "' is not a CEX command. " << CLog::endl;
+			return false;			
+		}
+		// match is found and we can guarantee it's a unique (exact) match at this point
+		else m_Arg.get("-command")->addParam(arg);		
 	}
 
 	// after scanning all args after '-command', let's check if there's a valid <command>
@@ -511,6 +549,8 @@ void CCex::executeCommand()
 	if ( pCmd->get().compare("evx_summary") == 0 ) cmdSummary(pCmd);
 	if ( pCmd->get().compare("gem") == 0 ) cmdGem(pCmd);
 	if ( pCmd->is("debug") ) cmdDebug(pCmd);
+	if ( pCmd->is("evx_dlog_methods") ) cmdDlogMethods(pCmd);
+	if ( pCmd->is("evx_dlog_file_freq") ) cmdDlogFileFreq(pCmd);
 
 	return;
 
@@ -1391,6 +1431,195 @@ bool CCex::cmdDebug(const CArg* pCmd)
 
 	}
 
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdDlogMethods(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	// if there's an option, check the first option if it's an integer
+	if (pCmd->getNumParam())
+	{
+		if ( !isInteger( pCmd->getParam(0) ) )
+		{
+			m_Log << "CEX Error: expect an positive integer number for dlog index." << CLog::endl;
+			return false;
+		}
+		// check if <dlog_index> is within range
+		if ( toLong( pCmd->getParam(0) ) < 0 || toLong( pCmd->getParam(0) ) >= m_pProgCtrl->getNumDatalogs() )
+		{
+			m_Log << "CEX Error: valid dlog index is from 0 to " << (m_pProgCtrl->getNumDatalogs() - 1) << "." << CLog::endl;
+			return false;
+		}
+	}
+
+	// strictly accepts only 1 option
+	if (pCmd->getNumParam() > 1)
+	{
+		m_Log << "CEX Error: evx_dlog_methods: Too many arguments." << CLog::endl;
+		return false;
+	}
+	
+	for (int i = 0; i < m_pProgCtrl->getNumDatalogs(); i++)
+	{
+		// try to get the <method>
+		std::stringstream val;
+		// check if <method> is immediate
+		val << m_pProgCtrl->getDatalogString(i, 1, 0);
+		if (!val.str().size())
+		{
+			// check if <method> is buffered
+			val << m_pProgCtrl->getDatalogString(i, 2, 0);
+		}
+
+		if (!val.str().size())
+		{
+			if (pCmd->getNumParam())
+			{
+				if ( toLong( pCmd->getParam(0) ) == i ) 
+				{
+					m_Log << "No evx datalog method associated with dlog " << i << CLog::endl;
+					break;			
+				}
+			}
+			else m_Log << "No evx datalog method associated with dlog " << i << CLog::endl;
+		}
+		else
+		{
+			if (pCmd->getNumParam())
+			{
+				if ( toLong( pCmd->getParam(0) ) == i ) 
+				{
+					m_Log << "Evx datalog "<< i << " method: "<< val.str() << CLog::endl;
+					break;		
+				}	
+			}
+			else m_Log << "Evx datalog "<< i << " method: "<< val.str() << CLog::endl;
+		}
+	}
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdDlogFileFreq(const CArg* pCmd)
+{
+	if (!pCmd) return false; 
+
+	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
+	if (!pCmd->getNumParam())
+	{
+		m_Log << "CEX Error: Must specify either a valid method or dlog index." << CLog::endl;
+		return false;
+	}
+	
+	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
+	{
+		// is the argument -n? then next argument must be an integer
+		if (pCmd->isParam("-n", i))
+		{
+			// if no arg after -n, ERROR
+			if (i + 1 >= pCmd->getNumParam())
+			{
+				m_Log << "CEX Error: " << pCmd->get() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+				return false;
+			}
+			// check if next arg is not an integer, ERROR
+			if (!isInteger( pCmd->getParam(i + 1) ) )
+			{
+				m_Log << "CEX Error: "  << pCmd->get() << ": '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+				return false;
+			}
+			// check if next arg's value is within dlog method's range
+			if ( toLong( pCmd->getParam(i + 1) ) < 0 || toLong( pCmd->getParam(i + 1) ) >= m_pProgCtrl->getNumDatalogs() )
+			{
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (m_pProgCtrl->getNumDatalogs() - 1) << "." << CLog::endl;
+				return false;
+			}	
+
+			// at this point, we have valid value for -n, we save it
+			CArg* pOption =	pCmd->get("-n", true);
+			if (!pOption)
+			{
+				m_Log << "CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+				return false;
+			}
+			else pOption->addParam( pCmd->getParam(i + 1) );
+		}
+
+		// is the argument -m? there must be a next argument
+		if (pCmd->isParam("-m", i))
+		{
+			// if no arg after -m, ERROR
+			if (i + 1 >= pCmd->getNumParam())
+			{
+				m_Log << "CEX Error: Must specify a valid dlog method with '" << pCmd->get() << "'." << CLog::endl;
+				return false;
+			}
+			// check if next arg is not an integer, ERROR
+			if (!isInteger( pCmd->getParam(i + 1) ) )
+			{
+				m_Log << "CEX Error: "  << pCmd->get() << ": '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+				return false;
+			}
+			// check if next arg's value is within dlog method's range
+			if ( toLong( pCmd->getParam(i + 1) ) < 0 || toLong( pCmd->getParam(i + 1) ) >= m_pProgCtrl->getNumDatalogs() )
+			{
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (m_pProgCtrl->getNumDatalogs() - 1) << "." << CLog::endl;
+				return false;
+			}	
+
+			// at this point, we have valid value for -n, we save it
+			CArg* pOption =	pCmd->get("-n", true);
+			if (!pOption)
+			{
+				m_Log << "CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+				return false;
+			}
+			else pOption->addParam( pCmd->getParam(i + 1) );
+		}
+	}
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdDlogFileDest(const CArg* pCmd)
+{
+	return true;
+}
+
+
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdDlogSampleRate(const CArg* pCmd)
+{
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdDlogTestID(const CArg* pCmd)
+{
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CCex::cmdDlogType(const CArg* pCmd)
+{
 	return true;
 }
 

@@ -13,19 +13,19 @@ LFLAGS=-m64 -lcrypt -lnsl -lm -lrt -levxa -L/ltx/customer/lib64 -Wl,-rpath /ltx/
 
 INCDIR=-I.  -I/ltx/customer/include -I/ltx/customer/include/evxa
 
-DEMO_PROGS= cex
+DEMO_PROGS= demo
 
-CEX_FILES= cex.cpp utility.cpp CmdLineArgs.cpp demo.cpp
+CEX_FILES= demo.cpp  utility.cpp tester.cpp cex.cpp arg.cpp cmd.cpp
 
 
 CEX_OBJS = $(CEX_FILES:.cpp=.o)
 
 all : $(DEMO_PROGS)
 
-cex.o : $(CEX_FILES)
+demo.o : $(CEX_FILES)
 	$(CC) -c $(CFLAGS) $(INCDIR) $(CEX_FILES)
 
-cex : $(CEX_OBJS)
+demo : $(CEX_OBJS)
 	$(CC) -o _cex  $(CEX_OBJS) $(LIB_FILES) $(LFLAGS)
 
 

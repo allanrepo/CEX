@@ -70,6 +70,13 @@ public:
 	void disconnect();
 	void loop();
 
+	// accessors to tester objects
+	TesterConnection* Tester(){ return m_pTester; }
+	TestheadConnection* TestHead(){ return m_pConn; }
+	ProgramControl* ProgCtrl(){ return m_pProgCtrl; }
+	CStateNotification* StateNotify(){ return m_pState; }
+	CEvxioStreamClient* StreamClient(){ return m_pEvxio; }
+
 	// tester properties
 	int getHead(){ return m_nHead; }
 };

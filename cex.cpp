@@ -28,6 +28,7 @@ CCex::CCex(): m_Tester(CTester::instance()), m_Log(CTester::instance().m_Log), m
 	CArg* pCmd = new CCmd(); 
 	pCmd->addOpt(new CGetHead());
 	pCmd->addOpt(new CCexVersion());
+	pCmd->addOpt(new CGetName());
 	addOpt( pCmd );
 
 	// add options 

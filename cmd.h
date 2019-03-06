@@ -11,7 +11,13 @@
 #include <arg.h>
 #include <cex.h>
 
+/*
 
+command list status:
+get_head		[done]
+cex_version		[done]
+
+*/
 
 /* ------------------------------------------------------------------------------------------
 base class for all commands
@@ -76,5 +82,15 @@ public:
 	virtual bool scan(std::list< std::string >& Args);
 };
 
+/* ------------------------------------------------------------------------------------------
+-c <get_name> opt class
+------------------------------------------------------------------------------------------ */
+class CGetName: public CCmdBase
+{
+public:
+	CGetName():CCmdBase("get_name"){}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
 
 #endif

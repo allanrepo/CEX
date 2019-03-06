@@ -282,3 +282,46 @@ bool CCexVersion::scan(std::list< std::string >& Args)
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+execute get_name
+------------------------------------------------------------------------------------------ */
+bool CGetName::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "********************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                         get_name                        L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        get_name - get_name prints the name of the current tester." << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        get_name" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The command get_name prints the name of the tester that is" << CUtil::CLog::endl;
+		m_Log << "        currently being used." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "********************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		m_Log << "CEX: Name of Tester : " << CTester::instance().Tester()->getName() << CUtil::CLog::endl;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+there should be no options for get_name
+------------------------------------------------------------------------------------------ */
+bool CGetName::scan(std::list< std::string >& Args)
+{
+	if (Args.size())
+	{		
+		m_Log << "CEX Error: " << get() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+	return true;
+}
+

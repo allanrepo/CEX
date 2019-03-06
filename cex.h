@@ -1,6 +1,3 @@
-/*
-*/
-
 #ifndef __CEX__
 #define __CEX__
 
@@ -11,18 +8,29 @@
 #include <tester.h>  
 #include <arg.h>
 
+/* ------------------------------------------------------------------------------------------
+cex class 
+-	has reference to singleton class CTester
+-	has reference to class CTester's loggers
+------------------------------------------------------------------------------------------ */
 class CCex: public CArg
 {
 private:
-	const std::string getUserName() const;
+	// CTester is a singleton object
 	CTester& m_Tester;
+
+	// loggers that are referenced to CTester's members (public)
 	CUtil::CLog& m_Log;
 	CUtil::CLog& m_Debug;
+
+	// get login username. private as we use it exclusively for default tester name
+	const std::string getUserName() const;
 
 public:
 	CCex(); 	
 	virtual ~CCex(){} 
 
+	// store command line arguments to a list for processing
 	bool scan(int argc, char **argv);
 
 	// virtual methods from CArg to be overriden

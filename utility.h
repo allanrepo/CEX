@@ -9,9 +9,7 @@
 #include <vector>
 #include <fstream>
 
-long toLong(const std::string& num);
-bool isNumber(const std::string& n);
-bool isInteger(const std::string& n);
+
 
 namespace CUtil
 {
@@ -151,7 +149,9 @@ namespace CUtil
 		}
 	};
 
-
+	long toLong(const std::string& num);
+	bool isNumber(const std::string& n);
+	bool isInteger(const std::string& n);
 };
 
 

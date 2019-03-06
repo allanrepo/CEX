@@ -8,6 +8,8 @@
 #include <unistd.h>
 #include <arg.h>
 
+#define SAFE_DELETE(p){ delete(p); p = 0; }
+
 class CStateNotification: public StateNotification
 {
 public:
@@ -26,6 +28,13 @@ public:
 	virtual ~CEvxioStreamClient(){}
 };
  
+/* ------------------------------------------------------------------------------------------
+tester class 
+-	singleton class. we only need 1 tester for all.
+-	contains loggers. this class being singleton, allows all other classes
+	to use this loggers exclusively. they just have to make reference to them
+-	2 loggers. 1 for common print display, another for debug display
+------------------------------------------------------------------------------------------ */
 class CTester: public CArg
 {
 private:
@@ -44,20 +53,24 @@ private:
 	int m_nHead;
 
 public:
+	// loggers
 	CUtil::CLog m_Log;
 	CUtil::CLog m_Debug;
 
 public:
+	// you can't instantiate yourself so this is how u get a reference to the singleton object
 	static CTester& instance()
 	{
 		static CTester inst;
 		return inst;
 	}
 
+	// tester functions
 	bool connect(const std::string& strTesterName, int nAttempts = 1);
 	void disconnect();
 	void loop();
 
+	// tester properties
 	int getHead(){ return m_nHead; }
 };
 

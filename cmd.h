@@ -12,15 +12,6 @@
 #include <cex.h>
 
 
-/* ------------------------------------------------------------------------------------------
-general help
------------------------------------------------------------------------------------------- */
-class CHelp: public CArg
-{
-public:
-	CHelp(): CArg("-help"){};
-	virtual bool exec();
-};
 
 /* ------------------------------------------------------------------------------------------
 base class for all commands
@@ -40,6 +31,17 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
+general help
+------------------------------------------------------------------------------------------ */
+class CHelp: public CCmdBase
+{
+public:
+	CHelp(): CCmdBase("-help"){};
+	virtual bool exec();
+};
+
+
+/* ------------------------------------------------------------------------------------------
 -c[ommand] opt class
 ------------------------------------------------------------------------------------------ */
 class CCmd: public CCmdBase
@@ -49,7 +51,6 @@ public:
 	{
 		addOpt( &CTester::instance() );
 	} 
-	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);
 };
 
@@ -64,6 +65,16 @@ public:
 	virtual bool scan(std::list< std::string >& Args);
 };
 
+/* ------------------------------------------------------------------------------------------
+-c <cex_version> opt class
+------------------------------------------------------------------------------------------ */
+class CCexVersion: public CCmdBase
+{
+public:
+	CCexVersion():CCmdBase("cex_version"){}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
 
 
 #endif

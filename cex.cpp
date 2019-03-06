@@ -1,6 +1,53 @@
 #include <cex.h>
 #include <cmd.h>
 
+
+/* ------------------------------------------------------------------------------------------
+constructor 
+------------------------------------------------------------------------------------------ */
+CCex::CCex(): m_Tester(CTester::instance()), m_Log(CTester::instance().m_Log), m_Debug(CTester::instance().m_Debug)
+{  
+	// debug log is immediate and disabled by default 
+	m_Debug.immediate = true;
+	m_Debug.enable = false;
+	m_Debug.silent = true;
+  
+	// logger is always enabled and immediate 
+	m_Log.immediate = true;
+	m_Log.enable = true;    
+	m_Log.silent = false; 
+ 
+	// create -t[ester] option
+	addOpt( &CTester::instance() );
+
+	// create -h[elp] option
+	CArg* pHelp = new CHelp();
+	addOpt( pHelp );
+
+	// create -c[ommand] option
+	CArg* pCmd = new CCmd(); 
+	pCmd->addOpt(new CGetHead());
+	pCmd->addOpt(new CCexVersion());
+	addOpt( pCmd );
+
+	// add options 
+	addOpt( new CArg("-debug") );
+	addOpt( new CArg("-dm") );
+	addOpt( new CArg("-timeout") );
+	addOpt( new CArg("-head") );
+	addOpt( new CArg("-hd") );
+	addOpt( new CArg("-syntax_check") );
+	addOpt( new CArg("-version") );	
+	
+	// let's initialize <tester> to default name
+	std::stringstream ss;
+	getUserName().empty()? (ss << "sim") : (ss << getUserName() << "_sim");
+	getOpt("-tester")->setValue(ss.str()); 
+	
+	// let's set tester connection enabled by default 
+	getOpt("-tester")->getOpt("connect")->setValue("ok");
+}
+
 /* ------------------------------------------------------------------------------------------
 get user name
 ------------------------------------------------------------------------------------------ */
@@ -31,62 +78,10 @@ bool CCex::scan(int argc, char **argv)
 }
 
 /* ------------------------------------------------------------------------------------------
-constructor 
------------------------------------------------------------------------------------------- */
-CCex::CCex(): m_Tester(CTester::instance()), m_Log(CTester::instance().m_Log), m_Debug(CTester::instance().m_Debug)
-{  
-	// debug log is immediate and disabled by default 
-	m_Debug.immediate = true;
-	m_Debug.enable = false;
-	m_Debug.silent = true;
-  
-	// logger is always enabled and immediate 
-	m_Log.immediate = true;
-	m_Log.enable = true;    
-	m_Log.silent = false; 
- 
-	// create -t[ester] option
-	addOpt( &CTester::instance() );
-
-	// create -h[elp] option
-	CArg* pHelp = new CHelp();
-	addOpt( pHelp );
-
-	// create -c[ommand] option
-	CArg* pCmd = new CCmd(); 
-	pCmd->addOpt(new CGetHead());
-	addOpt( pCmd );
-
-	// add options 
-	addOpt( new CArg("-debug") );
-	addOpt( new CArg("-dm") );
-	addOpt( new CArg("-timeout") );
-	addOpt( new CArg("-head") );
-	addOpt( new CArg("-hd") );
-	addOpt( new CArg("-syntax_check") );
-	addOpt( new CArg("-version") );	
-	
-	// let's initialize <tester> to default name
-	std::stringstream ss;
-	getUserName().empty()? (ss << "sim") : (ss << getUserName() << "_sim");
-	getOpt("-tester")->setValue(ss.str()); 
-	
-	// let's set tester connection enabled by default 
-	getOpt("-tester")->getOpt("connect")->setValue("ok");
-}
-
-/* ------------------------------------------------------------------------------------------
 scan command line arguments
 ------------------------------------------------------------------------------------------ */
 bool CCex::scan(std::list< std::string >& Args)
 {
-	// if there's no argument, we will connect to tester with default name and do nothing else.
-	//if (!Args.size())
-	{
-	//	getOpt("-tester")->getOpt("connect")->setValue("ok");
-	//	return true;
-	}
-
 	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
 	{ 
 		std::string arg( (*it) );

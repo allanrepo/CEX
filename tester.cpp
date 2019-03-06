@@ -101,6 +101,11 @@ destroys the EVXA tester objects
 ------------------------------------------------------------------------------------------ */
 void CTester::disconnect()
 {
+	SAFE_DELETE( m_pTester );
+	SAFE_DELETE( m_pConn );
+	SAFE_DELETE( m_pProgCtrl );
+	SAFE_DELETE( m_pState );
+	SAFE_DELETE( m_pEvxio );
 }
 
 /* ------------------------------------------------------------------------------------------

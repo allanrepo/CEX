@@ -5,42 +5,35 @@ prints out general help
 ------------------------------------------------------------------------------------------ */
 bool CHelp::exec()
 {
-	std::cout << std::endl;
-	std::cout << "LTX CEX usage: " << std::endl; 
-	std::cout << "cex [-tester <tester name>] [-head(-hd) <head num>]" << std::endl;
-	std::cout << "     [-timeout] <seconds>" << std::endl; 
-	std::cout << "     [-debug] [-dm] [-version] [-syntax_check] [-help]" << std::endl;
-	std::cout << "     [-command <command> <arg1> <arg2> ... <argN>]" << std::endl;
-	std::cout << "" << std::endl;
-	std::cout << "Any unambiguous abbreviations are allowed for options to the  cex command" << std::endl;
-	std::cout << "itself as well as the commands listed below" << std::endl;
-	std::cout << "As an example you may specify: -c, -co, -com ... -command." << std::endl;
-	std::cout << "" << std::endl;
-	std::cout << "The following environment variables are recognized to specify" << std::endl;
-	std::cout << "the tester environment:                  " << std::endl;
-	std::cout << "    LTX_TESTER=<tester name>   - specify tester" << std::endl;
-	std::cout << "    HEAD=<head num>        	 - specify head" << std::endl;
-	std::cout << "    LTX_CEX_DEBUG          	 - if set causes debugging info to be printed" << std::endl;
-	std::cout << "    LTX_CEX_VERSION        	 - if set causes version info to be printed" << std::endl;
-	std::cout << "    LTX_CEX_SYNTAX_CHECK   	 - if set causes syntax to be check, commands are NOT executed" << std::endl;
-	std::cout << "    LTX_CEX_TIMEOUT=<secs> 	 - if set causes all readback from the tester " << std::endl;
-	std::cout << "                                 to fail after waiting <secs> seconds." << std::endl;
-	std::cout << "                                 <secs> <= 0 is ignored." << std::endl;
-	std::cout << "" << std::endl;
-	std::cout << "LTX CEX commands:" << std::endl;
-	std::cout << "    (all commands will accept the options -help, -? to get help)" << std::endl;
-	std::cout << "add_stream <client name> <stream name>" << std::endl;
-	std::cout << "cex_help" << std::endl;
-	std::cout << "cex_version" << std::endl;
-	std::cout << "clear_memories <options>" << std::endl;
-	std::cout << "" << std::endl;
-}
-
-/* ------------------------------------------------------------------------------------------
-
------------------------------------------------------------------------------------------- */
-bool CCmd::exec()
-{
+	m_Log << "" << CUtil::CLog::endl;
+	m_Log << "LTX CEX usage: " << CUtil::CLog::endl; 
+	m_Log << "cex [-tester <tester name>] [-head(-hd) <head num>]" << CUtil::CLog::endl;
+	m_Log << "     [-timeout] <seconds>" << CUtil::CLog::endl; 
+	m_Log << "     [-debug] [-dm] [-version] [-syntax_check] [-help]" << CUtil::CLog::endl;
+	m_Log << "     [-command <command> <arg1> <arg2> ... <argN>]" << CUtil::CLog::endl;
+	m_Log << "" << CUtil::CLog::endl;
+	m_Log << "Any unambiguous abbreviations are allowed for options to the  cex command" << CUtil::CLog::endl;
+	m_Log << "itself as well as the commands listed below" << CUtil::CLog::endl;
+	m_Log << "As an example you may specify: -c, -co, -com ... -command." << CUtil::CLog::endl;
+	m_Log << "" << CUtil::CLog::endl;
+	m_Log << "The following environment variables are recognized to specify" << CUtil::CLog::endl;
+	m_Log << "the tester environment:                  " << CUtil::CLog::endl;
+	m_Log << "    LTX_TESTER=<tester name>   - specify tester" << CUtil::CLog::endl;
+	m_Log << "    HEAD=<head num>        	 - specify head" << CUtil::CLog::endl;
+	m_Log << "    LTX_CEX_DEBUG          	 - if set causes debugging info to be printed" << CUtil::CLog::endl;
+	m_Log << "    LTX_CEX_VERSION        	 - if set causes version info to be printed" << CUtil::CLog::endl;
+	m_Log << "    LTX_CEX_SYNTAX_CHECK   	 - if set causes syntax to be check, commands are NOT executed" << CUtil::CLog::endl;
+	m_Log << "    LTX_CEX_TIMEOUT=<secs> 	 - if set causes all readback from the tester " << CUtil::CLog::endl;
+	m_Log << "                                 to fail after waiting <secs> seconds." << CUtil::CLog::endl;
+	m_Log << "                                 <secs> <= 0 is ignored." << CUtil::CLog::endl;
+	m_Log << "" << CUtil::CLog::endl;
+	m_Log << "LTX CEX commands:" << CUtil::CLog::endl;
+	m_Log << "    (all commands will accept the options -help, -? to get help)" << CUtil::CLog::endl;
+	m_Log << "add_stream <client name> <stream name>" << CUtil::CLog::endl;
+	m_Log << "cex_help" << CUtil::CLog::endl;
+	m_Log << "cex_version" << CUtil::CLog::endl;
+	m_Log << "clear_memories <options>" << CUtil::CLog::endl;
+	m_Log << "" << CUtil::CLog::endl;
 }
 
 /* ------------------------------------------------------------------------------------------
@@ -48,6 +41,8 @@ processes all args past -c[ommand]
 -	-t[ester] <tester> can still be called after -c[ommand] so it's processed here
 -	-c[ommand] arg object will contain the <command> as it's value if a valid 
 	<command> is found
+-	if -h[elp] is found before any -t[ester] after <command>, we will not connect
+	to tester
 ------------------------------------------------------------------------------------------ */
 bool CCmd::scan(std::list< std::string >& Args)
 {
@@ -196,7 +191,7 @@ bool CCmd::scan(std::list< std::string >& Args)
 }
 
 /* ------------------------------------------------------------------------------------------
-
+execute get_head
 ------------------------------------------------------------------------------------------ */
 bool CGetHead::exec()
 {
@@ -226,9 +221,58 @@ bool CGetHead::exec()
 }
 
 /* ------------------------------------------------------------------------------------------
-
+there should be no options for get_head 
 ------------------------------------------------------------------------------------------ */
 bool CGetHead::scan(std::list< std::string >& Args)
+{
+	if (Args.size())
+	{		
+		m_Log << "CEX Error: cex_version: does not accept parameters. Found '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+execute cex_version
+------------------------------------------------------------------------------------------ */
+bool CCexVersion::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "***********************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                         cex_version                        L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        cex_version - print version information" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        cex_version" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        Print the version information. " << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "***********************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "**********************************************************************" << CUtil::CLog::endl;
+		m_Log << "CEX Apps Version Developed by Allan Asis. Rev 0.1" << CUtil::CLog::endl;
+		m_Log << "Build Date: " << CUtil::CLog::endl;
+		m_Log << "Build OS: " << CUtil::CLog::endl;
+		m_Log << "**********************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+there should be no options for cex_version
+------------------------------------------------------------------------------------------ */
+bool CCexVersion::scan(std::list< std::string >& Args)
 {
 	if (Args.size())
 	{		

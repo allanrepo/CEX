@@ -1,6 +1,6 @@
 #include <utility.h>
 
-
+using namespace CUtil;
 
 long toLong(const std::string& n)
 {

@@ -325,3 +325,107 @@ bool CGetName::scan(std::list< std::string >& Args)
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+execute load
+------------------------------------------------------------------------------------------ */
+bool CLoad::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "*****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                            load                                  L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        load - load the specified program into the tester" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        load <pathname> [-display]" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The load command sends the indicated file to the tester to be" << CUtil::CLog::endl;
+		m_Log << "        loaded as a Cadence test program. If the file cannot be  opened" << CUtil::CLog::endl;
+ 		m_Log << "       or  loaded,  or  has an incorrect \"VTI  Version\" stamp, an error" << CUtil::CLog::endl;
+ 		m_Log << "       message results. " << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "        If \"-display\" is given, Cex will display all the applicable windows " << CUtil::CLog::endl;
+		m_Log << "        with the load including errorTool, tpa_server, led, and binTool." << CUtil::CLog::endl;
+		m_Log << "        By default, only the errorTool icon will be visible." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "*****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		CTester& T = CTester::instance();
+
+		// is there any program loaded? if yes, ERROR
+		if (T.ProgCtrl()->isProgramLoaded())
+		{
+			m_Log << "CEX Error: Another program '" << T.ProgCtrl()->getProgramName() << "' is already loaded." << CUtil::CLog::endl;
+			return false;
+		}
+
+		// let's load program!
+		m_Log << "CEX: Program " << getValue() << " is loading " << (getOpt("-display")->has("ok")? "WITH" : "WITHOUT") << " display..." << CUtil::CLog::endl;
+		T.ProgCtrl()->load( getValue().c_str(), EVXA::WAIT, getOpt("-display")->has("ok")? EVXA::DISPLAY : EVXA::NO_DISPLAY );
+
+		// did something bad happend when we tried to load program?
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log << "CEX Error: Error in loading " << getValue()  << CUtil::CLog::endl;
+			return false;
+		} 
+		// can we check if program is actually loaded?
+		if ( T.ProgCtrl()->isProgramLoaded() )
+		{
+			m_Log << "CEX: Loaded program " << T.ProgCtrl()->getProgramName() << "." << CUtil::CLog::endl;
+			return true;
+		}
+		else
+		{
+			m_Log << "CEX Error: There is no program loaded." << CUtil::CLog::endl;
+			return false;
+		}
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+scan arguments for load command options
+------------------------------------------------------------------------------------------ */
+bool CLoad::scan(std::list< std::string >& Args)
+{
+	std::vector< std::string > v;
+	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+	{ 
+		std::string arg( (*it) );
+		CArg* p = getOpt(arg);
+		// is param not a valid arg? then it might be the test program path to load
+		if (!p)	v.push_back( arg );
+		// or it can be a valid arg. valid arg must be exact match
+		else
+		{ 
+			if (p->is("-display")) p->setValue("ok"); 
+		}
+	}	
+
+	// if multiple programs are specified
+	if (v.size() > 1)
+	{
+		m_Log << "CEX Error: load: Multiple program names found, ";
+		for (unsigned int i = 0; i < v.size(); i++){ m_Log << "'" << v[i] << "', "; }
+		m_Log << CUtil::CLog::endl;
+		return false;
+	}
+	// if no program is specified
+	else if (!v.size())
+	{
+		m_Log << "CEX Error: load: Missing test program name (ltx/cex)" << CUtil::CLog::endl;
+		return false;
+	}
+	// found only one program as option, we store that
+	else setValue( v[0] );
+
+	return true;
+}
+

@@ -29,6 +29,7 @@ CCex::CCex(): m_Tester(CTester::instance()), m_Log(CTester::instance().m_Log), m
 	pCmd->addOpt(new CGetHead());
 	pCmd->addOpt(new CCexVersion());
 	pCmd->addOpt(new CGetName());
+	pCmd->addOpt(new CLoad());
 	addOpt( pCmd );
 
 	// add options 

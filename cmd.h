@@ -14,8 +14,21 @@
 /*
 
 command list status:
-get_head		[done]
-cex_version		[done]
+get_head									[done]
+cex_version									[done]
+get_name									[done]
+get_username
+start [-ntimes <loop_count> [-wait <seconds>]] [-nowait]
+program_loaded
+program_load_done
+get_exp <expression> <display mode>
+evx_summary 
+evx_summary <site> [on||off]
+evx_summary <site, partial, final> <full [on||off]> <clear [on||off]>
+evx_summary [clearfinal || clearpartial]
+evx_summary output [sublot|lot] [partial|final]
+load <program> -display
+unload -wait <t> -nowait -dontsave
 
 */
 
@@ -89,6 +102,20 @@ class CGetName: public CCmdBase
 {
 public:
 	CGetName():CCmdBase("get_name"){}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <load> opt class
+------------------------------------------------------------------------------------------ */
+class CLoad: public CCmdBase
+{
+public:
+	CLoad():CCmdBase("load")
+	{
+		addOpt( new CArg("-display") );
+	}
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);
 };

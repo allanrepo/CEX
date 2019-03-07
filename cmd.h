@@ -139,29 +139,26 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
--c <unload> opt class
------------------------------------------------------------------------------------------- */
-class CUnload: public CCmdBase
-{
-public:
-	CUnload():CCmdBase("unload")
-	{
-		addOpt( new CArg("-wait") );
-		addOpt( new CArg("-nowait") );
-		addOpt( new CArg("-dontsave") );
-	}
-	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
-};
-
-/* ------------------------------------------------------------------------------------------
 -c <start> opt class
 ------------------------------------------------------------------------------------------ */
 class CStart: public CCmdBase
 {
+private:
+	bool m_bLoop; // no loop
+	int m_nLoop; // execute once	
+	int m_nWaitAfterExec; // wait time in <sec> after each execution
+	bool m_bExitAfterExec; // -nowait flag; 
+	bool m_bWaitAfterExec; // -wait flag
+
 public:
 	CStart():CCmdBase("start")
 	{
+		m_bLoop = false; // no loop
+		m_nLoop = 1; // execute once	
+		m_nWaitAfterExec = 0; // wait time in <sec> after each execution
+		m_bExitAfterExec = false; // -nowait flag; 
+		m_bWaitAfterExec = false; // -wait flag
+
 		addOpt( new CArg("-wait") );
 		addOpt( new CArg("-nowait") );
 		addOpt( new CArg("-ntimes") );

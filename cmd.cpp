@@ -627,50 +627,161 @@ bool CStart::exec()
 		m_Log << "        times  before  terminating.   If  -nowait is specified, cex puts" << CUtil::CLog::endl;
  		m_Log << "       the  request  to  run  into  the  tester's  command   queue  and" << CUtil::CLog::endl;
  		m_Log << "       terminates,  freeing  the  shell  for  use.  Note  that  -nowait" << CUtil::CLog::endl;
- 		m_Log << "       cannot be used with -ntimes. 
-		m_Log << "
-		m_Log << "        Example 1: Start the test program run without waiting for a response
-		m_Log << "
-		m_Log << "             cex -t <tester> -c start -nowait
-		m_Log << "
-		m_Log << "        Example 2: Run the test program for 10 loops, waiting 2 seconds 
-		m_Log << "                   between runs
-		m_Log << "
-		m_Log << "             cex -t <tester> -c start -ntimes 10 -wait 2
-		m_Log << "
- 		m_Log << "       Example 3:
-		m_Log << "
-		m_Log << "        If you would like to use -ntimes but still be able to work in 
-		m_Log << "        the same shell, run the cex command in the background with the  
-		m_Log << "        ampersand symbol "&". For example:
-		m_Log << "        
-		m_Log << "             cex -t <tester> -c start -ntimes 2000 -wait 4 &
-		m_Log << "        
-		m_Log << "        The above command runs the currently loaded program 2000  times,
-		m_Log << "        waiting  4  seconds   between  runs. This occurs as a background
-		m_Log << "        process and the  shell  prompt  returns   immediately.  See  the
-		m_Log << "        manual  for  your specific shell regarding control of background
-		m_Log << "        processes. 
-		m_Log << "
+ 		m_Log << "       cannot be used with -ntimes. " << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "        Example 1: Start the test program run without waiting for a response" << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "             cex -t <tester> -c start -nowait" << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "        Example 2: Run the test program for 10 loops, waiting 2 seconds " << CUtil::CLog::endl;
+		m_Log << "                   between runs" << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "             cex -t <tester> -c start -ntimes 10 -wait 2" << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+ 		m_Log << "       Example 3:" << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "        If you would like to use -ntimes but still be able to work in " << CUtil::CLog::endl;
+		m_Log << "        the same shell, run the cex command in the background with the  " << CUtil::CLog::endl;
+		m_Log << "        ampersand symbol \"&\". For example:" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "             cex -t <tester> -c start -ntimes 2000 -wait 4 &" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The above command runs the currently loaded program 2000  times," << CUtil::CLog::endl;
+		m_Log << "        waiting  4  seconds   between  runs. This occurs as a background" << CUtil::CLog::endl;
+		m_Log << "        process and the  shell  prompt  returns   immediately.  See  the" << CUtil::CLog::endl;
+		m_Log << "        manual  for  your specific shell regarding control of background" << CUtil::CLog::endl;
+		m_Log << "        processes. " << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "********************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
 	}
 	else
 	{
-		m_Log << "CEX: Name of Tester : " << CTester::instance().Tester()->getName() << CUtil::CLog::endl;
+		CTester& T = CTester::instance();
+
+		for (int i = 0; i < m_nLoop; i++)
+		{
+			if (m_bLoop) m_Log << "Looping (" << i + 1 << "/" << m_nLoop << ")" << CUtil::CLog::endl; // replicate original CEX printing this on loop
+
+			T.ProgCtrl()->start( m_bExitAfterExec? EVXA::NO_WAIT : EVXA::WAIT );
+
+			// if -nowait, we immediately exit after executing
+			if (m_bExitAfterExec) return true;
+		
+			// -wait <sec> occurs AFTER every execution
+			if (m_nWaitAfterExec) sleep(m_nWaitAfterExec);
+		}
 	}
 	return true;
 }
 
 /* ------------------------------------------------------------------------------------------
-
+handle start command
+- 	default is -wait <0>
+- 	default is execute start only once and will not log loop count message
 ------------------------------------------------------------------------------------------ */
 bool CStart::scan(std::list< std::string >& Args)
 {
-	if (Args.size())
-	{		
-		m_Log << "CEX Error: " << get() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
-		return false;
+	// defaults
+	m_bLoop = false; // no loop
+	m_nLoop = 1; // execute once	
+	m_nWaitAfterExec = 0; // wait time in <sec> after each execution
+	m_bExitAfterExec = false; // -nowait flag; 
+	m_bWaitAfterExec = false; // -wait flag
+
+	// let's find any invalid arg
+	std::vector< std::string > v;
+	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+	{ 
+		std::string arg( (*it) );
+		CArg* p = getOpt(arg);
+
+		// is this option not valid? error then...
+		if (!p) v.push_back(arg);
+
+		// or it can be a valid arg. valid arg must be exact match
+		else
+		{
+			// if -wait is found, let's take the next param as the <wait> value.
+			if (p->is("-wait"))
+			{
+				// is there no more argument after '-wait'?
+				it++;
+				if (it == Args.end())
+				{
+					m_Log << "CEX Error: " << get() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					return false;
+				}
+				// is the argument after '-wait' a number?
+				if ( !CUtil::isInteger( (*it) ) )
+				{
+					m_Log << "CEX Error: " << get() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					return false;
+				}		
+		
+				// let's now disable  -nowait flag if it was set prior to this
+				m_bExitAfterExec = false;
+
+				// let's also get the number as wait in <sec>, ensure it's min as 0
+				m_nWaitAfterExec = CUtil::toLong( (*it) );	
+				m_nWaitAfterExec = m_nWaitAfterExec < 0 ? 0 : m_nWaitAfterExec;
+
+				// enable wait after execution
+				m_bWaitAfterExec = true;	
+				continue;								
+			}
+			
+			// found '-nowait' param
+			if (p->is("-nowait"))
+			{
+				// if -wait <sec> is already found prior to this,it's error
+				if ( m_bWaitAfterExec )
+				{
+					m_Log << "CEX Error: " << get() << ": No-wait with wait interval not available." << CUtil::CLog::endl;
+					return false;
+				}
+				// otherwise, let's do a -nowait execution
+				m_bExitAfterExec = true;							
+				continue;
+			}
+
+			// found -ntimes param
+			if (p->is("-ntimes"))
+			{
+				// is there no more argument after '-ntimes'?
+				it++;
+				if (it == Args.end())
+				{
+					m_Log << "CEX Error: " << get() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					return false;
+				}
+				// is the argument after '-wait' a number?
+				if ( !CUtil::isInteger( (*it) ) )
+				{
+					m_Log << "CEX Error: " << get() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					return false;
+				}		
+
+				// let's now disable -nowait flag if it was set prior to this
+				m_bExitAfterExec = false;
+
+				// let's set loop to true 
+				m_bLoop = true;
+
+				// let's also get the number as number of loops, ensure it's min as 1
+				m_nLoop = CUtil::toLong( (*it) );	
+				m_nLoop = m_nLoop < 1 ? 1 : m_nLoop;				
+				continue;
+			}
+		}		
 	}
+
+	// did we find invalid args?
+	if (v.size())
+	{
+		m_Log << "CEX Error: unload: Unknown parameter '" << v[0] << "'." << CUtil::CLog::endl;
+		return false;
+	}	
+
 	return true;
 }

@@ -14,6 +14,7 @@ int main(int argc, char **argv)
 	T.addCmd(new CGetName());
 	T.addCmd(new CLoad());
 	T.addCmd(new CUnload());
+	T.addCmd(new CStart());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

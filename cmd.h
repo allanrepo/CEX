@@ -27,8 +27,10 @@ evx_summary <site> [on||off]
 evx_summary <site, partial, final> <full [on||off]> <clear [on||off]>
 evx_summary [clearfinal || clearpartial]
 evx_summary output [sublot|lot] [partial|final]
-load <program> -display
+load <program> -display								[done]
 unload -wait <t> -nowait -dontsave
+- 	'-dontsave' not working because both evxa and cex unload 
+	command ignores this flag find work around to implement this
 
 */
 
@@ -131,6 +133,38 @@ public:
 		addOpt( new CArg("-wait") );
 		addOpt( new CArg("-nowait") );
 		addOpt( new CArg("-dontsave") );
+	}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <unload> opt class
+------------------------------------------------------------------------------------------ */
+class CUnload: public CCmdBase
+{
+public:
+	CUnload():CCmdBase("unload")
+	{
+		addOpt( new CArg("-wait") );
+		addOpt( new CArg("-nowait") );
+		addOpt( new CArg("-dontsave") );
+	}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <start> opt class
+------------------------------------------------------------------------------------------ */
+class CStart: public CCmdBase
+{
+public:
+	CStart():CCmdBase("start")
+	{
+		addOpt( new CArg("-wait") );
+		addOpt( new CArg("-nowait") );
+		addOpt( new CArg("-ntimes") );
 	}
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);

@@ -508,7 +508,13 @@ bool CUnload::exec()
 }
 
 /* ------------------------------------------------------------------------------------------
-there should be no options for get_name
+scan options for unload
+-	-nowait = false by default
+-	-dontsave = false by default
+-	nWait is stored in -wait arg object
+-	if -wait value is empty then we have not receive a -wait option
+-	-wait option is default and nWait = 0 is default as well
+-	if -wait 0, it waits forever
 ------------------------------------------------------------------------------------------ */
 bool CUnload::scan(std::list< std::string >& Args)
 {	
@@ -591,5 +597,80 @@ bool CUnload::scan(std::list< std::string >& Args)
 		return false;
 	}	
 
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+execute start
+------------------------------------------------------------------------------------------ */
+bool CStart::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "***********************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                         start                              L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        start - run the test program beginning with the on_start procedure" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        start [-ntimes <loop count> [-wait<seconds>]]" << CUtil::CLog::endl;
+		m_Log << "              [-nowait]" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        start  begins execution of the loaded program with the procedure" << CUtil::CLog::endl;
+		m_Log << "        on_start. The  optional -ntimes <loop count> specifies how  many" << CUtil::CLog::endl;
+ 		m_Log << "       times  the  program  is  to be  executed. If -wait is specified," << CUtil::CLog::endl;
+		m_Log << "        cex waits the specified number of seconds   before  issuing  the" << CUtil::CLog::endl;
+		m_Log << "        next  start.  Here  the  looping  is  done  by  cex,  not by the" << CUtil::CLog::endl;
+		m_Log << "        tester. cex waits for the  program  to  be  started  loop  count" << CUtil::CLog::endl;
+		m_Log << "        times  before  terminating.   If  -nowait is specified, cex puts" << CUtil::CLog::endl;
+ 		m_Log << "       the  request  to  run  into  the  tester's  command   queue  and" << CUtil::CLog::endl;
+ 		m_Log << "       terminates,  freeing  the  shell  for  use.  Note  that  -nowait" << CUtil::CLog::endl;
+ 		m_Log << "       cannot be used with -ntimes. 
+		m_Log << "
+		m_Log << "        Example 1: Start the test program run without waiting for a response
+		m_Log << "
+		m_Log << "             cex -t <tester> -c start -nowait
+		m_Log << "
+		m_Log << "        Example 2: Run the test program for 10 loops, waiting 2 seconds 
+		m_Log << "                   between runs
+		m_Log << "
+		m_Log << "             cex -t <tester> -c start -ntimes 10 -wait 2
+		m_Log << "
+ 		m_Log << "       Example 3:
+		m_Log << "
+		m_Log << "        If you would like to use -ntimes but still be able to work in 
+		m_Log << "        the same shell, run the cex command in the background with the  
+		m_Log << "        ampersand symbol "&". For example:
+		m_Log << "        
+		m_Log << "             cex -t <tester> -c start -ntimes 2000 -wait 4 &
+		m_Log << "        
+		m_Log << "        The above command runs the currently loaded program 2000  times,
+		m_Log << "        waiting  4  seconds   between  runs. This occurs as a background
+		m_Log << "        process and the  shell  prompt  returns   immediately.  See  the
+		m_Log << "        manual  for  your specific shell regarding control of background
+		m_Log << "        processes. 
+		m_Log << "
+		m_Log << "********************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		m_Log << "CEX: Name of Tester : " << CTester::instance().Tester()->getName() << CUtil::CLog::endl;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CStart::scan(std::list< std::string >& Args)
+{
+	if (Args.size())
+	{		
+		m_Log << "CEX Error: " << get() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
 	return true;
 }

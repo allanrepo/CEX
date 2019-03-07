@@ -1,8 +1,7 @@
 #include <utility.h>
 
-using namespace CUtil;
 
-long toLong(const std::string& n)
+long CUtil::toLong(const std::string& n)
 {
 	std::stringstream a(n);
 	long val;
@@ -10,7 +9,7 @@ long toLong(const std::string& n)
 	return val;
 } 
 
-bool isNumber(const std::string& n)
+bool CUtil::isNumber(const std::string& n)
 {
 	bool bDigit = false;
 	bool bSign = false; 
@@ -48,7 +47,7 @@ bool isNumber(const std::string& n)
 	return true;
 }
 
-bool isInteger(const std::string& n)
+bool CUtil::isInteger(const std::string& n)
 {
 	bool bDigit = false;
 	bool bSign = false; 

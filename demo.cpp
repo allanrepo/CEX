@@ -13,6 +13,7 @@ int main(int argc, char **argv)
 	T.addCmd(new CCexVersion());
 	T.addCmd(new CGetName());
 	T.addCmd(new CLoad());
+	T.addCmd(new CUnload());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

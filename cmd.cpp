@@ -1,4 +1,5 @@
 #include <cmd.h>
+#include <utility.h>
 
 /* ------------------------------------------------------------------------------------------
 prints out general help
@@ -429,3 +430,166 @@ bool CLoad::scan(std::list< std::string >& Args)
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+execute get_name
+------------------------------------------------------------------------------------------ */
+bool CUnload::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "********************************************************************" << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        unload - unload the loaded program" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "               unload [-wait <seconds> | -nowait] [-dontsave]" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        unload  removes  the  currently  loaded  Test Program, if one is" << CUtil::CLog::endl;
+		m_Log << "        loaded, running  its on_unload procedure if it has one. " << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "        The default syntax is \"unload\" with no arguments, which performs" << CUtil::CLog::endl;
+		m_Log << "        the unload, prompts to save the Cadence program if necessary, and" << CUtil::CLog::endl;
+		m_Log << "        waits forever until the unload is finished." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "        The \"-wait\" flag allows the user to specify the number of seconds" << CUtil::CLog::endl;
+		m_Log << "        to wait for the program unload before timing out. If this flag is " << CUtil::CLog::endl;
+		m_Log << "        not specified, the program defaults to wait mode with no timeout." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "        The \"-nowait\" flag can be used to force the process to return " << CUtil::CLog::endl;
+		m_Log << "        without waiting for the unload command to complete." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "        The \"-dontsave\" flag disables the prompt for saving the Cadence " << CUtil::CLog::endl;
+		m_Log << "        program if it has changed since the last save." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "********************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else 
+	{
+		CTester& T = CTester::instance();
+		bool bWait = !getOpt("-nowait")->has("ok");		
+		long nWait = getOpt("-wait")->getValue().empty()? 0 : CUtil::toLong( getOpt("-wait")->getValue() );
+		bool bDontSave = getOpt("-dontsave")->has("ok");
+
+		// unload the program
+		if ( !T.ProgCtrl()->isProgramLoaded() )
+		{
+			m_Log << "CEX Error: There is no program loaded." << CUtil::CLog::endl;
+			return false;
+		}
+
+		const char* szProgramName =  T.ProgCtrl()->getProgramName();
+		m_Log << "CEX: Program " << szProgramName << " is unloading. This may take a few moments...." << CUtil::CLog::endl;
+
+		// execute evxa command to unload program
+		// if nWait = 0, it will wait forever
+		// bSave is ignored by evxa and original CEX command so must figure a work around to implement this behavior
+		T.ProgCtrl()->unload( bWait? EVXA::WAIT : EVXA::NO_WAIT, nWait, bDontSave );
+
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log << "CEX Error: Error in unloading " << szProgramName << CUtil::CLog::endl;
+			return false;
+		}
+
+		if ( !T.ProgCtrl()->isProgramLoaded() || !bWait)
+		{
+			m_Log << "CEX: Unloaded program " << szProgramName << "." << CUtil::CLog::endl;
+			return true;
+		}
+		else
+		{
+			m_Log << "CEX Error: Program " << T.ProgCtrl()->getProgramName() << " is still loaded." << CUtil::CLog::endl;
+			return false;
+		}
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+there should be no options for get_name
+------------------------------------------------------------------------------------------ */
+bool CUnload::scan(std::list< std::string >& Args)
+{	
+	// set default values
+	getOpt("-nowait")->setValue(""); // false. waiting by default
+	getOpt("-dontsave")->setValue(""); // false. saving by default
+	
+	// let's find any invalid arg
+	std::vector< std::string > v;
+	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+	{ 
+		std::string arg( (*it) );
+		CArg* p = getOpt(arg);
+
+		// is this option not valid? error then...
+		if (!p) v.push_back(arg);
+
+		// or it can be a valid arg. valid arg must be exact match
+		else
+		{
+			// if -wait is found, let's take the next param as the <wait> value.
+			if (p->is("-wait"))
+			{
+				// if '-nowait' is also an option used then it's an error
+				if (getOpt("-nowait")->has("ok"))
+				{
+					m_Log << "CEX Error: unload: No-wait with wait interval not available." << CUtil::CLog::endl;
+					return false;
+				}
+				// is there no more argument after '-wait'?
+				it++;
+				if (it == Args.end())
+				{
+					m_Log << "CEX Error: unload: 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					return false;
+				}
+				// is the argument after '-wait' a number?
+				if ( !CUtil::isInteger( (*it) ) )
+				{
+					m_Log << "CEX Error: unload: '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					return false;
+				}		
+				// let's get the number and store it in -wait arg object
+				//nWait = toLong( (*it) );
+				p->setValue( (*it) );		
+				
+				// we also set -nowait arg object as disabled
+				getOpt("-nowait")->setValue("");
+				continue;								
+			}
+			
+			// found '-nowait' param
+			if (p->is("-nowait"))
+			{
+				// if '-wait' is also an option used then it's an error
+				if (!getOpt("-wait")->getValue().empty())
+				{
+					m_Log << "CEX Error: unload: No-wait with wait interval not available." << CUtil::CLog::endl;
+					return false;
+				}
+				// remove the value set in -wait (to be sure it's cleared
+				getOpt("-wait")->setValue("");
+				// enable -nowait arg object
+				p->setValue( "ok" );	
+				continue;						
+			}
+			// found -dontsave param
+			if (p->is("-dontsave"))
+			{
+				p->setValue("ok");
+				continue;
+			}
+		}		
+	}
+
+	// did we find invalid args?
+	if (v.size())
+	{
+		m_Log << "CEX Error: unload: Unknown parameter '" << v[0] << "'." << CUtil::CLog::endl;
+		return false;
+	}	
+
+	return true;
+}

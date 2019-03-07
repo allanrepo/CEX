@@ -120,4 +120,20 @@ public:
 	virtual bool scan(std::list< std::string >& Args);
 };
 
+/* ------------------------------------------------------------------------------------------
+-c <unload> opt class
+------------------------------------------------------------------------------------------ */
+class CUnload: public CCmdBase
+{
+public:
+	CUnload():CCmdBase("unload")
+	{
+		addOpt( new CArg("-wait") );
+		addOpt( new CArg("-nowait") );
+		addOpt( new CArg("-dontsave") );
+	}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
 #endif

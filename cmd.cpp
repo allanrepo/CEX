@@ -327,6 +327,50 @@ bool CGetName::scan(std::list< std::string >& Args)
 }
 
 /* ------------------------------------------------------------------------------------------
+execute get_username
+------------------------------------------------------------------------------------------ */
+bool CGetUserName::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                           get_username                          L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        get_username" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
+		m_Log << "        by the login name." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		m_Log << "CEX: Current session owner: " << CTester::instance().ProgCtrl()->getUserName() << CUtil::CLog::endl;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+there should be no options for get_username
+------------------------------------------------------------------------------------------ */
+bool CGetUserName::scan(std::list< std::string >& Args)
+{
+	if (Args.size())
+	{		
+		m_Log << "CEX Error: " << get() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+	return true;
+}
+
+
+/* ------------------------------------------------------------------------------------------
 execute load
 ------------------------------------------------------------------------------------------ */
 bool CLoad::exec()
@@ -679,6 +723,13 @@ bool CStart::exec()
 handle start command
 - 	default is -wait <0>
 - 	default is execute start only once and will not log loop count message
+-	if -nowait -wait <t>, -nowait is ignored.
+-	if -wait <t> -nowait, it's ERROR
+-	if -nowait -wait <t> -nowait, it's ERROR
+-	if -ntimes <n> is used, -nowait is ignored no matter when it's used
+- 	if -wait <t> is used multiple times, the last one gets used.
+- 	if -ntimes <n> is used multiple times, the last one gets used.
+-	n in ntimes <n> has min value of 1. any value lower than this is set to 1.
 ------------------------------------------------------------------------------------------ */
 bool CStart::scan(std::list< std::string >& Args)
 {
@@ -740,6 +791,9 @@ bool CStart::scan(std::list< std::string >& Args)
 					m_Log << "CEX Error: " << get() << ": No-wait with wait interval not available." << CUtil::CLog::endl;
 					return false;
 				}
+				// if -ntimes is already called prior to this, we ignore -nowait
+				if (m_bLoop) continue;
+
 				// otherwise, let's do a -nowait execution
 				m_bExitAfterExec = true;							
 				continue;
@@ -779,7 +833,7 @@ bool CStart::scan(std::list< std::string >& Args)
 	// did we find invalid args?
 	if (v.size())
 	{
-		m_Log << "CEX Error: unload: Unknown parameter '" << v[0] << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << get() << ": Unknown parameter '" << v[0] << "'." << CUtil::CLog::endl;
 		return false;
 	}	
 

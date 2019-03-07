@@ -17,8 +17,8 @@ command list status:
 get_head									[done]
 cex_version									[done]
 get_name									[done]
-get_username
-start [-ntimes <loop_count> [-wait <seconds>]] [-nowait]
+get_username									[done]
+start [-ntimes <loop_count> [-wait <seconds>]] [-nowait]			[done]
 program_loaded
 program_load_done
 get_exp <expression> <display mode>
@@ -109,6 +109,17 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
+-c <get_username> opt class
+------------------------------------------------------------------------------------------ */
+class CGetUserName: public CCmdBase
+{
+public:
+	CGetUserName():CCmdBase("get_username"){}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+/* ------------------------------------------------------------------------------------------
 -c <load> opt class
 ------------------------------------------------------------------------------------------ */
 class CLoad: public CCmdBase
@@ -153,12 +164,6 @@ private:
 public:
 	CStart():CCmdBase("start")
 	{
-		m_bLoop = false; // no loop
-		m_nLoop = 1; // execute once	
-		m_nWaitAfterExec = 0; // wait time in <sec> after each execution
-		m_bExitAfterExec = false; // -nowait flag; 
-		m_bWaitAfterExec = false; // -wait flag
-
 		addOpt( new CArg("-wait") );
 		addOpt( new CArg("-nowait") );
 		addOpt( new CArg("-ntimes") );

@@ -33,6 +33,9 @@ public:
 	// store command line arguments to a list for processing
 	bool scan(int argc, char **argv);
 
+	// add commands
+	void addCmd( CArg* pCmd );
+
 	// virtual methods from CArg to be overriden
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);	

@@ -26,10 +26,6 @@ CCex::CCex(): m_Tester(CTester::instance()), m_Log(CTester::instance().m_Log), m
 
 	// create -c[ommand] option
 	CArg* pCmd = new CCmd(); 
-	pCmd->addOpt(new CGetHead());
-	pCmd->addOpt(new CCexVersion());
-	pCmd->addOpt(new CGetName());
-	pCmd->addOpt(new CLoad());
 	addOpt( pCmd );
 
 	// add options 
@@ -48,6 +44,14 @@ CCex::CCex(): m_Tester(CTester::instance()), m_Log(CTester::instance().m_Log), m
 	
 	// let's set tester connection enabled by default 
 	getOpt("-tester")->getOpt("connect")->setValue("ok");
+}
+
+/* ------------------------------------------------------------------------------------------
+add command objects. 
+------------------------------------------------------------------------------------------ */
+void CCex::addCmd( CArg* pCmd )
+{
+	getOpt("-command")->addOpt( pCmd );
 }
 
 /* ------------------------------------------------------------------------------------------

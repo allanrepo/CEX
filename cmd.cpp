@@ -369,6 +369,97 @@ bool CGetUserName::scan(std::list< std::string >& Args)
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+execute program_loaded
+------------------------------------------------------------------------------------------ */
+bool CProgramLoaded::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                           program_loaded                          L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        get_username" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
+		m_Log << "        by the login name." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		CTester& T = CTester::instance();
+		if (T.ProgCtrl()->isProgramLoaded()) m_Log << "CEX: Program " << T.ProgCtrl()->getProgramName() << " is currently loaded." << CUtil::CLog::endl;
+		else m_Log << "CEX: There is currently no program loaded." << CUtil::CLog::endl;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+there should be no options for program_loaded
+------------------------------------------------------------------------------------------ */
+bool CProgramLoaded::scan(std::list< std::string >& Args)
+{
+	if (Args.size())
+	{		
+		m_Log << "CEX Error: " << get() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+	return true;
+}
+
+
+/* ------------------------------------------------------------------------------------------
+execute program_load_done
+------------------------------------------------------------------------------------------ */
+bool CProgramLoadDone::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                           program_load_done                      L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        get_username" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
+		m_Log << "        by the login name." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		CTester& T = CTester::instance();
+		if (T.ProgCtrl()->isProgramLoadDone()) m_Log << "CEX: Program " << T.ProgCtrl()->getProgramName() << " is done loading." << CUtil::CLog::endl;
+		else m_Log << "CCEX: Program is not done loading." << CUtil::CLog::endl;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+there should be no options for program_load_done
+------------------------------------------------------------------------------------------ */
+bool CProgramLoadDone::scan(std::list< std::string >& Args)
+{
+	if (Args.size())
+	{		
+		m_Log << "CEX Error: " << get() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+	return true;
+}
+
 
 /* ------------------------------------------------------------------------------------------
 execute load

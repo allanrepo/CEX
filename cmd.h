@@ -120,6 +120,28 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
+-c <program_loaded> opt class
+------------------------------------------------------------------------------------------ */
+class CProgramLoaded: public CCmdBase
+{
+public:
+	CProgramLoaded():CCmdBase("program_loaded"){}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <program_load_done> opt class
+------------------------------------------------------------------------------------------ */
+class CProgramLoadDone: public CCmdBase
+{
+public:
+	CProgramLoadDone():CCmdBase("program_load_done"){}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+/* ------------------------------------------------------------------------------------------
 -c <load> opt class
 ------------------------------------------------------------------------------------------ */
 class CLoad: public CCmdBase

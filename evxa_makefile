@@ -1,11 +1,3 @@
-###################################################################
-# Copyright 1998, LTX Corporation, Westwood, MA
-# 
-#  Makefile for building EVXA Demo Programs
-#
-#  99-05-21  Shah Alam  Added rules for evxa_program_demo
-#  99-04-12  Shah Alam  Created
-# ###################################################################
 
 CC=/usr/bin/g++
 CFLAGS=-m64 -fpermissive -g -Wall -Wno-return-type -Wno-unknown-pragmas -DLINUX_TARGET
@@ -15,7 +7,7 @@ INCDIR=-I.  -I/ltx/customer/include -I/ltx/customer/include/evxa
 
 DEMO_PROGS= demo
 
-CEX_FILES= demo.cpp  utility.cpp tester.cpp cex.cpp arg.cpp cmd.cpp
+CEX_FILES= demo.cpp  utility.cpp tester.cpp cex.cpp arg.cpp cmd.cpp xml.cpp
 
 
 CEX_OBJS = $(CEX_FILES:.cpp=.o)

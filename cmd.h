@@ -194,4 +194,21 @@ public:
 	virtual bool scan(std::list< std::string >& Args);
 };
 
+/* ------------------------------------------------------------------------------------------
+-c <get_exp> opt class
+------------------------------------------------------------------------------------------ */
+class CGetExp: public CCmdBase
+{
+public:
+	CGetExp():CCmdBase("get_exp")
+	{
+		addOpt( new CArg("expression") );
+		addOpt( new CArg("value") );
+		addOpt( new CArg("multi_value") );
+		addOpt( new CArg("multi_range") );
+	}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
 #endif

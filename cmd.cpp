@@ -930,3 +930,98 @@ bool CStart::scan(std::list< std::string >& Args)
 
 	return true;
 }
+
+/* ------------------------------------------------------------------------------------------
+execute get_exp
+------------------------------------------------------------------------------------------ */
+bool CGetExp::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                           get_exp                      L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        get_username" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
+		m_Log << "        by the login name." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		CTester& T = CTester::instance();
+
+		EVX_EXPR_DISPLAY_MODE nDisplayMode;
+		if ( getOpt("expression")->has("ok") ) nDisplayMode = EVX_SHOW_EXPRESSION;
+		if ( getOpt("value")->has("ok") ) nDisplayMode = EVX_SHOW_VALUE;
+		if ( getOpt("multi_value")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_VALUE;
+		if ( getOpt("multi_range")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_RANGE;
+		m_Log << T.ProgCtrl()->getExpression( getValue().c_str(), nDisplayMode) << CUtil::CLog::endl;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+handle options for get_exp
+-	example expression: TestProgData.Device
+------------------------------------------------------------------------------------------ */
+bool CGetExp::scan(std::list< std::string >& Args)
+{
+	if (!Args.size())
+	{		
+		m_Log << "CEX Error: " << get() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// if there's no param after this command then it's error. we're expecting <expression> to immediately follow -c <get_exp>
+	if (!Args.size())
+	{
+		m_Log << "CEX Error: " << get() << ": Missing expression name." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// if there's no param  after <expression> then it's error. we're expecting one of the -display options
+	if (Args.size() < 2)
+	{
+		m_Log << "CEX Error: " << get() << ": Missing mode name." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// we strictly expect only 2 arguments after this command - <expression> and -display. anything else is error.
+	if (Args.size() > 2)
+	{
+		m_Log << "CEX Error: " << get() << ": Multiple mode names found - ";
+		for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+		{
+			m_Log << "'" << (*it) << "', ";
+		}
+		m_Log << CUtil::CLog::endl;
+		return false;
+	}
+
+	// store the expression to this object
+	std::list< std::string >::iterator it = Args.begin();
+	setValue( (*it) );
+
+	// check if mode name is a valid mode.
+	it++;
+	CArg* pMode = getOpt( (*it) );
+	if (!pMode)
+	{
+		m_Log << "CEX Error: Unknown display mode type. " << (*it) <<  CUtil::CLog::endl;
+		return false;
+	}
+	else
+	{
+		pMode->setValue("ok");
+	}
+	return true;
+}
+

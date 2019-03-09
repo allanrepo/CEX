@@ -33,6 +33,7 @@ int main(int argc, char **argv)
 	T.addCmd(new CProgramLoaded());
 	T.addCmd(new CProgramLoadDone());
 	T.addCmd(new CGetExp());
+	T.addCmd(new CEvxSummary());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

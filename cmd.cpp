@@ -1025,3 +1025,280 @@ bool CGetExp::scan(std::list< std::string >& Args)
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+execute program_load_done
+------------------------------------------------------------------------------------------ */
+bool CEvxSummary::exec()
+{
+	if ( getOpt("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                           evx_summary                      L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        get_username" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
+		m_Log << "        by the login name." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		CTester& T = CTester::instance();
+
+		// you do stuff below is there's no option used because it's just a query
+		m_Log << "evx_summary status:" << CUtil::CLog::endl;
+
+		// print site state
+		EVXA::ON_OFF_TYPE state = T.ProgCtrl()->getSummary(EVX_UpdateBreakout);
+		m_Log << "    site     " << (state == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+		// print lot type
+		EVX_LOT_TYPE_SUMMARY lot = T.ProgCtrl()->getLotTypeSummary();
+		m_Log << "    lot_type " << (lot == EVX_SUBLOT_SUMMARY? "sublot" : "lot") << CUtil::CLog::endl;
+
+		// print partial status
+		m_Log << "    partial  full " << (T.ProgCtrl()->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
+		m_Log << ",  clear " << (T.ProgCtrl()->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+
+		// print final status
+		m_Log << "    final    clear " << (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+	}
+	return true;
+}
+
+/*
+CArg* CEvxSummary::Recursive( CArg* pPrev, CArg* pCurr, std::list< std::string>& v, std::list< std::string >::iterator& it )
+{
+	// check if thisArg exists in currOpt
+	// nextOpt = currOpt.find( thisArg )
+	
+	// if exists, nextOpt.ok
+	// thisArg++
+
+	// if not, 
+
+	if (it == v.end()) return pCurr;
+	if (!pCurr) return 0;
+	CArg* pNext = pCurr->getOpt(*it);
+
+
+
+	if (pNext) 
+	{
+		pNext->setValue("ok");
+		pPrev = pCurr;
+	}
+	else
+	{
+		pNext = pPrev;
+	}
+	it++;
+	std::cout << "-----------" << pNext->get() << std::endl;
+	return Recursive(pCurr, pNext, v, it);
+
+	return 0;
+}
+*/
+
+/* ------------------------------------------------------------------------------------------
+handle evx_summary command
+-	it's default response is to print out unison summary states
+-	this command has several option:
+	-	details, site, partial, final, output, type
+	- 	the first arg after evx_summary must be one of the above
+	-	succeeding arg is an option and the next one after that (if exists)
+		is either param for the previous option or another option
+	-	e.g. evx_summary <partial <clear> <full> <on> 
+		-	<partial> is evx_summary option
+		-	<clear> is one of <partial>'s option
+		-	<full> is one of <partial>'s option
+		-	<on> is <full>'s option
+	-	some options must have option such as <partial> 
+		while others don't e.g. <site>	
+------------------------------------------------------------------------------------------ */
+bool CEvxSummary::scan(std::list< std::string >& Args)
+{
+	// if there's no options, then it's just a query
+	if (!Args.size()) return true;
+#if 0
+
+	// the first option must be valid and will be considered as primary option. succeeding ones will be parameters of this primary option
+	std::list< std::string >::iterator it = Args.begin();
+	CArg* pSummaryType = getOpt( *it );
+	if (!pSummaryType)
+	{
+		m_Log << "CEX Error: evx_summary: " << (*it) << " is not a valid option." << CUtil::CLog::endl;
+		return false;
+	}
+	else pSummaryType->setValue("ok");
+	
+	// analyze succeeding args if any
+	it++;
+
+	CArg* pPrev = this;
+	CArg* pCurr = 0;
+
+	while ( it != Args.begin() )
+	{
+		pCurr = pPrev->getOpt( *it );
+	
+		if (!pCurr)
+		{
+			
+		}
+	}
+
+	if (!Recursive(pSummaryType, Args, it))
+	{
+		if (it == Args.end()) std::cout << "recursive() return 0 and XX" << std::endl;
+		else std::cout << "recursive() return 0 and YY" << std::endl;
+	}
+
+	
+	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+	{
+		// search our summary type if this arg is one of its valid options. if yes, enable it.
+		if (pSummaryType->getOpt( *it ))
+		{
+			CArg* pOpt = pSummaryType->getOpt( *it );
+			pOpt->setValue("ok");
+		}
+		// if this arg is not a valid option for our current summary type, it might be a option for the current summary type's latest option
+		else
+		{
+			// if summary type option  is <site>, we ignore succeeding args
+			if (pSummaryType->is("site"))
+			{
+				return true;
+			}
+			else
+			{
+			}
+
+			// let's check first if current summary type even has options
+			if (pSummaryType->getNumParam())
+			{					
+				// try to get the summary option from current summary type's latest option 
+				CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(pSummaryType->getNumParam() - 1), true );
+				if (pSummaryOption) 
+				{
+					// if summary option matches (e.g. on, off, etc...), we set it
+					if (pSummaryOption->get( pCmd->getParam(i), true )) 
+					{
+						pSummaryOption->addParam( pCmd->getParam(i) );
+						continue;
+					}
+				}
+			}
+			// if we reached this point, either this arg is not a valid option for current summary type's latest option or current 
+			// summary type doesn't even have an option at all. it might be an ERROR for certain summary options but we don't handle it here. 
+			// instead we handle when we're about to execute command so we just pass it as summary type's option. that's how original CEX behaves
+			pSummaryType->addParam( pCmd->getParam(i) ); 
+		
+		}
+	}
+#endif
+#if 0
+
+	// if summary type is <site>
+	if (pSummaryType->is("site", true))
+	{
+		// do the job. note that we only care about first option of <site>
+		if ( pSummaryType->isParam("on") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::ON);		
+		else if ( pSummaryType->isParam("off") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::OFF);
+		else T.ProgCtrl()->setSummary(EVX_UpdateBreakout, T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
+
+		// display results 
+		m_Log << "CEX: evx_summary ";
+		m_Log << pSummaryType->get();
+		m_Log << " option has been " << ( (pSummaryType->isParam("on") || pSummaryType->isParam("off"))? "set":"toggled") << " to ";
+		m_Log << (T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+	}
+	// if summary type is <clearfinal> or <clearpartial>
+	else if ( pSummaryType->get().compare("clearfinal") == 0 || pSummaryType->get().compare("clearpartial") == 0)
+	{
+		if (pSummaryType->get().compare("clearfinal") == 0) T.ProgCtrl()->clearFinalSummary();
+		else T.ProgCtrl()->clearPartialSummary();
+		m_Log << "CEX: cleared "<< (pSummaryType->get().compare("clearfinal") == 0? "final":"partial") << " summary." << CUtil::CLog::endl;
+	}
+	// if summary type is <output>
+	else if ( pSummaryType->is("output", true) )
+	{		
+		bool bFinal = T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? true:false;
+		for (unsigned int i = 0; i < pSummaryType->getNumParam(); i++)
+		{
+			// get the summary option for this param
+			CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(i), true );		
+			if (!pSummaryOption)
+			{
+				m_Log << "CEX Error: evx_summary: " << pSummaryType->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CUtil::CLog::endl;
+				return false;
+			}		 
+			// we set lot/sublot option here because in CEX, the last one gets the dibs
+			if (pSummaryOption->is("lot")) T.ProgCtrl()->setLotTypeSummary(EVX_LOT_SUMMARY);
+			if (pSummaryOption->is("sublot")) T.ProgCtrl()->setLotTypeSummary(EVX_SUBLOT_SUMMARY);
+			if (pSummaryOption->is("final")) bFinal = true; 
+			if (pSummaryOption->is("partial")) bFinal = false; 
+		}
+		// do the job
+		bFinal? T.ProgCtrl()->outputFinalSummary() : T.ProgCtrl()->outputPartialSummary();
+
+		// display results
+		m_Log << CUtil::CLog::endl << "CEX: evx_summary output -- " << (bFinal? "Final" : "Partial") << "/" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? "Lot":"Sublot") << CUtil::CLog::endl;
+		if (bFinal)
+		{
+			m_Log << "     Clearing results: Sublot" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? ", Lot":"") << CUtil::CLog::endl;
+			m_Log << "     Reseting NextSerial to '1'." << CUtil::CLog::endl << CUtil::CLog::endl;
+		}
+	}
+	// if summary type is <partial> or <final>
+	else
+	{
+		// if there's no param, it's ERROR
+		if (!pSummaryType->getNumParam())
+		{
+			m_Log << "CEX Error: evx_summary: Missing argument to the " << pSummaryType->get() << " option." << CUtil::CLog::endl;
+			return false;		
+		}
+		for (unsigned int i = 0; i < pSummaryType->getNumParam(); i++)
+		{
+			// get the summary option for this param
+			CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(i), true );		
+	
+			if (!pSummaryOption)
+			{
+				m_Log << "CEX Error: evx_summary: " << pSummaryType->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CUtil::CLog::endl;
+				return false;
+			}
+
+			// let's specify which summary type are we going to process			
+			EVX_SUMMARY_TYPE st;
+			if ( pSummaryType->get().compare("partial") == 0 && pSummaryOption->get().compare("full") == 0) st = EVX_UpdateFinal; // UpdateFinal - partial full
+			else if ( pSummaryType->get().compare("partial") == 0 && pSummaryOption->get().compare("clear") == 0) st = EVX_ClearPartial; // ClearPartial - partial clear
+			else if ( pSummaryType->get().compare("final") == 0 && pSummaryOption->get().compare("clear") == 0) st = EVX_ClearFinal; // ClearFinal - final clear
+			else if ( pSummaryOption->get().compare("site") == 0 ) st = EVX_UpdateBreakout; // UpdateBreakout - site
+			else continue;
+			
+			// do the job
+			if ( pSummaryOption->hasParam("on") ) T.ProgCtrl()->setSummary(st, EVXA::ON);
+			else if ( pSummaryOption->hasParam("off") ) T.ProgCtrl()->setSummary(st, EVXA::OFF);
+			else T.ProgCtrl()->setSummary(st, T.ProgCtrl()->getSummary(st) == EVXA::ON? EVXA::OFF : EVXA::ON);
+
+			// display results 
+			m_Log << "CEX: evx_summary ";
+			m_Log << (pSummaryOption->get().compare("site") == 0? "": pSummaryType->get());
+			m_Log << (pSummaryOption->get().compare("site") == 0? "": " ") << pSummaryOption->get();
+			m_Log << " option has been " << ( (pSummaryOption->hasParam("on") || pSummaryOption->hasParam("off"))? "set":"toggled") << " to ";
+			m_Log << (T.ProgCtrl()->getSummary(st) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+		}
+	}
+#endif
+	return true;
+}
+

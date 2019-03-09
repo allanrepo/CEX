@@ -19,8 +19,8 @@ cex_version									[done]
 get_name									[done]
 get_username									[done]
 start [-ntimes <loop_count> [-wait <seconds>]] [-nowait]			[done]
-program_loaded
-program_load_done
+program_loaded									[done]
+program_load_done								[done]
 get_exp <expression> <display mode>
 evx_summary 
 evx_summary <site> [on||off]
@@ -206,6 +206,62 @@ public:
 		addOpt( new CArg("value") );
 		addOpt( new CArg("multi_value") );
 		addOpt( new CArg("multi_range") );
+	}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <evx_summary> opt class
+------------------------------------------------------------------------------------------ */
+class CEvxSummary: public CCmdBase
+{
+private:
+	//CArg* Recursive( CArg* pCurr, std::list< std::string>& v, std::list< std::string >::iterator& it );
+public:
+	CEvxSummary():CCmdBase("evx_summary")
+	{
+		// cofigure arguments for -command <evx_summary> <site>
+		CArg* pSite = new CArg("site");
+		pSite->addOpt( new CArg("on") );
+		pSite->addOpt( new CArg("off") );
+
+		// cofigure arguments for -command <evx_summary> <partial>
+		CArg* pFull = new CArg("full");	
+		pFull->addOpt( new CArg("on") );
+		pFull->addOpt( new CArg("off") );
+		CArg* pClear = new CArg("clear");	
+		pClear->addOpt( new CArg("on") );
+		pClear->addOpt( new CArg("off") );
+		CArg* pPartial = new CArg("partial");
+		pPartial->addOpt( pFull );
+		pPartial->addOpt( pClear );
+		pPartial->addOpt( pSite );
+
+		// configure arguments for -command <evx_summary> <final>
+		CArg* pFinal = new CArg("final");
+		pClear = new CArg("clear");	
+		pClear->addOpt( new CArg("on") );
+		pClear->addOpt( new CArg("off") );
+		pFinal->addOpt( pClear );
+		pFinal->addOpt( pSite );
+
+		// configure arguments for -command <evx_summary> <output>
+		CArg* pOutput = new CArg("output");
+		pOutput->addOpt( new CArg("lot") );
+		pOutput->addOpt( new CArg("sublot") );
+		pOutput->addOpt( new CArg("final") );
+		pOutput->addOpt( new CArg("partial") );
+
+		// add arguments for -command <evx_summary>
+		addOpt( pSite );
+		addOpt( pPartial );
+		addOpt( pFinal );
+		addOpt( pOutput );
+		addOpt( new CArg("clearpartial") );
+		addOpt( new CArg("clearfinal") );
+		addOpt( new CArg("details") );
+
 	}
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);

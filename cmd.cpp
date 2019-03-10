@@ -1338,7 +1338,10 @@ bool CDlogMethods::exec()
 }
 
 /* ------------------------------------------------------------------------------------------
-
+evx_dlog_methods [ <dlog_index> ]
+-	strictly accepts only 1 arg.
+-	the arg must be integer and within dlog index range
+-	if no arg is given, will process all available dlog 
 ------------------------------------------------------------------------------------------ */
 bool CDlogMethods::scan(std::list< std::string >& Args)
 {
@@ -1386,15 +1389,161 @@ bool CDlogFileFreq::exec()
 }
 
 /* ------------------------------------------------------------------------------------------
-
+evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 
+-	must have a valid arg
 ------------------------------------------------------------------------------------------ */
 bool CDlogFileFreq::scan(std::list< std::string >& Args)
 {
-	if (Args.size())
+	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
+	if (!Args.size())
 	{		
-		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CUtil::CLog::endl;
 		return false;
 	}
+
+	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+	{}
+
+#if 0
+	std::string strFileFreq;
+	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
+	{
+		// is the argument -n? then next argument must be an integer
+		if (pCmd->isParam("-n", i))
+		{
+			// if no arg after -n, ERROR
+			if (i + 1 >= pCmd->getNumParam())
+			{
+				m_Log << "CEX Error: " << pCmd->get() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+				return false;
+			}
+			// check if next arg is not an integer, ERROR
+			if (!isInteger( pCmd->getParam(i + 1) ) )
+			{
+				m_Log << "CEX Error: "  << pCmd->get() << ": '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+				return false;
+			}
+			// check if next arg's value is within dlog method's range
+			if ( toLong( pCmd->getParam(i + 1) ) < 0 || toLong( pCmd->getParam(i + 1) ) >= m_pProgCtrl->getNumDatalogs() )
+			{
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (m_pProgCtrl->getNumDatalogs() - 1) << "." << CLog::endl;
+				return false;
+			}	
+
+			// at this point, we have valid value for -n, but check if -m is also used before
+			if ( pCmd->get("-m", true)->getNumParam() )
+			{
+				m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
+				return false;
+			}
+			// if this is the only option, we save it. any previous call to this option is removed
+			else
+			{
+				pCmd->get("-n", true)->clearParam();
+				pCmd->get("-n", true)->addParam( pCmd->getParam(++i) );
+			}
+		}
+
+		// is the argument -m? there must be a next argument
+		else if (pCmd->isParam("-m", i))
+		{
+			// if no arg after -m, ERROR
+			if (i + 1 >= pCmd->getNumParam())
+			{
+				m_Log << "CEX Error: Must specify a valid dlog method with '" << pCmd->get() << "'." << CLog::endl;
+				return false;
+			}
+
+			// at this point, we have valid value for -m, but check if -n is also used before
+			if ( pCmd->get("-n", true)->getNumParam() )
+			{
+				m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
+				return false;
+			}
+			// if this is the only option, we save it. any previous call to this option is removed
+			else
+			{
+				pCmd->get("-m", true)->clearParam();
+				pCmd->get("-m", true)->addParam( pCmd->getParam(++i) );
+			}
+		}
+		// it might be any of the valid file frequency values - Lot, SubLot, Wafer, Session
+		else if ( pCmd->get( pCmd->getParam(i), true ) )
+		{
+			// if there's more arg after this, ERROR
+			if ( i + 1 < pCmd->getNumParam())
+			{
+				m_Log << "CEX Error: " << pCmd->get() << ": Too many arguments. "<< CLog::endl;
+				return false;
+			}
+			else strFileFreq = pCmd->getParam(i);
+		}
+		// this arg does not match any of the valid options for this command
+		else
+		{
+			m_Log <<"CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+			return false;
+		}
+	}
+
+	// let's check if neither -n nor -m were used at all
+	if ( !pCmd->get("-n", true)->getNumParam() && !pCmd->get("-m", true)->getNumParam() )
+	{
+		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
+		return false;
+	}
+
+	// did we have a valid file frequency value?
+	if ( !pCmd->get( strFileFreq, true ) )
+	{
+		m_Log <<"CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+		return false;
+	}
+
+	if (pCmd->get("-n", true)->getNumParam())
+	{
+		int i = toLong( pCmd->get("-n", true)->getParam() );
+		strFileFreq.insert(0, "DlogFreq:");
+
+		// check if this is valid dlog method
+		std::stringstream val;
+		val << m_pProgCtrl->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << m_pProgCtrl->getDatalogString(i, 2, 0);
+
+		if (!val.str().size())
+		{
+			m_Log << "CEX Error: Dlog index " << i << " is not associated with any methods." << CLog::endl;
+			return false;
+		}
+		else 
+		{
+			m_pProgCtrl->setDatalogFileFreq (i, strFileFreq.c_str() );
+			m_Log << "CEX: File frequency for dlog" << i << " set to " << strFileFreq << "." << CLog::endl;
+			return true;
+		}
+	}
+	else 
+	{
+		for (int i = 0; i < m_pProgCtrl->getNumDatalogs(); i++)
+		{
+			std::stringstream val;
+			val << m_pProgCtrl->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << m_pProgCtrl->getDatalogString(i, 2, 0);
+			
+			if (val.str().compare( pCmd->get("-m", true)->getParam() ) == 0)
+			{
+				strFileFreq.insert(0, "DlogFreq:");
+				m_pProgCtrl->setDatalogFileFreq (i, strFileFreq.c_str());
+				m_Log << "CEX: File Frequency for method "<<  pCmd->get("-m", true)->getParam() << " [dlog" << i << "] set to " << strFileFreq << "." <<CLog::endl;
+				return true;
+			}
+		}
+		m_Log << "CEX Error: The datalogging method " << pCmd->get("-m", true)->getParam() << " was not found." << CLog::endl;
+		return false;
+	}
+#endif
+
+
 	return true;
 }
 

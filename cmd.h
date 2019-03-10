@@ -22,16 +22,37 @@ start [-ntimes <loop_count> [-wait <seconds>]] [-nowait]			[done]
 program_loaded									[done]
 program_load_done								[done]
 get_exp <expression> <display mode>
-evx_summary 
-evx_summary <site> [on||off]
-evx_summary <site, partial, final> <full [on||off]> <clear [on||off]>
-evx_summary [clearfinal || clearpartial]
-evx_summary output [sublot|lot] [partial|final]
+evx_summary 									[done]
+evx_summary <site> [on||off]							[done]
+evx_summary <site, partial, final> <full [on||off]> <clear [on||off]>		[done]
+evx_summary [clearfinal || clearpartial]					[done]
+evx_summary output [sublot|lot] [partial|final]					[done]
+evx_summary type [prod|ilqa]
+execute_flow <type> [-nowait|-wait <seconds>]]
 load <program> -display								[done]
-unload -wait <t> -nowait -dontsave
-- 	'-dontsave' not working because both evxa and cex unload 
-	command ignores this flag find work around to implement this
-
+unload -wait <t> -nowait -dontsave							- '-dontsave' not working because both evxa and cex unload command ignores this flag find work around to implement this
+evx_dfilter [-m <method> | -n <dlog_index>] [<filter>]
+evx_dlog_after_failcount <n>
+evx_dlog_before_failcount <n>
+evx_dlog_clear_methods [ <dlog_index> ]
+evx_dlog_failcount <n>
+evx_dlog_file_destination <dlog_method_name> <file name>
+evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 
+evx_dlog_methods [ <dlog_index> ]
+evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>
+evx_dlog_testID [-m <method> | -n <dlog_index>] <string>
+evx_dlog_type [-m <method> | -n <dlog_index> ] <type> 
+program_state
+process_status
+processes_hung
+qa_mode off | inline | 100pct
+qa_retest_count <value>
+reset_program
+reset_tester <options>
+restart
+sampling on | off [-tnum <test number> [-start_after <int> -interval <int>]]
+save
+save_as <program name>
 */
 
 /* ------------------------------------------------------------------------------------------

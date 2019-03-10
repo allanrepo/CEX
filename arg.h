@@ -34,7 +34,9 @@ private:
 	std::string m_strValue;
 	
 	// list of arg options acceptable to this arg
-	std::vector< CArg* > m_listOpt;
+	std::vector< CArg* > m_Children;
+
+	CArg* m_pParent;
 
 public:
 	// constructs with option to specify value
@@ -42,27 +44,33 @@ public:
 	virtual ~CArg(){};
 
 	// access this arg's name
-	const std::string& get() const { return m_strName; } 	
+	const std::string& name() const { return m_strName; } 	
 
 	// check if this arg matches the given name, with option for partial match
 	bool is(const std::string& name, bool bPartialMatch = false );
+
+	// access this arg's parent
+	CArg* parent(){ return m_pParent; }
 
 	/*------------------------------------------------------------------------------
 	methods for managing options
 	------------------------------------------------------------------------------*/
 
 	// add an option. options must have unique names. 
-	bool addOpt(CArg* pOpt);
+	bool addChild(CArg* pChild);
 
 	// return number of options
-	unsigned int getNumOpt() const { return m_listOpt.size(); }
+	unsigned int getNumChildren() const { return m_Children.size(); }
 
 	// list all Reference option found that matches the given name. has option search for partial match
-	void listOptMatch(const std::string& name, std::vector< CArg* >& v, bool bPartialMatch = false) const;
+	void findChildren(const std::string& name, std::vector< CArg* >& v, bool bPartialMatch = false) const;
 
 	// find option with the given name in the list. if more than one match is found, return null.
 	// there's an option to search for partial match, default being exact match
-	CArg* getOpt(const std::string& name, bool bPartialMatch = false) const;
+	CArg* getChild(const std::string& name, bool bPartialMatch = false) const;
+
+	// get child based on index in the children list 
+	CArg* getChild(unsigned int n){ return n >= m_Children.size()? 0 : m_Children[n]; }
 
 	/*------------------------------------------------------------------------------
 	methods for managing value
@@ -79,7 +87,6 @@ public:
 
 	// checks if this arg contains value that exactly matches the given string. 
 	bool has(const std::string& value) const { return m_strValue.compare(value) == 0? true : false; }
-
 
 	static const std::string m_strEmpty;
 

@@ -59,7 +59,7 @@ bool CCmd::scan(std::list< std::string >& Args)
 
 		// get a list of (partial) matching args in the valid list of args available on '-command'
 		std::vector< CArg* > v;
-		listOptMatch(arg, v, true);
+		findChildren(arg, v, true);
 
 		// is there no match?
 		if (!v.size())
@@ -84,13 +84,13 @@ bool CCmd::scan(std::list< std::string >& Args)
 		{
 			// in our first attempt to search, we did a partial match. this time, let's do an exact match
 			// because this arg might be a <command>
-			listOptMatch(arg, v);
+			findChildren(arg, v);
 
 			// is it still ambiguous?
 			if (v.size() > 1)
 			{			
 				m_Log << "CEX Error: CEX arguments: Ambiguous option '" << arg << "' choices are: ";
-				for (unsigned int i = 0; i < v.size(); i++) m_Log << "'" << v[i]->get() << "', ";
+				for (unsigned int i = 0; i < v.size(); i++) m_Log << "'" << v[i]->name() << "', ";
 				m_Log << CUtil::CLog::endl;
 				return false;
 			}
@@ -112,7 +112,6 @@ bool CCmd::scan(std::list< std::string >& Args)
 					continue;
 				}				
 			}
-
 			// at this point, we found a single exact match. let's handle it in the next codes
 		}
 
@@ -132,12 +131,12 @@ bool CCmd::scan(std::list< std::string >& Args)
 				// we ignore -t[ester] if -h[elp] is already found
 				if (!getValue().empty())
 				{
-					if ( getOpt( getValue() )->getOpt("-help")->has("ok") ) 
+					if ( getChild( getValue() )->getChild("-help")->has("ok") ) 
 						continue;
 				}
 				// otherwise, let's get the <tester> and enable connect
 				v[0]->setValue( *it );
-				v[0]->getOpt("connect")->setValue("ok");
+				v[0]->getChild("connect")->setValue("ok");
 				bTester = true;
 				continue;
 			}
@@ -158,17 +157,17 @@ bool CCmd::scan(std::list< std::string >& Args)
 				if (!bTester)
 				{
 					CTester& T = CTester::instance();
-					T.getOpt("connect")->setValue("");					
+					T.getChild("connect")->setValue("");					
 				}
 				// enable help for this <command>
-				getOpt( getValue() )->getOpt("-help")->setValue("ok");
+				getChild( getValue() )->getChild("-help")->setValue("ok");
 				continue;
 			}
 		}
 
 		// at this point, it might be the <command> but it might have been a partial match only.
 		// <command> must be an exact match. let's test it
-		listOptMatch(arg, v);
+		findChildren(arg, v);
 		
 		// since we already know that partial search returns unique match, we only test for non match on exact search
 		if (!v.size())
@@ -183,7 +182,7 @@ bool CCmd::scan(std::list< std::string >& Args)
 	// after scanning all args after '-command', let's check if there's a valid <command>
 	if (!getValue().empty())
 	{
-		CArg* pCmd = getOpt( getValue() );
+		CArg* pCmd = getChild( getValue() );
 		if (pCmd) return pCmd->scan(a);
 	}
 
@@ -196,7 +195,7 @@ execute get_head
 ------------------------------------------------------------------------------------------ */
 bool CGetHead::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "**********************************************************************" << CUtil::CLog::endl;
@@ -239,7 +238,7 @@ execute cex_version
 ------------------------------------------------------------------------------------------ */
 bool CCexVersion::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "***********************************************************************" << CUtil::CLog::endl;
@@ -277,7 +276,7 @@ bool CCexVersion::scan(std::list< std::string >& Args)
 {
 	if (Args.size())
 	{		
-		m_Log << "CEX Error: " << get() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
 		return false;
 	}
 	return true;
@@ -288,7 +287,7 @@ execute get_name
 ------------------------------------------------------------------------------------------ */
 bool CGetName::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "********************************************************************" << CUtil::CLog::endl;
@@ -320,7 +319,7 @@ bool CGetName::scan(std::list< std::string >& Args)
 {
 	if (Args.size())
 	{		
-		m_Log << "CEX Error: " << get() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
 		return false;
 	}
 	return true;
@@ -331,7 +330,7 @@ execute get_username
 ------------------------------------------------------------------------------------------ */
 bool CGetUserName::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
@@ -363,7 +362,7 @@ bool CGetUserName::scan(std::list< std::string >& Args)
 {
 	if (Args.size())
 	{		
-		m_Log << "CEX Error: " << get() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
 		return false;
 	}
 	return true;
@@ -374,7 +373,7 @@ execute program_loaded
 ------------------------------------------------------------------------------------------ */
 bool CProgramLoaded::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
@@ -408,7 +407,7 @@ bool CProgramLoaded::scan(std::list< std::string >& Args)
 {
 	if (Args.size())
 	{		
-		m_Log << "CEX Error: " << get() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
 		return false;
 	}
 	return true;
@@ -420,7 +419,7 @@ execute program_load_done
 ------------------------------------------------------------------------------------------ */
 bool CProgramLoadDone::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
@@ -454,7 +453,7 @@ bool CProgramLoadDone::scan(std::list< std::string >& Args)
 {
 	if (Args.size())
 	{		
-		m_Log << "CEX Error: " << get() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
 		return false;
 	}
 	return true;
@@ -466,7 +465,7 @@ execute load
 ------------------------------------------------------------------------------------------ */
 bool CLoad::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "*****************************************************************************" << CUtil::CLog::endl;
@@ -502,8 +501,8 @@ bool CLoad::exec()
 		}
 
 		// let's load program!
-		m_Log << "CEX: Program " << getValue() << " is loading " << (getOpt("-display")->has("ok")? "WITH" : "WITHOUT") << " display..." << CUtil::CLog::endl;
-		T.ProgCtrl()->load( getValue().c_str(), EVXA::WAIT, getOpt("-display")->has("ok")? EVXA::DISPLAY : EVXA::NO_DISPLAY );
+		m_Log << "CEX: Program " << getValue() << " is loading " << (getChild("-display")->has("ok")? "WITH" : "WITHOUT") << " display..." << CUtil::CLog::endl;
+		T.ProgCtrl()->load( getValue().c_str(), EVXA::WAIT, getChild("-display")->has("ok")? EVXA::DISPLAY : EVXA::NO_DISPLAY );
 
 		// did something bad happend when we tried to load program?
 		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
@@ -535,7 +534,7 @@ bool CLoad::scan(std::list< std::string >& Args)
 	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
 	{ 
 		std::string arg( (*it) );
-		CArg* p = getOpt(arg);
+		CArg* p = getChild(arg);
 		// is param not a valid arg? then it might be the test program path to load
 		if (!p)	v.push_back( arg );
 		// or it can be a valid arg. valid arg must be exact match
@@ -570,7 +569,7 @@ execute get_name
 ------------------------------------------------------------------------------------------ */
 bool CUnload::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "********************************************************************" << CUtil::CLog::endl;
@@ -603,9 +602,9 @@ bool CUnload::exec()
 	else 
 	{
 		CTester& T = CTester::instance();
-		bool bWait = !getOpt("-nowait")->has("ok");		
-		long nWait = getOpt("-wait")->getValue().empty()? 0 : CUtil::toLong( getOpt("-wait")->getValue() );
-		bool bDontSave = getOpt("-dontsave")->has("ok");
+		bool bWait = !getChild("-nowait")->has("ok");		
+		long nWait = getChild("-wait")->getValue().empty()? 0 : CUtil::toLong( getChild("-wait")->getValue() );
+		bool bDontSave = getChild("-dontsave")->has("ok");
 
 		// unload the program
 		if ( !T.ProgCtrl()->isProgramLoaded() )
@@ -654,15 +653,15 @@ scan options for unload
 bool CUnload::scan(std::list< std::string >& Args)
 {	
 	// set default values
-	getOpt("-nowait")->setValue(""); // false. waiting by default
-	getOpt("-dontsave")->setValue(""); // false. saving by default
+	getChild("-nowait")->setValue(""); // false. waiting by default
+	getChild("-dontsave")->setValue(""); // false. saving by default
 	
 	// let's find any invalid arg
 	std::vector< std::string > v;
 	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
 	{ 
 		std::string arg( (*it) );
-		CArg* p = getOpt(arg);
+		CArg* p = getChild(arg);
 
 		// is this option not valid? error then...
 		if (!p) v.push_back(arg);
@@ -674,7 +673,7 @@ bool CUnload::scan(std::list< std::string >& Args)
 			if (p->is("-wait"))
 			{
 				// if '-nowait' is also an option used then it's an error
-				if (getOpt("-nowait")->has("ok"))
+				if (getChild("-nowait")->has("ok"))
 				{
 					m_Log << "CEX Error: unload: No-wait with wait interval not available." << CUtil::CLog::endl;
 					return false;
@@ -697,7 +696,7 @@ bool CUnload::scan(std::list< std::string >& Args)
 				p->setValue( (*it) );		
 				
 				// we also set -nowait arg object as disabled
-				getOpt("-nowait")->setValue("");
+				getChild("-nowait")->setValue("");
 				continue;								
 			}
 			
@@ -705,13 +704,13 @@ bool CUnload::scan(std::list< std::string >& Args)
 			if (p->is("-nowait"))
 			{
 				// if '-wait' is also an option used then it's an error
-				if (!getOpt("-wait")->getValue().empty())
+				if (!getChild("-wait")->getValue().empty())
 				{
 					m_Log << "CEX Error: unload: No-wait with wait interval not available." << CUtil::CLog::endl;
 					return false;
 				}
 				// remove the value set in -wait (to be sure it's cleared
-				getOpt("-wait")->setValue("");
+				getChild("-wait")->setValue("");
 				// enable -nowait arg object
 				p->setValue( "ok" );	
 				continue;						
@@ -740,7 +739,7 @@ execute start
 ------------------------------------------------------------------------------------------ */
 bool CStart::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "***********************************************************************" << CUtil::CLog::endl;
@@ -836,7 +835,7 @@ bool CStart::scan(std::list< std::string >& Args)
 	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
 	{ 
 		std::string arg( (*it) );
-		CArg* p = getOpt(arg);
+		CArg* p = getChild(arg);
 
 		// is this option not valid? error then...
 		if (!p) v.push_back(arg);
@@ -851,13 +850,13 @@ bool CStart::scan(std::list< std::string >& Args)
 				it++;
 				if (it == Args.end())
 				{
-					m_Log << "CEX Error: " << get() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					m_Log << "CEX Error: " << name() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 					return false;
 				}
 				// is the argument after '-wait' a number?
 				if ( !CUtil::isInteger( (*it) ) )
 				{
-					m_Log << "CEX Error: " << get() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					m_Log << "CEX Error: " << name() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 					return false;
 				}		
 		
@@ -879,7 +878,7 @@ bool CStart::scan(std::list< std::string >& Args)
 				// if -wait <sec> is already found prior to this,it's error
 				if ( m_bWaitAfterExec )
 				{
-					m_Log << "CEX Error: " << get() << ": No-wait with wait interval not available." << CUtil::CLog::endl;
+					m_Log << "CEX Error: " << name() << ": No-wait with wait interval not available." << CUtil::CLog::endl;
 					return false;
 				}
 				// if -ntimes is already called prior to this, we ignore -nowait
@@ -897,13 +896,13 @@ bool CStart::scan(std::list< std::string >& Args)
 				it++;
 				if (it == Args.end())
 				{
-					m_Log << "CEX Error: " << get() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					m_Log << "CEX Error: " << name() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 					return false;
 				}
 				// is the argument after '-wait' a number?
 				if ( !CUtil::isInteger( (*it) ) )
 				{
-					m_Log << "CEX Error: " << get() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+					m_Log << "CEX Error: " << name() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 					return false;
 				}		
 
@@ -924,7 +923,7 @@ bool CStart::scan(std::list< std::string >& Args)
 	// did we find invalid args?
 	if (v.size())
 	{
-		m_Log << "CEX Error: " << get() << ": Unknown parameter '" << v[0] << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << v[0] << "'." << CUtil::CLog::endl;
 		return false;
 	}	
 
@@ -936,7 +935,7 @@ execute get_exp
 ------------------------------------------------------------------------------------------ */
 bool CGetExp::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
@@ -959,10 +958,10 @@ bool CGetExp::exec()
 		CTester& T = CTester::instance();
 
 		EVX_EXPR_DISPLAY_MODE nDisplayMode;
-		if ( getOpt("expression")->has("ok") ) nDisplayMode = EVX_SHOW_EXPRESSION;
-		if ( getOpt("value")->has("ok") ) nDisplayMode = EVX_SHOW_VALUE;
-		if ( getOpt("multi_value")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_VALUE;
-		if ( getOpt("multi_range")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_RANGE;
+		if ( getChild("expression")->has("ok") ) nDisplayMode = EVX_SHOW_EXPRESSION;
+		if ( getChild("value")->has("ok") ) nDisplayMode = EVX_SHOW_VALUE;
+		if ( getChild("multi_value")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_VALUE;
+		if ( getChild("multi_range")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_RANGE;
 		m_Log << T.ProgCtrl()->getExpression( getValue().c_str(), nDisplayMode) << CUtil::CLog::endl;
 	}
 	return true;
@@ -976,28 +975,28 @@ bool CGetExp::scan(std::list< std::string >& Args)
 {
 	if (!Args.size())
 	{		
-		m_Log << "CEX Error: " << get() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// if there's no param after this command then it's error. we're expecting <expression> to immediately follow -c <get_exp>
 	if (!Args.size())
 	{
-		m_Log << "CEX Error: " << get() << ": Missing expression name." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Missing expression name." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// if there's no param  after <expression> then it's error. we're expecting one of the -display options
 	if (Args.size() < 2)
 	{
-		m_Log << "CEX Error: " << get() << ": Missing mode name." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Missing mode name." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// we strictly expect only 2 arguments after this command - <expression> and -display. anything else is error.
 	if (Args.size() > 2)
 	{
-		m_Log << "CEX Error: " << get() << ": Multiple mode names found - ";
+		m_Log << "CEX Error: " << name() << ": Multiple mode names found - ";
 		for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
 		{
 			m_Log << "'" << (*it) << "', ";
@@ -1012,7 +1011,7 @@ bool CGetExp::scan(std::list< std::string >& Args)
 
 	// check if mode name is a valid mode.
 	it++;
-	CArg* pMode = getOpt( (*it) );
+	CArg* pMode = getChild( (*it) );
 	if (!pMode)
 	{
 		m_Log << "CEX Error: Unknown display mode type. " << (*it) <<  CUtil::CLog::endl;
@@ -1030,7 +1029,7 @@ execute program_load_done
 ------------------------------------------------------------------------------------------ */
 bool CEvxSummary::exec()
 {
-	if ( getOpt("-help")->has("ok") )
+	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
@@ -1052,59 +1051,129 @@ bool CEvxSummary::exec()
 	{
 		CTester& T = CTester::instance();
 
-		// you do stuff below is there's no option used because it's just a query
-		m_Log << "evx_summary status:" << CUtil::CLog::endl;
+		// did we have -c evx_summary <opt>?
+		
+		if (has("site"))
+		{
+			// do the job. note that we only care about first option of <site>
+			if ( getChild("site")->getChild("on")->has("ok") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::ON);		
+			else if ( getChild("site")->getChild("off")->has("ok") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::OFF);
+			else T.ProgCtrl()->setSummary(EVX_UpdateBreakout, T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
 
-		// print site state
-		EVXA::ON_OFF_TYPE state = T.ProgCtrl()->getSummary(EVX_UpdateBreakout);
-		m_Log << "    site     " << (state == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
-		// print lot type
-		EVX_LOT_TYPE_SUMMARY lot = T.ProgCtrl()->getLotTypeSummary();
-		m_Log << "    lot_type " << (lot == EVX_SUBLOT_SUMMARY? "sublot" : "lot") << CUtil::CLog::endl;
+			// display results 
+			m_Log << "CEX: evx_summary " << getValue() << " option has been ";
+			m_Log << ( (getChild("site")->getChild("on")->has("ok") || getChild("site")->getChild("off")->has("ok") )? "set":"toggled") << " to ";
+			m_Log << (T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+			return true;
+		}
 
-		// print partial status
-		m_Log << "    partial  full " << (T.ProgCtrl()->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
-		m_Log << ",  clear " << (T.ProgCtrl()->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+		else if (has("clearfinal") || has("clearpartial"))
+		{
+			if (has("clearfinal")) T.ProgCtrl()->clearFinalSummary();
+			else T.ProgCtrl()->clearPartialSummary();
+			m_Log << "CEX: cleared "<< (has("clearfinal")? "final":"partial") << " summary." << CUtil::CLog::endl;
+			return true;
+		}	
+		
+		else if (has("partial") || has("final"))
+		{
+			// get the summary option <opt> object
+			CArg* pSummary = getChild( getValue() );
+			for(unsigned int i = 0; i < pSummary->getNumChildren(); i++)
+			{ 
+				CArg* pOpt = pSummary->getChild(i);
+				if (!pOpt->has("ok")) continue;			
 
-		// print final status
-		m_Log << "    final    clear " << (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+				// let's specify which summary type are we going to process			
+				EVX_SUMMARY_TYPE st;
+				if ( pSummary->is("partial") && pOpt->is("full") ) st = EVX_UpdateFinal; // UpdateFinal - partial full
+				else if ( pSummary->is("partial") && pOpt->is("clear") ) st = EVX_ClearPartial; // ClearPartial - partial clear
+				else if ( pSummary->is("final") && pOpt->is("clear") ) st = EVX_ClearFinal; // ClearFinal - final clear
+				else if ( pOpt->is("site") ) st = EVX_UpdateBreakout; // UpdateBreakout - site
+				else continue;
+
+				// do the job
+				if ( pOpt->getChild("on")->has("ok") ) T.ProgCtrl()->setSummary(st, EVXA::ON);
+				else if ( pOpt->getChild("off")->has("ok") ) T.ProgCtrl()->setSummary(st, EVXA::OFF);
+				else T.ProgCtrl()->setSummary(st, T.ProgCtrl()->getSummary(st) == EVXA::ON? EVXA::OFF : EVXA::ON);
+
+				// display results 
+				m_Log << "CEX: evx_summary ";
+				m_Log << (pOpt->is("site")? "": pSummary->name());
+				m_Log << (pOpt->is("site")? "": " ") << pOpt->name();
+				m_Log << " option has been " << ( (pOpt->getChild("on")->has("ok") || pOpt->getChild("off")->has("ok"))? "set":"toggled") << " to ";
+				m_Log << (T.ProgCtrl()->getSummary(st) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+			}
+			// do we have invalid arg?
+			if ( m_strInvalidArg.length() )
+			{
+				m_Log << "CEX Error: " << name() << ": " << m_strInvalidArg << " is not a valid " << getValue() << " summary type." << CUtil::CLog::endl;
+				return false;
+			}
+			return true;
+		}
+
+		else if (has("output"))
+		{
+			// do we have invalid arg?
+			if ( m_strInvalidArg.length() )
+			{
+				m_Log << "CEX Error: " << name() << ": " << m_strInvalidArg << " is not a valid " << getValue() << " summary type." << CUtil::CLog::endl;
+				return false;
+			}
+
+			// get settings from arg options
+			if (getChild("output")->getChild("lot")->has("ok")) T.ProgCtrl()->setLotTypeSummary(EVX_LOT_SUMMARY);
+			if (getChild("output")->getChild("sublot")->has("ok")) T.ProgCtrl()->setLotTypeSummary(EVX_SUBLOT_SUMMARY);
+			if (getChild("output")->getChild("final")->has("ok")){ T.ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::ON); T.ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::OFF); }
+			if (getChild("output")->getChild("partial")->has("ok")){ T.ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::OFF); T.ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::ON); }
+
+			// do the job
+			bool bFinal = (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON)? true:false;
+			bFinal? T.ProgCtrl()->outputFinalSummary() : T.ProgCtrl()->outputPartialSummary();
+
+			// display results
+			m_Log << CUtil::CLog::endl << "CEX: " << name() << " output -- " << (bFinal? "Final" : "Partial") << "/" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? "Lot":"Sublot") << CUtil::CLog::endl;
+			if (bFinal)
+			{
+				m_Log << "     Clearing results: Sublot" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? ", Lot":"") << CUtil::CLog::endl;
+				m_Log << "     Reseting NextSerial to '1'." << CUtil::CLog::endl;
+			}
+			m_Log << CUtil::CLog::endl;
+			return true;
+		}
+		// if there's no options, then it's just a query
+		else
+		{
+			m_Log << "evx_summary status:" << CUtil::CLog::endl;
+
+			// print site state
+			EVXA::ON_OFF_TYPE state = T.ProgCtrl()->getSummary(EVX_UpdateBreakout);
+			m_Log << "    site     " << (state == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+			// print lot type
+			EVX_LOT_TYPE_SUMMARY lot = T.ProgCtrl()->getLotTypeSummary();
+			m_Log << "    lot_type " << (lot == EVX_SUBLOT_SUMMARY? "sublot" : "lot") << CUtil::CLog::endl;
+
+			// print partial status
+			m_Log << "    partial  full " << (T.ProgCtrl()->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
+			m_Log << ",  clear " << (T.ProgCtrl()->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+
+			// print final status
+			m_Log << "    final    clear " << (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+		}
 	}
 	return true;
 }
 
-/*
-CArg* CEvxSummary::Recursive( CArg* pPrev, CArg* pCurr, std::list< std::string>& v, std::list< std::string >::iterator& it )
+void printRecursive( CArg* pCurr )
 {
-	// check if thisArg exists in currOpt
-	// nextOpt = currOpt.find( thisArg )
-	
-	// if exists, nextOpt.ok
-	// thisArg++
-
-	// if not, 
-
-	if (it == v.end()) return pCurr;
-	if (!pCurr) return 0;
-	CArg* pNext = pCurr->getOpt(*it);
-
-
-
-	if (pNext) 
+	for (unsigned int i = 0; i < pCurr->getNumChildren(); i++)
 	{
-		pNext->setValue("ok");
-		pPrev = pCurr;
+		CArg* pNext = pCurr->getChild(i);
+		if (pNext->has("ok")) std::cout << (pNext->parent()? pNext->parent()->name(): "") << (pNext->parent()? ":":"") << pNext->name() << std::endl;	
+		printRecursive( pNext );
 	}
-	else
-	{
-		pNext = pPrev;
-	}
-	it++;
-	std::cout << "-----------" << pNext->get() << std::endl;
-	return Recursive(pCurr, pNext, v, it);
-
-	return 0;
 }
-*/
 
 /* ------------------------------------------------------------------------------------------
 handle evx_summary command
@@ -1126,179 +1195,58 @@ bool CEvxSummary::scan(std::list< std::string >& Args)
 {
 	// if there's no options, then it's just a query
 	if (!Args.size()) return true;
-#if 0
-
-	// the first option must be valid and will be considered as primary option. succeeding ones will be parameters of this primary option
+  
+	// the first option must be valid and will be considered as primary option. 
 	std::list< std::string >::iterator it = Args.begin();
-	CArg* pSummaryType = getOpt( *it );
+	CArg* pSummaryType = getChild( *it );
 	if (!pSummaryType)
 	{
 		m_Log << "CEX Error: evx_summary: " << (*it) << " is not a valid option." << CUtil::CLog::endl;
 		return false;
 	}
-	else pSummaryType->setValue("ok");
-	
-	// analyze succeeding args if any
-	it++;
-
-	CArg* pPrev = this;
-	CArg* pCurr = 0;
-
-	while ( it != Args.begin() )
-	{
-		pCurr = pPrev->getOpt( *it );
-	
-		if (!pCurr)
-		{
-			
-		}
-	}
-
-	if (!Recursive(pSummaryType, Args, it))
-	{
-		if (it == Args.end()) std::cout << "recursive() return 0 and XX" << std::endl;
-		else std::cout << "recursive() return 0 and YY" << std::endl;
-	}
-
-	
-	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
-	{
-		// search our summary type if this arg is one of its valid options. if yes, enable it.
-		if (pSummaryType->getOpt( *it ))
-		{
-			CArg* pOpt = pSummaryType->getOpt( *it );
-			pOpt->setValue("ok");
-		}
-		// if this arg is not a valid option for our current summary type, it might be a option for the current summary type's latest option
-		else
-		{
-			// if summary type option  is <site>, we ignore succeeding args
-			if (pSummaryType->is("site"))
-			{
-				return true;
-			}
-			else
-			{
-			}
-
-			// let's check first if current summary type even has options
-			if (pSummaryType->getNumParam())
-			{					
-				// try to get the summary option from current summary type's latest option 
-				CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(pSummaryType->getNumParam() - 1), true );
-				if (pSummaryOption) 
-				{
-					// if summary option matches (e.g. on, off, etc...), we set it
-					if (pSummaryOption->get( pCmd->getParam(i), true )) 
-					{
-						pSummaryOption->addParam( pCmd->getParam(i) );
-						continue;
-					}
-				}
-			}
-			// if we reached this point, either this arg is not a valid option for current summary type's latest option or current 
-			// summary type doesn't even have an option at all. it might be an ERROR for certain summary options but we don't handle it here. 
-			// instead we handle when we're about to execute command so we just pass it as summary type's option. that's how original CEX behaves
-			pSummaryType->addParam( pCmd->getParam(i) ); 
-		
-		}
-	}
-#endif
-#if 0
-
-	// if summary type is <site>
-	if (pSummaryType->is("site", true))
-	{
-		// do the job. note that we only care about first option of <site>
-		if ( pSummaryType->isParam("on") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::ON);		
-		else if ( pSummaryType->isParam("off") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::OFF);
-		else T.ProgCtrl()->setSummary(EVX_UpdateBreakout, T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
-
-		// display results 
-		m_Log << "CEX: evx_summary ";
-		m_Log << pSummaryType->get();
-		m_Log << " option has been " << ( (pSummaryType->isParam("on") || pSummaryType->isParam("off"))? "set":"toggled") << " to ";
-		m_Log << (T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
-	}
-	// if summary type is <clearfinal> or <clearpartial>
-	else if ( pSummaryType->get().compare("clearfinal") == 0 || pSummaryType->get().compare("clearpartial") == 0)
-	{
-		if (pSummaryType->get().compare("clearfinal") == 0) T.ProgCtrl()->clearFinalSummary();
-		else T.ProgCtrl()->clearPartialSummary();
-		m_Log << "CEX: cleared "<< (pSummaryType->get().compare("clearfinal") == 0? "final":"partial") << " summary." << CUtil::CLog::endl;
-	}
-	// if summary type is <output>
-	else if ( pSummaryType->is("output", true) )
-	{		
-		bool bFinal = T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? true:false;
-		for (unsigned int i = 0; i < pSummaryType->getNumParam(); i++)
-		{
-			// get the summary option for this param
-			CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(i), true );		
-			if (!pSummaryOption)
-			{
-				m_Log << "CEX Error: evx_summary: " << pSummaryType->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CUtil::CLog::endl;
-				return false;
-			}		 
-			// we set lot/sublot option here because in CEX, the last one gets the dibs
-			if (pSummaryOption->is("lot")) T.ProgCtrl()->setLotTypeSummary(EVX_LOT_SUMMARY);
-			if (pSummaryOption->is("sublot")) T.ProgCtrl()->setLotTypeSummary(EVX_SUBLOT_SUMMARY);
-			if (pSummaryOption->is("final")) bFinal = true; 
-			if (pSummaryOption->is("partial")) bFinal = false; 
-		}
-		// do the job
-		bFinal? T.ProgCtrl()->outputFinalSummary() : T.ProgCtrl()->outputPartialSummary();
-
-		// display results
-		m_Log << CUtil::CLog::endl << "CEX: evx_summary output -- " << (bFinal? "Final" : "Partial") << "/" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? "Lot":"Sublot") << CUtil::CLog::endl;
-		if (bFinal)
-		{
-			m_Log << "     Clearing results: Sublot" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? ", Lot":"") << CUtil::CLog::endl;
-			m_Log << "     Reseting NextSerial to '1'." << CUtil::CLog::endl << CUtil::CLog::endl;
-		}
-	}
-	// if summary type is <partial> or <final>
+	// a valid option for evx_summary is found, let's enable this option and move to next arg
 	else
 	{
-		// if there's no param, it's ERROR
-		if (!pSummaryType->getNumParam())
-		{
-			m_Log << "CEX Error: evx_summary: Missing argument to the " << pSummaryType->get() << " option." << CUtil::CLog::endl;
-			return false;		
-		}
-		for (unsigned int i = 0; i < pSummaryType->getNumParam(); i++)
-		{
-			// get the summary option for this param
-			CArg* pSummaryOption = pSummaryType->get( pSummaryType->getParam(i), true );		
+		pSummaryType->setValue("ok");
+		setValue( *it );
+		it++;
+	}
+
+	// now let's deal with the succeeding args. these args are expected to be -c evx_summary <opt> and their corresponding options if any
+	CArg* pCurr = pSummaryType;
+	while ( it != Args.end() )
+	{
+		CArg* pNext = pCurr->getChild( *it );
 	
-			if (!pSummaryOption)
+		// if this arg is invalid for this <opt>...
+		if (!pNext)
+		{
+			// if the <opt> we're currently searching for is already -c evx_summary <opt>, there's nothing to search anymore
+			if (pCurr == pSummaryType) break;
+			// otherwise, let's move up one <opt> layer
+			else pCurr = pCurr->parent();
+		}
+		// if this arg is a valid <opt>, let's enable it and move to next arg. also move to next <opt> layer
+		else
+		{
+			// handle special case: -c evx_summary output <opt> can have multiple <opt>. the last valid one gets dibs.
+			if (pCurr->is("output"))
 			{
-				m_Log << "CEX Error: evx_summary: " << pSummaryType->getParam(i)  << " is not a valid " << pSummaryType->get() << " summary option." << CUtil::CLog::endl;
-				return false;
+				if (pNext->is("lot")) pCurr->getChild("sublot")->setValue("");
+				if (pNext->is("sublot")) pCurr->getChild("lot")->setValue("");
 			}
 
-			// let's specify which summary type are we going to process			
-			EVX_SUMMARY_TYPE st;
-			if ( pSummaryType->get().compare("partial") == 0 && pSummaryOption->get().compare("full") == 0) st = EVX_UpdateFinal; // UpdateFinal - partial full
-			else if ( pSummaryType->get().compare("partial") == 0 && pSummaryOption->get().compare("clear") == 0) st = EVX_ClearPartial; // ClearPartial - partial clear
-			else if ( pSummaryType->get().compare("final") == 0 && pSummaryOption->get().compare("clear") == 0) st = EVX_ClearFinal; // ClearFinal - final clear
-			else if ( pSummaryOption->get().compare("site") == 0 ) st = EVX_UpdateBreakout; // UpdateBreakout - site
-			else continue;
-			
-			// do the job
-			if ( pSummaryOption->hasParam("on") ) T.ProgCtrl()->setSummary(st, EVXA::ON);
-			else if ( pSummaryOption->hasParam("off") ) T.ProgCtrl()->setSummary(st, EVXA::OFF);
-			else T.ProgCtrl()->setSummary(st, T.ProgCtrl()->getSummary(st) == EVXA::ON? EVXA::OFF : EVXA::ON);
-
-			// display results 
-			m_Log << "CEX: evx_summary ";
-			m_Log << (pSummaryOption->get().compare("site") == 0? "": pSummaryType->get());
-			m_Log << (pSummaryOption->get().compare("site") == 0? "": " ") << pSummaryOption->get();
-			m_Log << " option has been " << ( (pSummaryOption->hasParam("on") || pSummaryOption->hasParam("off"))? "set":"toggled") << " to ";
-			m_Log << (T.ProgCtrl()->getSummary(st) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+			pNext->setValue("ok");
+			it++;
+			pCurr = pNext;
 		}
 	}
-#endif
+	//printRecursive(this);
+
+	// if there's still arg not processed at this point, then that's considered invalid. for some <opt> invalid arg is ERROR
+	// we want to log error due to this invalid arg during execution so we save it first
+	if (it != Args.end()) m_strInvalidArg = *it;
+
 	return true;
 }
 

@@ -16,16 +16,19 @@ bool CArg::is(const std::string& name, bool bPartialMatch)
 /* ------------------------------------------------------------------------------------------
 add a reference option. reference options must have unique values.
 ------------------------------------------------------------------------------------------ */
-bool CArg::addOpt(CArg* pOpt)
+bool CArg::addChild(CArg* pChild)
 {
+	if (!pChild) return false;
+
 	// arg must have value that does not exist in list yet before it can be added
-	for (unsigned int i = 0; i < m_listOpt.size(); i++)
+	for (unsigned int i = 0; i < m_Children.size(); i++)
 	{
-		if (m_listOpt[i]->m_strName.compare(pOpt->m_strName) == 0) return false;
+		if (m_Children[i]->m_strName.compare(pChild->m_strName) == 0) return false;
 	}
 
 	// add to end if not yet
-	m_listOpt.push_back(pOpt);
+	m_Children.push_back(pChild);
+	pChild->m_pParent = this;
 	return true;
 }
 
@@ -33,12 +36,12 @@ bool CArg::addOpt(CArg* pOpt)
 list all  option found that matches the given name. 
 has option search for partial match
 ------------------------------------------------------------------------------------------ */
-void CArg::listOptMatch(const std::string& name, std::vector< CArg* >& v, bool bPartialMatch) const
+void CArg::findChildren(const std::string& name, std::vector< CArg* >& v, bool bPartialMatch) const
 {
 	v.clear();
-	for (unsigned int i = 0; i < m_listOpt.size(); i++)
+	for (unsigned int i = 0; i < m_Children.size(); i++)
 	{
-		if (m_listOpt[i]->is(name, bPartialMatch)) v.push_back( m_listOpt[i] );
+		if (m_Children[i]->is(name, bPartialMatch)) v.push_back( m_Children[i] );
 	}
 }
 
@@ -46,10 +49,10 @@ void CArg::listOptMatch(const std::string& name, std::vector< CArg* >& v, bool b
 find option with the given name in the list. if more than one match is found, 
 return null. has option to search for partial match, default being exact match
 ------------------------------------------------------------------------------------------ */
-CArg* CArg::getOpt(const std::string& name, bool bPartialMatch) const
+CArg* CArg::getChild(const std::string& name, bool bPartialMatch) const
 {
 	std::vector< CArg* > v;
-	listOptMatch(name, v, bPartialMatch);
+	findChildren(name, v, bPartialMatch);
 	return v.size() == 1? v[0] : 0;
 }
 

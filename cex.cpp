@@ -18,32 +18,32 @@ CCex::CCex(): m_Tester(CTester::instance()), m_Log(CTester::instance().m_Log), m
 	m_Log.silent = false; 
  
 	// create -t[ester] option
-	addOpt( &CTester::instance() );
+	addChild( &CTester::instance() );
 
 	// create -h[elp] option
 	CArg* pHelp = new CHelp();
-	addOpt( pHelp );
+	addChild( pHelp );
 
 	// create -c[ommand] option
 	CArg* pCmd = new CCmd(); 
-	addOpt( pCmd );
+	addChild( pCmd );
 
 	// add options 
-	addOpt( new CArg("-debug") );
-	addOpt( new CArg("-dm") );
-	addOpt( new CArg("-timeout") );
-	addOpt( new CArg("-head") );
-	addOpt( new CArg("-hd") );
-	addOpt( new CArg("-syntax_check") );
-	addOpt( new CArg("-version") );	
+	addChild( new CArg("-debug") );
+	addChild( new CArg("-dm") );
+	addChild( new CArg("-timeout") );
+	addChild( new CArg("-head") );
+	addChild( new CArg("-hd") );
+	addChild( new CArg("-syntax_check") );
+	addChild( new CArg("-version") );	
 	
 	// let's initialize <tester> to default name
 	std::stringstream ss;
 	getUserName().empty()? (ss << "sim") : (ss << getUserName() << "_sim");
-	getOpt("-tester")->setValue(ss.str()); 
+	getChild("-tester")->setValue(ss.str()); 
 	
 	// let's set tester connection enabled by default 
-	getOpt("-tester")->getOpt("connect")->setValue("ok");
+	getChild("-tester")->getChild("connect")->setValue("ok");
 }
 
 /* ------------------------------------------------------------------------------------------
@@ -51,7 +51,7 @@ add command objects.
 ------------------------------------------------------------------------------------------ */
 void CCex::addCmd( CArg* pCmd )
 {
-	getOpt("-command")->addOpt( pCmd );
+	getChild("-command")->addChild( pCmd );
 }
 
 /* ------------------------------------------------------------------------------------------
@@ -98,13 +98,13 @@ bool CCex::scan(std::list< std::string >& Args)
 
 		// list all options that partially match this arg
 		std::vector< CArg* > v;
-		listOptMatch(arg, v, true);
+		findChildren(arg, v, true);
 
 		// is it ambiguous?
 		if (v.size() > 1)
 		{
 			m_Log << "CEX Error: CEX arguments: Ambiguous option '" << arg << "' choices are: ";
-			for (unsigned int i = 0; i < v.size(); i++) m_Log << "'" << v[i]->get() << "', ";
+			for (unsigned int i = 0; i < v.size(); i++) m_Log << "'" << v[i]->name() << "', ";
 			m_Log << CUtil::CLog::endl;
 			return false;
 		}   
@@ -131,7 +131,7 @@ bool CCex::scan(std::list< std::string >& Args)
 			else
 			{
 				v[0]->setValue( *it );
-				v[0]->getOpt("connect")->setValue("ok");
+				v[0]->getChild("connect")->setValue("ok");
 				continue;
 			}
 		}
@@ -167,44 +167,36 @@ bool CCex::scan(std::list< std::string >& Args)
 bool CCex::exec()
 {
 	// are we in debug mode?
-	if (getOpt("-debug")->has("ok"))
+	if (getChild("-debug")->has("ok"))
 	{
 		m_Debug.enable = true;
 		m_Debug.silent = false;
 	}
 
 	// if general help is enabled, print it and do nothing
-	if (getOpt("-help")->has("ok"))
+	if (getChild("-help")->has("ok"))
 	{
-		getOpt("-help")->exec();
+		getChild("-help")->exec();
 		return true;
 	}
 
 	// try to connect to tester
-	if (getOpt("-tester")->getOpt("connect")->has("ok") )
+	if (getChild("-tester")->getChild("connect")->has("ok") )
 	{
-		if (!m_Tester.connect( getOpt("-tester")->getValue() )) return false;
+		if (!m_Tester.connect( getChild("-tester")->getValue() )) return false;
 	}
 
 	// are we executing command?
-	if (!getOpt("-command")->getValue().empty())
+	if (!getChild("-command")->getValue().empty())
 	{
-		std::string cmd = getOpt("-command")->getValue();
-		CArg* pCmd = getOpt("-command")->getOpt( cmd );
-		if (pCmd)
-		{
-			pCmd->exec();
-		}
-		else
-		{
-			m_Tester.loop();
-		}
+		std::string cmd = getChild("-command")->getValue();
+		CArg* pCmd = getChild("-command")->getChild( cmd );
+
+		if (pCmd) pCmd->exec();
+		else m_Tester.loop();
 	}
 	// if not, let's get into loop
-	else
-	{
-		m_Tester.loop();
-	}
+	else m_Tester.loop();
 
 	m_Tester.disconnect();
 	return true;

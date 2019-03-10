@@ -7,7 +7,7 @@ INCDIR=-I.  -I/ltx/customer/include -I/ltx/customer/include/evxa
 
 DEMO_PROGS= demo
 
-CEX_FILES= demo.cpp  utility.cpp tester.cpp cex.cpp arg.cpp cmd.cpp xml.cpp
+CEX_FILES= demo.cpp  utility.cpp arg.cpp tester.cpp  cex.cpp cmd.cpp xml.cpp
 
 
 CEX_OBJS = $(CEX_FILES:.cpp=.o)

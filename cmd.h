@@ -47,7 +47,7 @@ public:
 	CCmdBase(const std::string& n = ""):CArg(n), m_Log(CTester::instance().m_Log), m_Debug(CTester::instance().m_Debug)
 	{
 		// all commands have -h[elp] option
-		addOpt( new CArg("-help") );
+		addChild( new CArg("-help") );
 	}
 };
 
@@ -70,7 +70,7 @@ class CCmd: public CCmdBase
 public:
 	CCmd():CCmdBase("-command")
 	{
-		addOpt( &CTester::instance() );
+		addChild( &CTester::instance() );
 	} 
 	virtual bool scan(std::list< std::string >& Args);
 };
@@ -149,7 +149,7 @@ class CLoad: public CCmdBase
 public:
 	CLoad():CCmdBase("load")
 	{
-		addOpt( new CArg("-display") );
+		addChild( new CArg("-display") );
 	}
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);
@@ -163,9 +163,9 @@ class CUnload: public CCmdBase
 public:
 	CUnload():CCmdBase("unload")
 	{
-		addOpt( new CArg("-wait") );
-		addOpt( new CArg("-nowait") );
-		addOpt( new CArg("-dontsave") );
+		addChild( new CArg("-wait") );
+		addChild( new CArg("-nowait") );
+		addChild( new CArg("-dontsave") );
 	}
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);
@@ -186,9 +186,9 @@ private:
 public:
 	CStart():CCmdBase("start")
 	{
-		addOpt( new CArg("-wait") );
-		addOpt( new CArg("-nowait") );
-		addOpt( new CArg("-ntimes") );
+		addChild( new CArg("-wait") );
+		addChild( new CArg("-nowait") );
+		addChild( new CArg("-ntimes") );
 	}
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);
@@ -202,10 +202,10 @@ class CGetExp: public CCmdBase
 public:
 	CGetExp():CCmdBase("get_exp")
 	{
-		addOpt( new CArg("expression") );
-		addOpt( new CArg("value") );
-		addOpt( new CArg("multi_value") );
-		addOpt( new CArg("multi_range") );
+		addChild( new CArg("expression") );
+		addChild( new CArg("value") );
+		addChild( new CArg("multi_value") );
+		addChild( new CArg("multi_range") );
 	}
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);
@@ -217,51 +217,57 @@ public:
 class CEvxSummary: public CCmdBase
 {
 private:
+	std::string m_strInvalidArg;
 	//CArg* Recursive( CArg* pCurr, std::list< std::string>& v, std::list< std::string >::iterator& it );
 public:
-	CEvxSummary():CCmdBase("evx_summary")
+	CEvxSummary():CCmdBase("evx_summary"), m_strInvalidArg()
 	{
-		// cofigure arguments for -command <evx_summary> <site>
+		// configure arguments for -command <evx_summary> <site>
 		CArg* pSite = new CArg("site");
-		pSite->addOpt( new CArg("on") );
-		pSite->addOpt( new CArg("off") );
+		pSite->addChild( new CArg("on") );
+		pSite->addChild( new CArg("off") );
+		addChild( pSite );
 
-		// cofigure arguments for -command <evx_summary> <partial>
+		// configure arguments for -command <evx_summary> <partial>
+		pSite = new CArg("site");
+		pSite->addChild( new CArg("on") );
+		pSite->addChild( new CArg("off") );
 		CArg* pFull = new CArg("full");	
-		pFull->addOpt( new CArg("on") );
-		pFull->addOpt( new CArg("off") );
+		pFull->addChild( new CArg("on") );
+		pFull->addChild( new CArg("off") );
 		CArg* pClear = new CArg("clear");	
-		pClear->addOpt( new CArg("on") );
-		pClear->addOpt( new CArg("off") );
+		pClear->addChild( new CArg("on") );
+		pClear->addChild( new CArg("off") );
 		CArg* pPartial = new CArg("partial");
-		pPartial->addOpt( pFull );
-		pPartial->addOpt( pClear );
-		pPartial->addOpt( pSite );
+		pPartial->addChild( pFull );
+		pPartial->addChild( pClear );
+		pPartial->addChild( pSite );
+		addChild( pPartial );
 
 		// configure arguments for -command <evx_summary> <final>
-		CArg* pFinal = new CArg("final");
 		pClear = new CArg("clear");	
-		pClear->addOpt( new CArg("on") );
-		pClear->addOpt( new CArg("off") );
-		pFinal->addOpt( pClear );
-		pFinal->addOpt( pSite );
+		pClear->addChild( new CArg("on") );
+		pClear->addChild( new CArg("off") );
+		pSite = new CArg("site");
+		pSite->addChild( new CArg("on") );
+		pSite->addChild( new CArg("off") );
+		CArg* pFinal = new CArg("final");
+		pFinal->addChild( pClear );
+		pFinal->addChild( pSite );
+		addChild( pFinal );
 
 		// configure arguments for -command <evx_summary> <output>
 		CArg* pOutput = new CArg("output");
-		pOutput->addOpt( new CArg("lot") );
-		pOutput->addOpt( new CArg("sublot") );
-		pOutput->addOpt( new CArg("final") );
-		pOutput->addOpt( new CArg("partial") );
+		pOutput->addChild( new CArg("lot") );
+		pOutput->addChild( new CArg("sublot") );
+		pOutput->addChild( new CArg("final") );
+		pOutput->addChild( new CArg("partial") );
+		addChild( pOutput );
 
-		// add arguments for -command <evx_summary>
-		addOpt( pSite );
-		addOpt( pPartial );
-		addOpt( pFinal );
-		addOpt( pOutput );
-		addOpt( new CArg("clearpartial") );
-		addOpt( new CArg("clearfinal") );
-		addOpt( new CArg("details") );
-
+		// add the rest of possible arguments for -command <evx_summary>
+		addChild( new CArg("clearpartial") );
+		addChild( new CArg("clearfinal") );
+		addChild( new CArg("details") );
 	}
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);

@@ -5,7 +5,7 @@ constructor
 ------------------------------------------------------------------------------------------ */
 CTester::CTester():CArg("-tester")
 {
-	addOpt( new CArg("connect") );
+	addChild( new CArg("connect") );
 
 	// initialize tester flags lags
 	m_nHead = 1; // set head to default

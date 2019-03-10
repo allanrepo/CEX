@@ -34,6 +34,8 @@ int main(int argc, char **argv)
 	T.addCmd(new CProgramLoadDone());
 	T.addCmd(new CGetExp());
 	T.addCmd(new CEvxSummary());
+	T.addCmd(new CDlogMethods());
+	T.addCmd(new CDlogFileFreq());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

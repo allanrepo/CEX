@@ -294,4 +294,34 @@ public:
 	virtual bool scan(std::list< std::string >& Args);
 };
 
+/* ------------------------------------------------------------------------------------------
+-c <evx_dlog_methods> opt class
+evx_dlog_methods [ <dlog_index> ]
+------------------------------------------------------------------------------------------ */
+class CDlogMethods: public CCmdBase
+{
+public:
+	CDlogMethods():CCmdBase("evx_dlog_methods")
+	{
+	}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <evx_dlog_file_freq> opt class
+evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 
+------------------------------------------------------------------------------------------ */
+class CDlogFileFreq: public CCmdBase
+{
+public:
+	CDlogFileFreq():CCmdBase("evx_dlog_file_freq")
+	{
+	}
+	virtual bool exec();
+	virtual bool scan(std::list< std::string >& Args);
+};
+
+
+
 #endif

@@ -1190,6 +1190,7 @@ handle evx_summary command
 		-	<on> is <full>'s option
 	-	some options must have option such as <partial> 
 		while others don't e.g. <site>	
+	-	
 ------------------------------------------------------------------------------------------ */
 bool CEvxSummary::scan(std::list< std::string >& Args)
 {
@@ -1247,6 +1248,153 @@ bool CEvxSummary::scan(std::list< std::string >& Args)
 	// we want to log error due to this invalid arg during execution so we save it first
 	if (it != Args.end()) m_strInvalidArg = *it;
 
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CDlogMethods::exec()
+{
+	if ( getChild("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                           evx_dlog_methods                          L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        get_username" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
+		m_Log << "        by the login name." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		CTester& T = CTester::instance();
+		// do we arg? if yes, it must be integer and has valid range
+		if ( getValue().size() )
+		{
+			if ( !CUtil::isInteger( getValue() ) )
+			{
+				m_Log << "CEX Error: expect an positive integer number for dlog index." << CUtil::CLog::endl;
+				return false;
+			}
+			
+			// check if <dlog_index> is within range
+			long n = CUtil::toLong( getValue() );
+			if ( n < 0 || n >= T.ProgCtrl()->getNumDatalogs() )
+			{
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+				return false;
+			}
+		}
+
+		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+		{
+			// try to get the <method> at this index
+			std::stringstream val;
+			// if <method> is immediate, you can query it at this index
+			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+
+			// but if <method> is buffered, it must be queried here
+			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+
+			// if we didn't find <method>...
+			if (!val.str().size())
+			{
+				if ( getValue().size() )
+				{
+					if ( CUtil::toLong( getValue() ) == i ) 
+					{
+						m_Log << "No evx datalog method associated with dlog " << i << CUtil::CLog::endl;
+						break;			
+					}
+				}
+				else m_Log << "No evx datalog method associated with dlog " << i << CUtil::CLog::endl;
+			}
+			// if we found <method>, let's print its details
+			else
+			{
+				if ( getValue().size() )
+				{
+					if (  CUtil::toLong( getValue() ) == i ) 
+					{
+						m_Log << "Evx datalog "<< i << " method: "<< val.str() << CUtil::CLog::endl;
+						break;		
+					}	
+				}
+				else m_Log << "Evx datalog "<< i << " method: "<< val.str() << CUtil::CLog::endl;
+			}
+		}
+	}
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CDlogMethods::scan(std::list< std::string >& Args)
+{
+	// strictly accept only 1 argument
+	if (Args.size() > 1)
+	{		
+		m_Log << "CEX Error: "<< name() << ": Too many arguments." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// at this point, we know there's 1 arg. store it
+	if (Args.size()) setValue( *Args.begin() );
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CDlogFileFreq::exec()
+{
+	if ( getChild("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                          evx_dlog_file_freq                         L T X" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " NAME" << CUtil::CLog::endl;
+		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
+		m_Log << "        get_username" << CUtil::CLog::endl;
+		m_Log << "        " << CUtil::CLog::endl;
+		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
+		m_Log << "        by the login name." << CUtil::CLog::endl;
+		m_Log << "" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+	}
+	else
+	{
+		m_Log << "CEX: Current session owner: " << CTester::instance().ProgCtrl()->getUserName() << CUtil::CLog::endl;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+bool CDlogFileFreq::scan(std::list< std::string >& Args)
+{
+	if (Args.size())
+	{		
+		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
 	return true;
 }
 

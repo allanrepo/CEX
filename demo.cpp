@@ -37,6 +37,8 @@ int main(int argc, char **argv)
 	T.addCmd(new CDlogMethods());
 	T.addCmd(new CDlogFileFreq());
 	T.addCmd(new CDlogType());
+	T.addCmd(new CDlogSampleRate());
+	T.addCmd(new CDlogTestID());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

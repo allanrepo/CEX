@@ -41,7 +41,7 @@ evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 		[done]
 evx_dlog_methods [ <dlog_index> ]						[done]
 evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>
 evx_dlog_testID [-m <method> | -n <dlog_index>] <string>
-evx_dlog_type [-m <method> | -n <dlog_index> ] <type> 
+evx_dlog_type [-m <method> | -n <dlog_index> ] <type> 				[done]
 program_state
 process_status
 processes_hung
@@ -337,6 +337,35 @@ public:
 	virtual bool exec();
 };
 
+/* ------------------------------------------------------------------------------------------
+-c <evx_dlog_sample_rate> opt class
+evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>
+------------------------------------------------------------------------------------------ */
+class CDlogSampleRate: public CCmdBase
+{
+public:
+	CDlogSampleRate():CCmdBase("evx_dlog_sample_rate")
+	{
+		addChild( new CArg("-n") );
+		addChild( new CArg("-m") );
+	}
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <evx_dlog_testID> opt class
+evx_dlog_testID [-m <method> | -n <dlog_index>] <string>
+------------------------------------------------------------------------------------------ */
+class CDlogTestID: public CCmdBase
+{
+public:
+	CDlogTestID():CCmdBase("evx_dlog_testID")
+	{
+		addChild( new CArg("-n") );
+		addChild( new CArg("-m") );
+	}
+	virtual bool exec();
+};
 
 
 #endif

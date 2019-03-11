@@ -36,9 +36,9 @@ evx_dlog_after_failcount <n>
 evx_dlog_before_failcount <n>
 evx_dlog_clear_methods [ <dlog_index> ]
 evx_dlog_failcount <n>
-evx_dlog_file_destination <dlog_method_name> <file name>
-evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 
-evx_dlog_methods [ <dlog_index> ]
+evx_dlog_file_destination <dlog_method_name> <file name>	
+evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 		[done]
+evx_dlog_methods [ <dlog_index> ]						[done]
 evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>
 evx_dlog_testID [-m <method> | -n <dlog_index>] <string>
 evx_dlog_type [-m <method> | -n <dlog_index> ] <type> 
@@ -63,12 +63,19 @@ class CCmdBase: public CArg
 protected:
 	CUtil::CLog& m_Log;
 	CUtil::CLog& m_Debug;
+	std::list< std::string > m_Args;
 
 public:
 	CCmdBase(const std::string& n = ""):CArg(n), m_Log(CTester::instance().m_Log), m_Debug(CTester::instance().m_Debug)
 	{
 		// all commands have -h[elp] option
 		addChild( new CArg("-help") );
+	}
+	virtual bool scan(std::list< std::string >& Args)
+	{
+		// store args and let <command> parse them during exec()
+		m_Args = Args;
+		return true;
 	}
 };
 
@@ -317,9 +324,14 @@ class CDlogFileFreq: public CCmdBase
 public:
 	CDlogFileFreq():CCmdBase("evx_dlog_file_freq")
 	{
+		addChild( new CArg("-n") );
+		addChild( new CArg("-m") );
+		addChild( new CArg("Lot") );
+		addChild( new CArg("SubLot") );
+		addChild( new CArg("Wafer") );
+		addChild( new CArg("Session") );
 	}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 

@@ -1359,10 +1359,17 @@ bool CDlogMethods::scan(std::list< std::string >& Args)
 }
 
 /* ------------------------------------------------------------------------------------------
-
+evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 
+-	must have a valid arg
+-	-n <n> can be used multiple times, but last one gets the dibs
+-	-m <method> can be used multiple times, but last one gets the dibs
+- 	must used either -n or -m BUT can only use one of them
+-	if -m <method> is used, and there's multiple dlogs that uses the same <method>,
+	the first dlog gets updated. the rest are unchanged.
 ------------------------------------------------------------------------------------------ */
 bool CDlogFileFreq::exec()
 {
+	// if -help, let's do it and exit
 	if ( getChild("-help")->has("ok") )
 	{
 		m_Log << " " << CUtil::CLog::endl;
@@ -1380,170 +1387,136 @@ bool CDlogFileFreq::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
 	}
-	else
-	{
-		m_Log << "CEX: Current session owner: " << CTester::instance().ProgCtrl()->getUserName() << CUtil::CLog::endl;
-	}
-	return true;
-}
 
-/* ------------------------------------------------------------------------------------------
-evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 
--	must have a valid arg
------------------------------------------------------------------------------------------- */
-bool CDlogFileFreq::scan(std::list< std::string >& Args)
-{
+	CTester& T = CTester::instance();
+
 	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
-	if (!Args.size())
+	if (!m_Args.size())
 	{		
 		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CUtil::CLog::endl;
 		return false;
 	}
 
-	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
-	{}
-
-#if 0
-	std::string strFileFreq;
-	for (unsigned int i = 0; i < pCmd->getNumParam(); i++)
+	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{
-		// is the argument -n? then next argument must be an integer
-		if (pCmd->isParam("-n", i))
+		CArg* p = getChild( *it );
+
+		// this arg does not match any of the valid options for this command
+		if (!p)
+		{
+			m_Log << "CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CUtil::CLog::endl;
+			return false;
+		}
+
+		if (p->is("-n"))
 		{
 			// if no arg after -n, ERROR
-			if (i + 1 >= pCmd->getNumParam())
+			if (++it == m_Args.end())
 			{
-				m_Log << "CEX Error: " << pCmd->get() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+				m_Log << "CEX Error: " << name() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 				return false;
 			}
 			// check if next arg is not an integer, ERROR
-			if (!isInteger( pCmd->getParam(i + 1) ) )
+			if (!CUtil::isInteger( *it ))
 			{
-				m_Log << "CEX Error: "  << pCmd->get() << ": '" << pCmd->getParam(i + 1) << "' found where 'integer' expected (ltx/tkn)" << CLog::endl;
+				m_Log << "CEX Error: "  << name() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 				return false;
 			}
 			// check if next arg's value is within dlog method's range
-			if ( toLong( pCmd->getParam(i + 1) ) < 0 || toLong( pCmd->getParam(i + 1) ) >= m_pProgCtrl->getNumDatalogs() )
+			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= T.ProgCtrl()->getNumDatalogs() )
 			{
-				m_Log << "CEX Error: valid dlog index is from 0 to " << (m_pProgCtrl->getNumDatalogs() - 1) << "." << CLog::endl;
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
 				return false;
 			}	
-
-			// at this point, we have valid value for -n, but check if -m is also used before
-			if ( pCmd->get("-m", true)->getNumParam() )
-			{
-				m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
-				return false;
-			}
-			// if this is the only option, we save it. any previous call to this option is removed
-			else
-			{
-				pCmd->get("-n", true)->clearParam();
-				pCmd->get("-n", true)->addParam( pCmd->getParam(++i) );
-			}
+			// at this point, -n <m> is valid, we save it. 
+			p->setValue( *it );
 		}
-
-		// is the argument -m? there must be a next argument
-		else if (pCmd->isParam("-m", i))
+		else if (p->is("-m"))
 		{
 			// if no arg after -m, ERROR
-			if (i + 1 >= pCmd->getNumParam())
+			if (++it == m_Args.end())
 			{
-				m_Log << "CEX Error: Must specify a valid dlog method with '" << pCmd->get() << "'." << CLog::endl;
+				m_Log << "CEX Error: Must specify a valid dlog method with '" << name() << "'." << CUtil::CLog::endl;
 				return false;
 			}
-
-			// at this point, we have valid value for -m, but check if -n is also used before
-			if ( pCmd->get("-n", true)->getNumParam() )
-			{
-				m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
-				return false;
-			}
-			// if this is the only option, we save it. any previous call to this option is removed
-			else
-			{
-				pCmd->get("-m", true)->clearParam();
-				pCmd->get("-m", true)->addParam( pCmd->getParam(++i) );
-			}
+			// at this point, -m <method> is valid, we save it. 
+			p->setValue( *it );
 		}
 		// it might be any of the valid file frequency values - Lot, SubLot, Wafer, Session
-		else if ( pCmd->get( pCmd->getParam(i), true ) )
-		{
-			// if there's more arg after this, ERROR
-			if ( i + 1 < pCmd->getNumParam())
-			{
-				m_Log << "CEX Error: " << pCmd->get() << ": Too many arguments. "<< CLog::endl;
-				return false;
-			}
-			else strFileFreq = pCmd->getParam(i);
-		}
-		// this arg does not match any of the valid options for this command
 		else
 		{
-			m_Log <<"CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
-			return false;
-		}
+			// if there's more arg after this, ERROR
+			if (++it != m_Args.end())
+			{
+				m_Log << "CEX Error: " << name() << ": Too many arguments. "<< CUtil::CLog::endl;
+				return false;
+			}
+			p->setValue( "ok" ); 
+			setValue( *(--it) ); // store here for ease of access
+		}						
 	}
 
-	// let's check if neither -n nor -m were used at all
-	if ( !pCmd->get("-n", true)->getNumParam() && !pCmd->get("-m", true)->getNumParam() )
+	// must used either -n or -m BUT can only use one of them
+	if ( getChild("-n")->getValue().empty() == getChild("-m")->getValue().empty() )
 	{
-		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CLog::endl;
+		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// did we have a valid file frequency value?
-	if ( !pCmd->get( strFileFreq, true ) )
+	if ( !getChild("Lot")->has("ok") && !getChild("SubLot")->has("ok") && !getChild("Wafer")->has("ok") && !getChild("Session")->has("ok") )
 	{
-		m_Log <<"CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CLog::endl;
+		m_Log << "CEX Error: Frequency must be Lot, SubLot, Wafer, or Session." << CUtil::CLog::endl;
 		return false;
 	}
 
-	if (pCmd->get("-n", true)->getNumParam())
+	// if -n <n> is used
+	if ( getChild("-n")->getValue().size() )
 	{
-		int i = toLong( pCmd->get("-n", true)->getParam() );
-		strFileFreq.insert(0, "DlogFreq:");
+		int i = CUtil::toLong( getChild("-n")->getValue() );
+		std::string s = getValue();
+		s.insert(0, "DlogFreq:");
 
 		// check if this is valid dlog method
 		std::stringstream val;
-		val << m_pProgCtrl->getDatalogString(i, 1, 0);
-		if (!val.str().size()) val << m_pProgCtrl->getDatalogString(i, 2, 0);
+		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
 
 		if (!val.str().size())
 		{
-			m_Log << "CEX Error: Dlog index " << i << " is not associated with any methods." << CLog::endl;
+			m_Log << "CEX Error: Dlog index " << i << " is not associated with any methods." << CUtil::CLog::endl;
 			return false;
 		}
 		else 
 		{
-			m_pProgCtrl->setDatalogFileFreq (i, strFileFreq.c_str() );
-			m_Log << "CEX: File frequency for dlog" << i << " set to " << strFileFreq << "." << CLog::endl;
+			T.ProgCtrl()->setDatalogFileFreq (i, s.c_str() );
+			m_Log << "CEX: File frequency for dlog" << i << " set to " << s << "." << CUtil::CLog::endl;
 			return true;
 		}
 	}
+	// if -m <method> is used
 	else 
 	{
-		for (int i = 0; i < m_pProgCtrl->getNumDatalogs(); i++)
+		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
 		{
 			std::stringstream val;
-			val << m_pProgCtrl->getDatalogString(i, 1, 0);
-			if (!val.str().size()) val << m_pProgCtrl->getDatalogString(i, 2, 0);
+			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
 			
-			if (val.str().compare( pCmd->get("-m", true)->getParam() ) == 0)
+			if (val.str().compare( getChild("-m")->getValue() ) == 0)
 			{
-				strFileFreq.insert(0, "DlogFreq:");
-				m_pProgCtrl->setDatalogFileFreq (i, strFileFreq.c_str());
-				m_Log << "CEX: File Frequency for method "<<  pCmd->get("-m", true)->getParam() << " [dlog" << i << "] set to " << strFileFreq << "." <<CLog::endl;
+				std::string s = getValue();
+				s.insert(0, "DlogFreq:");
+				T.ProgCtrl()->setDatalogFileFreq (i, s.c_str());
+				m_Log << "CEX: File Frequency for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << s << "." << CUtil::CLog::endl;
 				return true;
 			}
 		}
-		m_Log << "CEX Error: The datalogging method " << pCmd->get("-m", true)->getParam() << " was not found." << CLog::endl;
+		m_Log << "CEX Error: The datalogging method " << getChild("-m")->getValue() << " was not found." << CUtil::CLog::endl;
 		return false;
 	}
-#endif
-
-
 	return true;
 }
 

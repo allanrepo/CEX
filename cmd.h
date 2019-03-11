@@ -320,6 +320,23 @@ public:
 	virtual bool exec();
 };
 
+/* ------------------------------------------------------------------------------------------
+-c <evx_dlog_type> opt class
+evx_dlog_type [-m <method> | -n <dlog_index> ] <type>
+------------------------------------------------------------------------------------------ */
+class CDlogType: public CCmdBase
+{
+public:
+	CDlogType():CCmdBase("evx_dlog_type")
+	{
+		addChild( new CArg("-n") );
+		addChild( new CArg("-m") );
+		addChild( new CArg("Production") );
+		addChild( new CArg("ILQA") );
+	}
+	virtual bool exec();
+};
+
 
 
 #endif

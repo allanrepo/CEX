@@ -1271,6 +1271,7 @@ evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq>
 - 	must used either -n or -m BUT can only use one of them
 -	if -m <method> is used, and there's multiple dlogs that uses the same <method>,
 	the first dlog gets updated. the rest are unchanged.
+-	only 1 dlog freq is accepted. more than 1 will be ERROR
 ------------------------------------------------------------------------------------------ */
 bool CDlogFileFreq::exec()
 {
@@ -1416,6 +1417,159 @@ bool CDlogFileFreq::exec()
 				s.insert(0, "DlogFreq:");
 				T.ProgCtrl()->setDatalogFileFreq (i, s.c_str());
 				m_Log << "CEX: File Frequency for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << s << "." << CUtil::CLog::endl;
+				return true;
+			}
+		}
+		m_Log << "CEX Error: The datalogging method " << getChild("-m")->getValue() << " was not found." << CUtil::CLog::endl;
+		return false;
+	}
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+evx_dlog_type [-m <method> | -n <dlog_index> ] <type>
+-	must have a valid arg
+-	-n <n> can be used multiple times, but last one gets the dibs
+-	-m <method> can be used multiple times, but last one gets the dibs
+- 	must used either -n or -m BUT can only use one of them
+-	if -m <method> is used, and there's multiple dlogs that uses the same <method>,
+	the first dlog gets updated. the rest are unchanged.
+-	only 1 dlog type is accepted. more than 1 will be ERROR
+------------------------------------------------------------------------------------------ */
+bool CDlogType::exec()
+{
+	// if -help, let's do it and exit
+	if ( getChild("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                          evx_dlog_type                         L T X" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	CTester& T = CTester::instance();
+
+	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
+	if (!m_Args.size())
+	{		
+		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CUtil::CLog::endl;
+		return false;
+	}
+
+	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
+	{
+		CArg* p = getChild( *it );
+
+		// this arg does not match any of the valid options for this command
+		if (!p)
+		{
+			m_Log << "CEX Error: Type must be Production or ILQA." << CUtil::CLog::endl;
+			return false;
+		}
+
+		if (p->is("-n"))
+		{
+			// if no arg after -n, ERROR
+			if (++it == m_Args.end())
+			{
+				m_Log << "CEX Error: " << name() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+				return false;
+			}
+			// check if next arg is not an integer, ERROR
+			if (!CUtil::isInteger( *it ))
+			{
+				m_Log << "CEX Error: "  << name() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+				return false;
+			}
+			// check if next arg's value is within dlog method's range
+			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= T.ProgCtrl()->getNumDatalogs() )
+			{
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+				return false;
+			}	
+			// at this point, -n <m> is valid, we save it. 
+			p->setValue( *it );
+		}
+		else if (p->is("-m"))
+		{
+			// if no arg after -m, ERROR
+			if (++it == m_Args.end())
+			{
+				m_Log << "CEX Error: Must specify a valid dlog method with '" << name() << "'." << CUtil::CLog::endl;
+				return false;
+			}
+			// at this point, -m <method> is valid, we save it. 
+			p->setValue( *it );
+		}
+		// it might be any of the valid dlog type - Production or ILQA
+		else
+		{
+			// if there's more arg after this, ERROR
+			if (++it != m_Args.end())
+			{
+				m_Log << "CEX Error: " << name() << ": Too many arguments. "<< CUtil::CLog::endl;
+				return false;
+			}
+			p->setValue( "ok" ); 
+			setValue( *(--it) ); // store here for ease of access
+		}						
+	}
+
+	// must used either -n or -m BUT can only use one of them
+	if ( getChild("-n")->getValue().empty() == getChild("-m")->getValue().empty() )
+	{
+		m_Log << "CEX Error: Must specify EITHER a valid method OR a dlog index." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// did we have a valid type?
+	if ( !getChild("Production")->has("ok") && !getChild("ILQA")->has("ok") )
+	{
+		m_Log << "CEX Error: Type must be Production or ILQA." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// if -n <n> is used
+	if ( getChild("-n")->getValue().size() )
+	{
+		int i = CUtil::toLong( getChild("-n")->getValue() );
+		std::string s = getValue();
+		//s.insert(0, "DlogFreq:");
+
+		// check if this is valid dlog method
+		std::stringstream val;
+		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+ 
+		if (!val.str().size())
+		{
+			m_Log << "CEX Error: Dlog index " << i << " is not associated with any methods." << CUtil::CLog::endl;
+			return false;
+		}
+		else 
+		{
+			T.ProgCtrl()->setDatalogType (i, s.c_str() );
+			m_Log << "CEX: Type for dlog" << i << " set to " << s << "." << CUtil::CLog::endl;
+			return true;
+		}
+	}
+	// if -m <method> is used
+	else 
+	{
+		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+		{
+			std::stringstream val;
+			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+			
+			if (val.str().compare( getChild("-m")->getValue() ) == 0)
+			{
+				std::string s = getValue();
+				//s.insert(0, "DlogFreq:");
+				T.ProgCtrl()->setDatalogType (i, s.c_str());
+				m_Log << "CEX: Type for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << s << "." << CUtil::CLog::endl;
 				return true;
 			}
 		}

@@ -111,7 +111,6 @@ class CGetHead: public CCmdBase
 public:
 	CGetHead():CCmdBase("get_head"){}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -122,7 +121,6 @@ class CCexVersion: public CCmdBase
 public:
 	CCexVersion():CCmdBase("cex_version"){}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -133,7 +131,6 @@ class CGetName: public CCmdBase
 public:
 	CGetName():CCmdBase("get_name"){}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -144,7 +141,6 @@ class CGetUserName: public CCmdBase
 public:
 	CGetUserName():CCmdBase("get_username"){}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -155,7 +151,6 @@ class CProgramLoaded: public CCmdBase
 public:
 	CProgramLoaded():CCmdBase("program_loaded"){}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -166,7 +161,6 @@ class CProgramLoadDone: public CCmdBase
 public:
 	CProgramLoadDone():CCmdBase("program_load_done"){}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -180,7 +174,6 @@ public:
 		addChild( new CArg("-display") );
 	}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -196,7 +189,6 @@ public:
 		addChild( new CArg("-dontsave") );
 	}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -219,7 +211,6 @@ public:
 		addChild( new CArg("-ntimes") );
 	}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -236,7 +227,6 @@ public:
 		addChild( new CArg("multi_range") );
 	}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -298,7 +288,6 @@ public:
 		addChild( new CArg("details") );
 	}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------
@@ -308,11 +297,8 @@ evx_dlog_methods [ <dlog_index> ]
 class CDlogMethods: public CCmdBase
 {
 public:
-	CDlogMethods():CCmdBase("evx_dlog_methods")
-	{
-	}
+	CDlogMethods():CCmdBase("evx_dlog_methods"){}
 	virtual bool exec();
-	virtual bool scan(std::list< std::string >& Args);
 };
 
 /* ------------------------------------------------------------------------------------------

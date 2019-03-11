@@ -192,6 +192,7 @@ bool CCmd::scan(std::list< std::string >& Args)
 
 /* ------------------------------------------------------------------------------------------
 execute get_head
+-	there should be no options for this arg
 ------------------------------------------------------------------------------------------ */
 bool CGetHead::exec()
 {
@@ -212,6 +213,13 @@ bool CGetHead::exec()
 		m_Log << "	is currently using. " << CUtil::CLog::endl;
 		m_Log << "**********************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	if (m_Args.size())
+	{		
+		m_Log << "CEX Error: cex_version: does not accept parameters. Found '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
 	}
 	else
 	{
@@ -221,20 +229,8 @@ bool CGetHead::exec()
 }
 
 /* ------------------------------------------------------------------------------------------
-there should be no options for get_head 
------------------------------------------------------------------------------------------- */
-bool CGetHead::scan(std::list< std::string >& Args)
-{
-	if (Args.size())
-	{		
-		m_Log << "CEX Error: cex_version: does not accept parameters. Found '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
-		return false;
-	}
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
 execute cex_version
+-	there should be no options
 ------------------------------------------------------------------------------------------ */
 bool CCexVersion::exec()
 {
@@ -254,6 +250,13 @@ bool CCexVersion::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "***********************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	if (m_Args.size())
+	{		
+		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
 	}
 	else
 	{
@@ -264,20 +267,6 @@ bool CCexVersion::exec()
 		m_Log << "Build OS: " << CUtil::CLog::endl;
 		m_Log << "**********************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
-
-	}
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
-there should be no options for cex_version
------------------------------------------------------------------------------------------- */
-bool CCexVersion::scan(std::list< std::string >& Args)
-{
-	if (Args.size())
-	{		
-		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
-		return false;
 	}
 	return true;
 }
@@ -304,6 +293,13 @@ bool CGetName::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "********************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	if (m_Args.size())
+	{		
+		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
 	}
 	else
 	{
@@ -313,20 +309,8 @@ bool CGetName::exec()
 }
 
 /* ------------------------------------------------------------------------------------------
-there should be no options for get_name
------------------------------------------------------------------------------------------- */
-bool CGetName::scan(std::list< std::string >& Args)
-{
-	if (Args.size())
-	{		
-		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
-		return false;
-	}
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
 execute get_username
+-	there should be no option
 ------------------------------------------------------------------------------------------ */
 bool CGetUserName::exec()
 {
@@ -347,23 +331,17 @@ bool CGetUserName::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+	
+	if (m_Args.size())
+	{		
+		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
 	}
 	else
 	{
 		m_Log << "CEX: Current session owner: " << CTester::instance().ProgCtrl()->getUserName() << CUtil::CLog::endl;
-	}
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
-there should be no options for get_username
------------------------------------------------------------------------------------------- */
-bool CGetUserName::scan(std::list< std::string >& Args)
-{
-	if (Args.size())
-	{		
-		m_Log << "CEX Error: " << name() << ": Unknown parameter '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
-		return false;
 	}
 	return true;
 }
@@ -390,6 +368,12 @@ bool CProgramLoaded::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+	if (m_Args.size())
+	{		
+		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
 	}
 	else
 	{
@@ -399,20 +383,6 @@ bool CProgramLoaded::exec()
 	}
 	return true;
 }
-
-/* ------------------------------------------------------------------------------------------
-there should be no options for program_loaded
------------------------------------------------------------------------------------------- */
-bool CProgramLoaded::scan(std::list< std::string >& Args)
-{
-	if (Args.size())
-	{		
-		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
-		return false;
-	}
-	return true;
-}
-
 
 /* ------------------------------------------------------------------------------------------
 execute program_load_done
@@ -436,6 +406,13 @@ bool CProgramLoadDone::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	if (m_Args.size())
+	{		
+		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
 	}
 	else
 	{
@@ -445,20 +422,6 @@ bool CProgramLoadDone::exec()
 	}
 	return true;
 }
-
-/* ------------------------------------------------------------------------------------------
-there should be no options for program_load_done
------------------------------------------------------------------------------------------- */
-bool CProgramLoadDone::scan(std::list< std::string >& Args)
-{
-	if (Args.size())
-	{		
-		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
-		return false;
-	}
-	return true;
-}
-
 
 /* ------------------------------------------------------------------------------------------
 execute load
@@ -488,50 +451,11 @@ bool CLoad::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "*****************************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
 	}
-	else
-	{
-		CTester& T = CTester::instance();
 
-		// is there any program loaded? if yes, ERROR
-		if (T.ProgCtrl()->isProgramLoaded())
-		{
-			m_Log << "CEX Error: Another program '" << T.ProgCtrl()->getProgramName() << "' is already loaded." << CUtil::CLog::endl;
-			return false;
-		}
-
-		// let's load program!
-		m_Log << "CEX: Program " << getValue() << " is loading " << (getChild("-display")->has("ok")? "WITH" : "WITHOUT") << " display..." << CUtil::CLog::endl;
-		T.ProgCtrl()->load( getValue().c_str(), EVXA::WAIT, getChild("-display")->has("ok")? EVXA::DISPLAY : EVXA::NO_DISPLAY );
-
-		// did something bad happend when we tried to load program?
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
-		{
-			m_Log << "CEX Error: Error in loading " << getValue()  << CUtil::CLog::endl;
-			return false;
-		} 
-		// can we check if program is actually loaded?
-		if ( T.ProgCtrl()->isProgramLoaded() )
-		{
-			m_Log << "CEX: Loaded program " << T.ProgCtrl()->getProgramName() << "." << CUtil::CLog::endl;
-			return true;
-		}
-		else
-		{
-			m_Log << "CEX Error: There is no program loaded." << CUtil::CLog::endl;
-			return false;
-		}
-	}
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
-scan arguments for load command options
------------------------------------------------------------------------------------------- */
-bool CLoad::scan(std::list< std::string >& Args)
-{
 	std::vector< std::string > v;
-	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{ 
 		std::string arg( (*it) );
 		CArg* p = getChild(arg);
@@ -561,11 +485,48 @@ bool CLoad::scan(std::list< std::string >& Args)
 	// found only one program as option, we store that
 	else setValue( v[0] );
 
+	CTester& T = CTester::instance();
+
+	// is there any program loaded? if yes, ERROR
+	if (T.ProgCtrl()->isProgramLoaded())
+	{
+		m_Log << "CEX Error: Another program '" << T.ProgCtrl()->getProgramName() << "' is already loaded." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// let's load program!
+	m_Log << "CEX: Program " << getValue() << " is loading " << (getChild("-display")->has("ok")? "WITH" : "WITHOUT") << " display..." << CUtil::CLog::endl;
+	T.ProgCtrl()->load( getValue().c_str(), EVXA::WAIT, getChild("-display")->has("ok")? EVXA::DISPLAY : EVXA::NO_DISPLAY );
+
+	// did something bad happend when we tried to load program?
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: Error in loading " << getValue()  << CUtil::CLog::endl;
+		return false;
+	} 
+	// can we check if program is actually loaded?
+	if ( T.ProgCtrl()->isProgramLoaded() )
+	{
+		m_Log << "CEX: Loaded program " << T.ProgCtrl()->getProgramName() << "." << CUtil::CLog::endl;
+		return true;
+	}
+	else
+	{
+		m_Log << "CEX Error: There is no program loaded." << CUtil::CLog::endl;
+		return false;
+	}
+
 	return true;
 }
 
 /* ------------------------------------------------------------------------------------------
-execute get_name
+scan options for unload
+-	-nowait = false by default
+-	-dontsave = false by default
+-	nWait is stored in -wait arg object
+-	if -wait value is empty then we have not receive a -wait option
+-	-wait option is default and nWait = 0 is default as well
+-	if -wait 0, it waits forever
 ------------------------------------------------------------------------------------------ */
 bool CUnload::exec()
 {
@@ -598,67 +559,16 @@ bool CUnload::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "********************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
 	}
-	else 
-	{
-		CTester& T = CTester::instance();
-		bool bWait = !getChild("-nowait")->has("ok");		
-		long nWait = getChild("-wait")->getValue().empty()? 0 : CUtil::toLong( getChild("-wait")->getValue() );
-		bool bDontSave = getChild("-dontsave")->has("ok");
 
-		// unload the program
-		if ( !T.ProgCtrl()->isProgramLoaded() )
-		{
-			m_Log << "CEX Error: There is no program loaded." << CUtil::CLog::endl;
-			return false;
-		}
-
-		const char* szProgramName =  T.ProgCtrl()->getProgramName();
-		m_Log << "CEX: Program " << szProgramName << " is unloading. This may take a few moments...." << CUtil::CLog::endl;
-
-		// execute evxa command to unload program
-		// if nWait = 0, it will wait forever
-		// bSave is ignored by evxa and original CEX command so must figure a work around to implement this behavior
-		T.ProgCtrl()->unload( bWait? EVXA::WAIT : EVXA::NO_WAIT, nWait, bDontSave );
-
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
-		{
-			m_Log << "CEX Error: Error in unloading " << szProgramName << CUtil::CLog::endl;
-			return false;
-		}
-
-		if ( !T.ProgCtrl()->isProgramLoaded() || !bWait)
-		{
-			m_Log << "CEX: Unloaded program " << szProgramName << "." << CUtil::CLog::endl;
-			return true;
-		}
-		else
-		{
-			m_Log << "CEX Error: Program " << T.ProgCtrl()->getProgramName() << " is still loaded." << CUtil::CLog::endl;
-			return false;
-		}
-	}
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
-scan options for unload
--	-nowait = false by default
--	-dontsave = false by default
--	nWait is stored in -wait arg object
--	if -wait value is empty then we have not receive a -wait option
--	-wait option is default and nWait = 0 is default as well
--	if -wait 0, it waits forever
------------------------------------------------------------------------------------------- */
-bool CUnload::scan(std::list< std::string >& Args)
-{	
 	// set default values
 	getChild("-nowait")->setValue(""); // false. waiting by default
 	getChild("-dontsave")->setValue(""); // false. saving by default
 	
 	// let's find any invalid arg
 	std::vector< std::string > v;
-	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{ 
 		std::string arg( (*it) );
 		CArg* p = getChild(arg);
@@ -680,7 +590,7 @@ bool CUnload::scan(std::list< std::string >& Args)
 				}
 				// is there no more argument after '-wait'?
 				it++;
-				if (it == Args.end())
+				if (it == m_Args.end())
 				{
 					m_Log << "CEX Error: unload: 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 					return false;
@@ -729,13 +639,59 @@ bool CUnload::scan(std::list< std::string >& Args)
 	{
 		m_Log << "CEX Error: unload: Unknown parameter '" << v[0] << "'." << CUtil::CLog::endl;
 		return false;
-	}	
+	}
 
+	// EXECUTION time!
+	CTester& T = CTester::instance();
+	bool bWait = !getChild("-nowait")->has("ok");		
+	long nWait = getChild("-wait")->getValue().empty()? 0 : CUtil::toLong( getChild("-wait")->getValue() );
+	bool bDontSave = getChild("-dontsave")->has("ok");
+
+	// unload the program
+	if ( !T.ProgCtrl()->isProgramLoaded() )
+	{
+		m_Log << "CEX Error: There is no program loaded." << CUtil::CLog::endl;
+		return false;
+	}
+
+	const char* szProgramName =  T.ProgCtrl()->getProgramName();
+	m_Log << "CEX: Program " << szProgramName << " is unloading. This may take a few moments...." << CUtil::CLog::endl;
+
+	// execute evxa command to unload program
+	// if nWait = 0, it will wait forever
+	// bSave is ignored by evxa and original CEX command so must figure a work around to implement this behavior
+	T.ProgCtrl()->unload( bWait? EVXA::WAIT : EVXA::NO_WAIT, nWait, bDontSave );
+
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: Error in unloading " << szProgramName << CUtil::CLog::endl;
+		return false;
+	}
+
+	if ( !T.ProgCtrl()->isProgramLoaded() || !bWait)
+	{
+		m_Log << "CEX: Unloaded program " << szProgramName << "." << CUtil::CLog::endl;
+		return true;
+	}
+	else
+	{
+		m_Log << "CEX Error: Program " << T.ProgCtrl()->getProgramName() << " is still loaded." << CUtil::CLog::endl;
+		return false;
+	}
 	return true;
 }
 
 /* ------------------------------------------------------------------------------------------
-execute start
+handle start command
+- 	default is -wait <0>
+- 	default is execute start only once and will not log loop count message
+-	if -nowait -wait <t>, -nowait is ignored.
+-	if -wait <t> -nowait, it's ERROR
+-	if -nowait -wait <t> -nowait, it's ERROR
+-	if -ntimes <n> is used, -nowait is ignored no matter when it's used
+- 	if -wait <t> is used multiple times, the last one gets used.
+- 	if -ntimes <n> is used multiple times, the last one gets used.
+-	n in ntimes <n> has min value of 1. any value lower than this is set to 1.
 ------------------------------------------------------------------------------------------ */
 bool CStart::exec()
 {
@@ -788,41 +744,9 @@ bool CStart::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "********************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
 	}
-	else
-	{
-		CTester& T = CTester::instance();
 
-		for (int i = 0; i < m_nLoop; i++)
-		{
-			if (m_bLoop) m_Log << "Looping (" << i + 1 << "/" << m_nLoop << ")" << CUtil::CLog::endl; // replicate original CEX printing this on loop
-
-			T.ProgCtrl()->start( m_bExitAfterExec? EVXA::NO_WAIT : EVXA::WAIT );
-
-			// if -nowait, we immediately exit after executing
-			if (m_bExitAfterExec) return true;
-		
-			// -wait <sec> occurs AFTER every execution
-			if (m_nWaitAfterExec) sleep(m_nWaitAfterExec);
-		}
-	}
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
-handle start command
-- 	default is -wait <0>
-- 	default is execute start only once and will not log loop count message
--	if -nowait -wait <t>, -nowait is ignored.
--	if -wait <t> -nowait, it's ERROR
--	if -nowait -wait <t> -nowait, it's ERROR
--	if -ntimes <n> is used, -nowait is ignored no matter when it's used
-- 	if -wait <t> is used multiple times, the last one gets used.
-- 	if -ntimes <n> is used multiple times, the last one gets used.
--	n in ntimes <n> has min value of 1. any value lower than this is set to 1.
------------------------------------------------------------------------------------------- */
-bool CStart::scan(std::list< std::string >& Args)
-{
 	// defaults
 	m_bLoop = false; // no loop
 	m_nLoop = 1; // execute once	
@@ -832,7 +756,7 @@ bool CStart::scan(std::list< std::string >& Args)
 
 	// let's find any invalid arg
 	std::vector< std::string > v;
-	for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
+	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{ 
 		std::string arg( (*it) );
 		CArg* p = getChild(arg);
@@ -848,7 +772,7 @@ bool CStart::scan(std::list< std::string >& Args)
 			{
 				// is there no more argument after '-wait'?
 				it++;
-				if (it == Args.end())
+				if (it == m_Args.end())
 				{
 					m_Log << "CEX Error: " << name() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 					return false;
@@ -894,7 +818,7 @@ bool CStart::scan(std::list< std::string >& Args)
 			{
 				// is there no more argument after '-ntimes'?
 				it++;
-				if (it == Args.end())
+				if (it == m_Args.end())
 				{
 					m_Log << "CEX Error: " << name() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 					return false;
@@ -927,11 +851,28 @@ bool CStart::scan(std::list< std::string >& Args)
 		return false;
 	}	
 
+	// EXECUTION time!
+	CTester& T = CTester::instance();
+	for (int i = 0; i < m_nLoop; i++)
+	{
+		if (m_bLoop) m_Log << "Looping (" << i + 1 << "/" << m_nLoop << ")" << CUtil::CLog::endl; // replicate original CEX printing this on loop
+
+		T.ProgCtrl()->start( m_bExitAfterExec? EVXA::NO_WAIT : EVXA::WAIT );
+
+		// if -nowait, we immediately exit after executing
+		if (m_bExitAfterExec) return true;
+	
+		// -wait <sec> occurs AFTER every execution
+		if (m_nWaitAfterExec) sleep(m_nWaitAfterExec);
+	}
+	
 	return true;
 }
 
+
 /* ------------------------------------------------------------------------------------------
 execute get_exp
+-	example expression: TestProgData.Device
 ------------------------------------------------------------------------------------------ */
 bool CGetExp::exec()
 {
@@ -952,80 +893,78 @@ bool CGetExp::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
 	}
-	else
-	{
-		CTester& T = CTester::instance();
 
-		EVX_EXPR_DISPLAY_MODE nDisplayMode;
-		if ( getChild("expression")->has("ok") ) nDisplayMode = EVX_SHOW_EXPRESSION;
-		if ( getChild("value")->has("ok") ) nDisplayMode = EVX_SHOW_VALUE;
-		if ( getChild("multi_value")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_VALUE;
-		if ( getChild("multi_range")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_RANGE;
-		m_Log << T.ProgCtrl()->getExpression( getValue().c_str(), nDisplayMode) << CUtil::CLog::endl;
-	}
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
-handle options for get_exp
--	example expression: TestProgData.Device
------------------------------------------------------------------------------------------- */
-bool CGetExp::scan(std::list< std::string >& Args)
-{
-	if (!Args.size())
+	if (!m_Args.size())
 	{		
-		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*Args.begin()) << "'." << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// if there's no param after this command then it's error. we're expecting <expression> to immediately follow -c <get_exp>
-	if (!Args.size())
+	if (!m_Args.size())
 	{
 		m_Log << "CEX Error: " << name() << ": Missing expression name." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// if there's no param  after <expression> then it's error. we're expecting one of the -display options
-	if (Args.size() < 2)
+	if (m_Args.size() < 2)
 	{
 		m_Log << "CEX Error: " << name() << ": Missing mode name." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// we strictly expect only 2 arguments after this command - <expression> and -display. anything else is error.
-	if (Args.size() > 2)
+	if (m_Args.size() > 2)
 	{
 		m_Log << "CEX Error: " << name() << ": Multiple mode names found - ";
-		for (std::list< std::string >::iterator it = Args.begin(); it != Args.end(); it++)
-		{
-			m_Log << "'" << (*it) << "', ";
-		}
+		for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++) m_Log << "'" << (*it) << "', ";
 		m_Log << CUtil::CLog::endl;
 		return false;
 	}
 
 	// store the expression to this object
-	std::list< std::string >::iterator it = Args.begin();
+	std::list< std::string >::iterator it = m_Args.begin();
 	setValue( (*it) );
 
 	// check if mode name is a valid mode.
-	it++;
-	CArg* pMode = getChild( (*it) );
+	CArg* pMode = getChild( *(++it) );
 	if (!pMode)
 	{
 		m_Log << "CEX Error: Unknown display mode type. " << (*it) <<  CUtil::CLog::endl;
 		return false;
 	}
-	else
-	{
-		pMode->setValue("ok");
-	}
+	else pMode->setValue("ok");
+
+	// EXECUTION time!
+	CTester& T = CTester::instance();
+	EVX_EXPR_DISPLAY_MODE nDisplayMode;
+	if ( getChild("expression")->has("ok") ) nDisplayMode = EVX_SHOW_EXPRESSION;
+	if ( getChild("value")->has("ok") ) nDisplayMode = EVX_SHOW_VALUE;
+	if ( getChild("multi_value")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_VALUE;
+	if ( getChild("multi_range")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_RANGE;
+	m_Log << T.ProgCtrl()->getExpression( getValue().c_str(), nDisplayMode) << CUtil::CLog::endl;
+	
 	return true;
 }
 
 /* ------------------------------------------------------------------------------------------
-execute program_load_done
+scan args and execute evx_summary
+-	it's default response is to print out unison summary states
+-	this command has several option:
+	-	details, site, partial, final, output, type
+	- 	the first arg after evx_summary must be one of the above
+	-	succeeding arg is an option and the next one after that (if exists)
+		is either param for the previous option or another option
+	-	e.g. evx_summary <partial <clear> <full> <on> 
+		-	<partial> is evx_summary option
+		-	<clear> is one of <partial>'s option
+		-	<full> is one of <partial>'s option
+		-	<on> is <full>'s option
+	-	some options must have option such as <partial> 
+		while others don't e.g. <site>	
 ------------------------------------------------------------------------------------------ */
 bool CEvxSummary::exec()
 {
@@ -1046,159 +985,14 @@ bool CEvxSummary::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
+		return true;
 	}
-	else
-	{
-		CTester& T = CTester::instance();
 
-		// did we have -c evx_summary <opt>?
-		
-		if (has("site"))
-		{
-			// do the job. note that we only care about first option of <site>
-			if ( getChild("site")->getChild("on")->has("ok") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::ON);		
-			else if ( getChild("site")->getChild("off")->has("ok") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::OFF);
-			else T.ProgCtrl()->setSummary(EVX_UpdateBreakout, T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
-
-			// display results 
-			m_Log << "CEX: evx_summary " << getValue() << " option has been ";
-			m_Log << ( (getChild("site")->getChild("on")->has("ok") || getChild("site")->getChild("off")->has("ok") )? "set":"toggled") << " to ";
-			m_Log << (T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
-			return true;
-		}
-
-		else if (has("clearfinal") || has("clearpartial"))
-		{
-			if (has("clearfinal")) T.ProgCtrl()->clearFinalSummary();
-			else T.ProgCtrl()->clearPartialSummary();
-			m_Log << "CEX: cleared "<< (has("clearfinal")? "final":"partial") << " summary." << CUtil::CLog::endl;
-			return true;
-		}	
-		
-		else if (has("partial") || has("final"))
-		{
-			// get the summary option <opt> object
-			CArg* pSummary = getChild( getValue() );
-			for(unsigned int i = 0; i < pSummary->getNumChildren(); i++)
-			{ 
-				CArg* pOpt = pSummary->getChild(i);
-				if (!pOpt->has("ok")) continue;			
-
-				// let's specify which summary type are we going to process			
-				EVX_SUMMARY_TYPE st;
-				if ( pSummary->is("partial") && pOpt->is("full") ) st = EVX_UpdateFinal; // UpdateFinal - partial full
-				else if ( pSummary->is("partial") && pOpt->is("clear") ) st = EVX_ClearPartial; // ClearPartial - partial clear
-				else if ( pSummary->is("final") && pOpt->is("clear") ) st = EVX_ClearFinal; // ClearFinal - final clear
-				else if ( pOpt->is("site") ) st = EVX_UpdateBreakout; // UpdateBreakout - site
-				else continue;
-
-				// do the job
-				if ( pOpt->getChild("on")->has("ok") ) T.ProgCtrl()->setSummary(st, EVXA::ON);
-				else if ( pOpt->getChild("off")->has("ok") ) T.ProgCtrl()->setSummary(st, EVXA::OFF);
-				else T.ProgCtrl()->setSummary(st, T.ProgCtrl()->getSummary(st) == EVXA::ON? EVXA::OFF : EVXA::ON);
-
-				// display results 
-				m_Log << "CEX: evx_summary ";
-				m_Log << (pOpt->is("site")? "": pSummary->name());
-				m_Log << (pOpt->is("site")? "": " ") << pOpt->name();
-				m_Log << " option has been " << ( (pOpt->getChild("on")->has("ok") || pOpt->getChild("off")->has("ok"))? "set":"toggled") << " to ";
-				m_Log << (T.ProgCtrl()->getSummary(st) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
-			}
-			// do we have invalid arg?
-			if ( m_strInvalidArg.length() )
-			{
-				m_Log << "CEX Error: " << name() << ": " << m_strInvalidArg << " is not a valid " << getValue() << " summary type." << CUtil::CLog::endl;
-				return false;
-			}
-			return true;
-		}
-
-		else if (has("output"))
-		{
-			// do we have invalid arg?
-			if ( m_strInvalidArg.length() )
-			{
-				m_Log << "CEX Error: " << name() << ": " << m_strInvalidArg << " is not a valid " << getValue() << " summary type." << CUtil::CLog::endl;
-				return false;
-			}
-
-			// get settings from arg options
-			if (getChild("output")->getChild("lot")->has("ok")) T.ProgCtrl()->setLotTypeSummary(EVX_LOT_SUMMARY);
-			if (getChild("output")->getChild("sublot")->has("ok")) T.ProgCtrl()->setLotTypeSummary(EVX_SUBLOT_SUMMARY);
-			if (getChild("output")->getChild("final")->has("ok")){ T.ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::ON); T.ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::OFF); }
-			if (getChild("output")->getChild("partial")->has("ok")){ T.ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::OFF); T.ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::ON); }
-
-			// do the job
-			bool bFinal = (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON)? true:false;
-			bFinal? T.ProgCtrl()->outputFinalSummary() : T.ProgCtrl()->outputPartialSummary();
-
-			// display results
-			m_Log << CUtil::CLog::endl << "CEX: " << name() << " output -- " << (bFinal? "Final" : "Partial") << "/" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? "Lot":"Sublot") << CUtil::CLog::endl;
-			if (bFinal)
-			{
-				m_Log << "     Clearing results: Sublot" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? ", Lot":"") << CUtil::CLog::endl;
-				m_Log << "     Reseting NextSerial to '1'." << CUtil::CLog::endl;
-			}
-			m_Log << CUtil::CLog::endl;
-			return true;
-		}
-		// if there's no options, then it's just a query
-		else
-		{
-			m_Log << "evx_summary status:" << CUtil::CLog::endl;
-
-			// print site state
-			EVXA::ON_OFF_TYPE state = T.ProgCtrl()->getSummary(EVX_UpdateBreakout);
-			m_Log << "    site     " << (state == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
-			// print lot type
-			EVX_LOT_TYPE_SUMMARY lot = T.ProgCtrl()->getLotTypeSummary();
-			m_Log << "    lot_type " << (lot == EVX_SUBLOT_SUMMARY? "sublot" : "lot") << CUtil::CLog::endl;
-
-			// print partial status
-			m_Log << "    partial  full " << (T.ProgCtrl()->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
-			m_Log << ",  clear " << (T.ProgCtrl()->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
-
-			// print final status
-			m_Log << "    final    clear " << (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
-		}
-	}
-	return true;
-}
-
-void printRecursive( CArg* pCurr )
-{
-	for (unsigned int i = 0; i < pCurr->getNumChildren(); i++)
-	{
-		CArg* pNext = pCurr->getChild(i);
-		if (pNext->has("ok")) std::cout << (pNext->parent()? pNext->parent()->name(): "") << (pNext->parent()? ":":"") << pNext->name() << std::endl;	
-		printRecursive( pNext );
-	}
-}
-
-/* ------------------------------------------------------------------------------------------
-handle evx_summary command
--	it's default response is to print out unison summary states
--	this command has several option:
-	-	details, site, partial, final, output, type
-	- 	the first arg after evx_summary must be one of the above
-	-	succeeding arg is an option and the next one after that (if exists)
-		is either param for the previous option or another option
-	-	e.g. evx_summary <partial <clear> <full> <on> 
-		-	<partial> is evx_summary option
-		-	<clear> is one of <partial>'s option
-		-	<full> is one of <partial>'s option
-		-	<on> is <full>'s option
-	-	some options must have option such as <partial> 
-		while others don't e.g. <site>	
-	-	
------------------------------------------------------------------------------------------- */
-bool CEvxSummary::scan(std::list< std::string >& Args)
-{
 	// if there's no options, then it's just a query
-	if (!Args.size()) return true;
+	if (!m_Args.size()) return true;
   
 	// the first option must be valid and will be considered as primary option. 
-	std::list< std::string >::iterator it = Args.begin();
+	std::list< std::string >::iterator it = m_Args.begin();
 	CArg* pSummaryType = getChild( *it );
 	if (!pSummaryType)
 	{
@@ -1215,7 +1009,7 @@ bool CEvxSummary::scan(std::list< std::string >& Args)
 
 	// now let's deal with the succeeding args. these args are expected to be -c evx_summary <opt> and their corresponding options if any
 	CArg* pCurr = pSummaryType;
-	while ( it != Args.end() )
+	while ( it != m_Args.end() )
 	{
 		CArg* pNext = pCurr->getChild( *it );
 	
@@ -1246,13 +1040,136 @@ bool CEvxSummary::scan(std::list< std::string >& Args)
 
 	// if there's still arg not processed at this point, then that's considered invalid. for some <opt> invalid arg is ERROR
 	// we want to log error due to this invalid arg during execution so we save it first
-	if (it != Args.end()) m_strInvalidArg = *it;
+	if (it != m_Args.end()) m_strInvalidArg = *it;
 
+	// EXECUTION time!
+	CTester& T = CTester::instance();
+	if (has("site"))
+	{
+		// do the job. note that we only care about first option of <site>
+		if ( getChild("site")->getChild("on")->has("ok") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::ON);		
+		else if ( getChild("site")->getChild("off")->has("ok") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::OFF);
+		else T.ProgCtrl()->setSummary(EVX_UpdateBreakout, T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
+
+		// display results 
+		m_Log << "CEX: evx_summary " << getValue() << " option has been ";
+		m_Log << ( (getChild("site")->getChild("on")->has("ok") || getChild("site")->getChild("off")->has("ok") )? "set":"toggled") << " to ";
+		m_Log << (T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+		return true;
+	}
+
+	else if (has("clearfinal") || has("clearpartial"))
+	{
+		if (has("clearfinal")) T.ProgCtrl()->clearFinalSummary();
+		else T.ProgCtrl()->clearPartialSummary();
+		m_Log << "CEX: cleared "<< (has("clearfinal")? "final":"partial") << " summary." << CUtil::CLog::endl;
+		return true;
+	}	
+	
+	else if (has("partial") || has("final"))
+	{
+		// get the summary option <opt> object
+		CArg* pSummary = getChild( getValue() );
+		for(unsigned int i = 0; i < pSummary->getNumChildren(); i++)
+		{ 
+			CArg* pOpt = pSummary->getChild(i);
+			if (!pOpt->has("ok")) continue;			
+
+			// let's specify which summary type are we going to process			
+			EVX_SUMMARY_TYPE st;
+			if ( pSummary->is("partial") && pOpt->is("full") ) st = EVX_UpdateFinal; // UpdateFinal - partial full
+			else if ( pSummary->is("partial") && pOpt->is("clear") ) st = EVX_ClearPartial; // ClearPartial - partial clear
+			else if ( pSummary->is("final") && pOpt->is("clear") ) st = EVX_ClearFinal; // ClearFinal - final clear
+			else if ( pOpt->is("site") ) st = EVX_UpdateBreakout; // UpdateBreakout - site
+			else continue;
+
+			// do the job
+			if ( pOpt->getChild("on")->has("ok") ) T.ProgCtrl()->setSummary(st, EVXA::ON);
+			else if ( pOpt->getChild("off")->has("ok") ) T.ProgCtrl()->setSummary(st, EVXA::OFF);
+			else T.ProgCtrl()->setSummary(st, T.ProgCtrl()->getSummary(st) == EVXA::ON? EVXA::OFF : EVXA::ON);
+
+			// display results 
+			m_Log << "CEX: evx_summary ";
+			m_Log << (pOpt->is("site")? "": pSummary->name());
+			m_Log << (pOpt->is("site")? "": " ") << pOpt->name();
+			m_Log << " option has been " << ( (pOpt->getChild("on")->has("ok") || pOpt->getChild("off")->has("ok"))? "set":"toggled") << " to ";
+			m_Log << (T.ProgCtrl()->getSummary(st) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+		}
+		// do we have invalid arg?
+		if ( m_strInvalidArg.length() )
+		{
+			m_Log << "CEX Error: " << name() << ": " << m_strInvalidArg << " is not a valid " << getValue() << " summary type." << CUtil::CLog::endl;
+			return false;
+		}
+		return true;
+	}
+
+	else if (has("output"))
+	{
+		// do we have invalid arg?
+		if ( m_strInvalidArg.length() )
+		{
+			m_Log << "CEX Error: " << name() << ": " << m_strInvalidArg << " is not a valid " << getValue() << " summary type." << CUtil::CLog::endl;
+			return false;
+		}
+
+		// get settings from arg options
+		if (getChild("output")->getChild("lot")->has("ok")) T.ProgCtrl()->setLotTypeSummary(EVX_LOT_SUMMARY);
+		if (getChild("output")->getChild("sublot")->has("ok")) T.ProgCtrl()->setLotTypeSummary(EVX_SUBLOT_SUMMARY);
+		if (getChild("output")->getChild("final")->has("ok")){ T.ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::ON); T.ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::OFF); }
+		if (getChild("output")->getChild("partial")->has("ok")){ T.ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::OFF); T.ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::ON); }
+
+		// do the job
+		bool bFinal = (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON)? true:false;
+		bFinal? T.ProgCtrl()->outputFinalSummary() : T.ProgCtrl()->outputPartialSummary();
+
+		// display results
+		m_Log << CUtil::CLog::endl << "CEX: " << name() << " output -- " << (bFinal? "Final" : "Partial") << "/" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? "Lot":"Sublot") << CUtil::CLog::endl;
+		if (bFinal)
+		{
+			m_Log << "     Clearing results: Sublot" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? ", Lot":"") << CUtil::CLog::endl;
+			m_Log << "     Reseting NextSerial to '1'." << CUtil::CLog::endl;
+		}
+		m_Log << CUtil::CLog::endl;
+		return true;
+	}
+	// if there's no options, then it's just a query
+	else
+	{
+		m_Log << "evx_summary status:" << CUtil::CLog::endl;
+
+		// print site state
+		EVXA::ON_OFF_TYPE state = T.ProgCtrl()->getSummary(EVX_UpdateBreakout);
+		m_Log << "    site     " << (state == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+		// print lot type
+		EVX_LOT_TYPE_SUMMARY lot = T.ProgCtrl()->getLotTypeSummary();
+		m_Log << "    lot_type " << (lot == EVX_SUBLOT_SUMMARY? "sublot" : "lot") << CUtil::CLog::endl;
+
+		// print partial status
+		m_Log << "    partial  full " << (T.ProgCtrl()->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
+		m_Log << ",  clear " << (T.ProgCtrl()->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+
+		// print final status
+		m_Log << "    final    clear " << (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+	}
 	return true;
 }
 
-/* ------------------------------------------------------------------------------------------
+void printRecursive( CArg* pCurr )
+{
+	for (unsigned int i = 0; i < pCurr->getNumChildren(); i++)
+	{
+		CArg* pNext = pCurr->getChild(i);
+		if (pNext->has("ok")) std::cout << (pNext->parent()? pNext->parent()->name(): "") << (pNext->parent()? ":":"") << pNext->name() << std::endl;	
+		printRecursive( pNext );
+	}
+}
 
+/* ------------------------------------------------------------------------------------------
+evx_dlog_methods [ <dlog_index> ]
+-	strictly accepts only 1 arg.
+-	the arg must be integer and within dlog index range
+-	if no arg is given, will process all available dlog 
 ------------------------------------------------------------------------------------------ */
 bool CDlogMethods::exec()
 {
@@ -1273,88 +1190,76 @@ bool CDlogMethods::exec()
 		m_Log << "" << CUtil::CLog::endl;
 		m_Log << "****************************************************************************" << CUtil::CLog::endl;
 		m_Log << " " << CUtil::CLog::endl;
-	}
-	else
-	{
-		CTester& T = CTester::instance();
-		// do we arg? if yes, it must be integer and has valid range
-		if ( getValue().size() )
-		{
-			if ( !CUtil::isInteger( getValue() ) )
-			{
-				m_Log << "CEX Error: expect an positive integer number for dlog index." << CUtil::CLog::endl;
-				return false;
-			}
-			
-			// check if <dlog_index> is within range
-			long n = CUtil::toLong( getValue() );
-			if ( n < 0 || n >= T.ProgCtrl()->getNumDatalogs() )
-			{
-				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
-				return false;
-			}
-		}
-
-		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
-		{
-			// try to get the <method> at this index
-			std::stringstream val;
-			// if <method> is immediate, you can query it at this index
-			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-
-			// but if <method> is buffered, it must be queried here
-			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
-
-			// if we didn't find <method>...
-			if (!val.str().size())
-			{
-				if ( getValue().size() )
-				{
-					if ( CUtil::toLong( getValue() ) == i ) 
-					{
-						m_Log << "No evx datalog method associated with dlog " << i << CUtil::CLog::endl;
-						break;			
-					}
-				}
-				else m_Log << "No evx datalog method associated with dlog " << i << CUtil::CLog::endl;
-			}
-			// if we found <method>, let's print its details
-			else
-			{
-				if ( getValue().size() )
-				{
-					if (  CUtil::toLong( getValue() ) == i ) 
-					{
-						m_Log << "Evx datalog "<< i << " method: "<< val.str() << CUtil::CLog::endl;
-						break;		
-					}	
-				}
-				else m_Log << "Evx datalog "<< i << " method: "<< val.str() << CUtil::CLog::endl;
-			}
-		}
+		return true;
 	}
 
-	return true;
-}
-
-/* ------------------------------------------------------------------------------------------
-evx_dlog_methods [ <dlog_index> ]
--	strictly accepts only 1 arg.
--	the arg must be integer and within dlog index range
--	if no arg is given, will process all available dlog 
------------------------------------------------------------------------------------------- */
-bool CDlogMethods::scan(std::list< std::string >& Args)
-{
 	// strictly accept only 1 argument
-	if (Args.size() > 1)
+	if (m_Args.size() > 1)
 	{		
 		m_Log << "CEX Error: "<< name() << ": Too many arguments." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// at this point, we know there's 1 arg. store it
-	if (Args.size()) setValue( *Args.begin() );
+	if (m_Args.size()) setValue( *m_Args.begin() );
 
+	// EXECUTION time!
+	CTester& T = CTester::instance();
+	// do we arg? if yes, it must be integer and has valid range
+	if ( getValue().size() )
+	{
+		if ( !CUtil::isInteger( getValue() ) )
+		{
+			m_Log << "CEX Error: expect an positive integer number for dlog index." << CUtil::CLog::endl;
+			return false;
+		}
+		
+		// check if <dlog_index> is within range
+		long n = CUtil::toLong( getValue() );
+		if ( n < 0 || n >= T.ProgCtrl()->getNumDatalogs() )
+		{
+			m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+			return false;
+		}
+	}
+
+	for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+	{
+		// try to get the <method> at this index
+		std::stringstream val;
+		// if <method> is immediate, you can query it at this index
+		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+
+		// but if <method> is buffered, it must be queried here
+		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+
+		// if we didn't find <method>...
+		if (!val.str().size())
+		{
+			if ( getValue().size() )
+			{
+				if ( CUtil::toLong( getValue() ) == i ) 
+				{
+					m_Log << "No evx datalog method associated with dlog " << i << CUtil::CLog::endl;
+					break;			
+				}
+			}
+			else m_Log << "No evx datalog method associated with dlog " << i << CUtil::CLog::endl;
+		}
+		// if we found <method>, let's print its details
+		else
+		{
+			if ( getValue().size() )
+			{
+				if (  CUtil::toLong( getValue() ) == i ) 
+				{
+					m_Log << "Evx datalog "<< i << " method: "<< val.str() << CUtil::CLog::endl;
+					break;		
+				}	
+			}
+			else m_Log << "Evx datalog "<< i << " method: "<< val.str() << CUtil::CLog::endl;
+		}
+	}
 	return true;
 }
 

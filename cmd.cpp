@@ -1596,6 +1596,8 @@ evx_dlog_testID [-m <method> | -n <dlog_index>] <string>
 -	if -m <method> is used, and there's multiple dlogs that uses the same <method>,
 	the first dlog gets updated. the rest are unchanged.
 -	only 1 dlog testID is accepted. more than 1 will be ERROR
+-	the <string> must be enclosed in single quotes for it to be acceptable
+	in setTestIdForStream()
 ------------------------------------------------------------------------------------------ */
 bool CDlogTestID::exec()
 {
@@ -1685,7 +1687,7 @@ bool CDlogTestID::exec()
 	// did we have a testID?
 	if ( getValue().empty() )
 	{
-		m_Log << "CEX Error: Type must be Production or ILQA." << CUtil::CLog::endl;
+		m_Log << "CEX Error: Must include the testID string or 'clear' to clear." << CUtil::CLog::endl;
 		return false;
 	}
 
@@ -1706,9 +1708,13 @@ bool CDlogTestID::exec()
 		}
 		else 
 		{
-			T.ProgCtrl()->setDatalogType (i, getValue().c_str() );
-			const char* p = T.ProgCtrl()->getDatalogType(i);
-			m_Log << "CEX: Type for dlog" << i << " set to " << (p?p:"") << "." << CUtil::CLog::endl;
+			std::stringstream ss; 
+			if (getValue().compare("clear") == 0) ss << "";
+			else ss << "'" << getValue() << "'";
+			T.ProgCtrl()->setTestIdForStream(i, ss.str().c_str() );
+			const char* p = T.ProgCtrl()->getTestIdForStream(i,0);
+			if (getValue().compare("clear") == 0) m_Log << "CEX: TestID string for dlog" << i << " has been cleared." <<  CUtil::CLog::endl;
+			else m_Log << "CEX: TestID string for dlog" << i << " set to " << (p?p:"") << "." << CUtil::CLog::endl;
 			return true;
 		}
 	}
@@ -1723,9 +1729,13 @@ bool CDlogTestID::exec()
 			
 			if (val.str().compare( getChild("-m")->getValue() ) == 0)
 			{
-				T.ProgCtrl()->setDatalogType (i, getValue().c_str());
-				const char* p = T.ProgCtrl()->getDatalogType(i);
-				m_Log << "CEX: Type for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << (p?p:"") << "." << CUtil::CLog::endl;
+				std::stringstream ss; 				
+				if (getValue().compare("clear") == 0) ss << "";
+				else ss << "'" << getValue() << "'";
+				T.ProgCtrl()->setTestIdForStream(i, ss.str().c_str());
+				const char* p = T.ProgCtrl()->getTestIdForStream(i,0);
+				if (getValue().compare("clear") == 0) m_Log << "CEX: Type for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] has been cleared." << CUtil::CLog::endl;
+				else m_Log << "CEX: TestID string for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << (p?p:"") << "." << CUtil::CLog::endl;
 				return true;
 			}
 		}
@@ -1887,4 +1897,41 @@ bool CDlogType::exec()
 	return true;
 }
 
+bool CDebug::exec()
+{
+	CTester& T = CTester::instance();
+	m_Log << "Num Datalogs: " << T.ProgCtrl()->getNumDatalogs() << CUtil::CLog::endl;
+	for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+	{
+		m_Log << "    [" << i << "] Attributes: " << T.ProgCtrl()->getNumDatalogAttributes(i) << CUtil::CLog::endl;
+		for (int j = 0; j < T.ProgCtrl()->getNumDatalogAttributes(i); j++)
+		{
+			m_Log << "        [" << j << "] " << T.ProgCtrl()->getDlogAttributeString(i, j) << CUtil::CLog::endl;
+		}
+	}
+	m_Log << CUtil::CLog::endl << "Num Datalogs: " << T.ProgCtrl()->getNumDatalogs() << CUtil::CLog::endl;
+//	for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+	for (int i = 0; i < 4; i++)
+	{
+		
+		//m_Log << "    [" << i << "] " << m_pProgCtrl->getDatalogFormat(i) << CLog::endl;
+		m_Log << "----[" << i  << "] " << T.ProgCtrl()->getDatalogString(i, -1, 0) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 0, 0) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 1, 0) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 2, 0) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 3, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 4, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 5, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 6, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 7, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 8, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 9, 1) << CUtil::CLog::endl;
+//		m_Log << "    [" << i  << "] " << m_pProgCtrl->getTestIdForStream(i, 1) << CLog::endl;
+
+//		int nDlogFormat = m_pProgCtrl->getNumDatalogFormats();
+
+	}
+
+	return true;
+}
 

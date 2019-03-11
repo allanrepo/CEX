@@ -39,8 +39,8 @@ evx_dlog_failcount <n>
 evx_dlog_file_destination <dlog_method_name> <file name>	
 evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 		[done]
 evx_dlog_methods [ <dlog_index> ]						[done]
-evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>
-evx_dlog_testID [-m <method> | -n <dlog_index>] <string>
+evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>			[done]
+evx_dlog_testID [-m <method> | -n <dlog_index>] <string>			[done]
 evx_dlog_type [-m <method> | -n <dlog_index> ] <type> 				[done]
 program_state
 process_status
@@ -364,6 +364,16 @@ public:
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 	}
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------ */
+class CDebug: public CCmdBase
+{
+public:
+	CDebug():CCmdBase("debug"){}
 	virtual bool exec();
 };
 

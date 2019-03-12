@@ -1951,6 +1951,8 @@ execute_flow <type> [-nowait|-wait <seconds>]]
 -	if multiple -wait <t> is used, the last one gets the dibs
 -	if invalid argument is used before <type>, ERROR; otherwise, it ignores the invalid
 	argument even when used before -wait <t> and -nowait
+-	NON COMPLIANT FEATURE: if -wait <t> t < 0, ERROR. original CEX ignores it and 
+	execute but since t < 0, it stays running forever without executing <type>
 ------------------------------------------------------------------------------------------ */
 bool CExecFlow::exec()
 {
@@ -1992,32 +1994,88 @@ bool CExecFlow::exec()
 				return false;
 			}
 			// is the argument after '-wait' a number?
-			if ( !CUtil::isInteger( (*it) ) )
+			if ( !CUtil::isInteger(*it) )
 			{
 				m_Log << "CEX Error: unload: '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 				return false;
-			}		
+			}	
+			// this is non compliant feature: we don't accept delay t < 0
+			if ( !CUtil::toLong(*it) < 0 )
+			{
+				m_Log << "CEX Error: " << name() << ": Invalid wait time (" << (*it) << ")." << CUtil::CLog::endl;
+				return false;
+			}
 			// let's get the number and store it in -wait arg object
-			//nWait = toLong( (*it) );
 			p->setValue( (*it) );		
-			
-			// we also set -nowait arg object as disabled
-			getChild("-nowait")->setValue("");
 			continue;								
 		}
-		
-				
-				
+		// if -wait is found, let's take the next arg as <t>.
+		else if (p->is("-nowait"))
+		{
+			p->setValue("ok");
+			continue;
+		}
+		// any other valid arg is <type>
+		else
+		{  
+			setValue( *it );
+			continue;
+		}		 
 	}
-
+ 
 	// if there's no <type>
-	if (getValue().empty())
+	if (getValue().empty()) 
 	{
 		m_Log << "CEX Error: " << name() << ": Missing type to the execute_flow command." << CUtil::CLog::endl;
 		return false;
 	}
 
+	// get the type
+	evo_flow_entry_point type = EVOF_NOT_ENTRY_POINT;
+	CArg* pType = getChild( getValue() ); 
+	if (pType->is("OnStart")) type = EVOF_ON_START; 
+	if (pType->is("OnRestart")) type = EVOF_ON_RESTART; 
+	if (pType->is("OnLoad")) type = EVOF_ON_LOAD; 
+	if (pType->is("OnUnload")) type = EVOF_ON_UNLOAD; 
+	if (pType->is("OnReset")) type = EVOF_ON_RESET; 
+	if (pType->is("OnRunTimeError")) type = EVOF_ON_RUNTIME_ERROR; 
+	if (pType->is("OnHalt")) type = EVOF_ON_HALT; 
+	if (pType->is("OnFault")) type = EVOF_ON_FAULT; 
+	if (pType->is("OnPowerDown")) type = EVOF_ON_POWERDOWN; 
+	if (pType->is("OnBeginLot")) type = EVOF_ON_BEGIN_LOT; 
+	if (pType->is("OnEndLot")) type = EVOF_ON_END_LOT; 
+	if (pType->is("OnDebug")) type = EVOF_ON_DEBUG; 
+	if (pType->is("OnGpidSrq")) type = EVOF_ON_GPIB_SRQ; 
+	if (pType->is("OnInitFlow")) type = EVOF_ON_INIT_FLOW; 
+	if (pType->is("OnAfterBin")) type = EVOF_ON_AFTER_BIN; 
+	if (pType->is("OnWaferStart")) type = EVOF_START_OF_WAFER; 
+	if (pType->is("OnWaferEnd")) type = EVOF_END_OF_WAFER; 
+	if (pType->is("OnBinOverflow")) type = EVOF_BIN_OVERFLOW; 
+	if (pType->is("Suspend")) type = EVOF_SUSPEND; 
+	if (pType->is("Resume")) type = EVOF_RESUME; 
+	if (pType->is("OnUsr0")) type = EVOF_USR_DEF_0; 
+	if (pType->is("OnUsr1")) type = EVOF_USR_DEF_1; 
+	if (pType->is("OnUsr2")) type = EVOF_USR_DEF_2; 
+	if (pType->is("OnUsr3")) type = EVOF_USR_DEF_3; 
+	if (pType->is("OnUsr4")) type = EVOF_USR_DEF_4; 
+	if (pType->is("OnUsr5")) type = EVOF_USR_DEF_5; 
+	if (pType->is("OnUsr6")) type = EVOF_USR_DEF_6; 
+	if (pType->is("OnUsr7")) type = EVOF_USR_DEF_7; 
+	if (pType->is("OnUsr8")) type = EVOF_USR_DEF_8; 
+	if (pType->is("OnUsr9")) type = EVOF_USR_DEF_9; 
 
+	// do we wait before executing?
+	if (!getChild("-wait")->getValue().empty())
+	{
+		m_Debug << "[DEBUG] Waiting for " << getChild("-wait")->getValue() << " seconds before executing " << getValue() << "..." << CUtil::CLog::endl;
+		sleep( CUtil::toLong( getChild("-wait")->getValue() ) );
+	}
+
+	// execute. consider -nowait option
+	CTester& T = CTester::instance();
+	m_Debug << "[DEBUG] Started Executing " << getValue() << "[" << type << "]..." << CUtil::CLog::endl;
+	T.ProgCtrl()->executeFlow( type, getChild("-nowait")->has("ok")? EVXA::NO_WAIT : EVXA::WAIT );
+	m_Debug << "[DEBUG] Done: -nowait " << (getChild("-nowait")->has("ok")? "enabled" : "disabled") << "." << CUtil::CLog::endl;
 	return true;
 }
 

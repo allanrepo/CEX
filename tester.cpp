@@ -40,26 +40,26 @@ bool CTester::connect(const std::string& strTesterName, int nAttempts)
   	while(nAttempts--) 
 	{
 		disconnect();
-		m_Debug << "Attempting to connect to tester <" << strTesterName.c_str() << ">..." << CUtil::CLog::endl;
+		m_Debug << "[DEBUG] Attempting to connect to tester <" << strTesterName.c_str() << ">..." << CUtil::CLog::endl;
 		// connect to tester
     		m_pTester = new TesterConnection(strTesterName.c_str());
-    		if(m_pTester->getStatus() != EVXA::OK){ m_Debug << "ERROR TesterConnection constructor" << CUtil::CLog::endl; continue; }
-		m_Debug << "TesterConnection object created..." << CUtil::CLog::endl;
+    		if(m_pTester->getStatus() != EVXA::OK){ m_Debug << "[DEBUG] ERROR TesterConnection constructor" << CUtil::CLog::endl; continue; }
+		m_Debug << "[DEBUG] TesterConnection object created..." << CUtil::CLog::endl;
 		
 		// connect to test head
     		m_pConn = new TestheadConnection(strTesterName.c_str(), m_nHead);
-    		if(m_pConn->getStatus() !=  EVXA::OK){ m_Debug << "ERROR in TestheadConnection constructor" << CUtil::CLog::endl; continue; }
-		m_Debug << "TestheadConnection object created..." << CUtil::CLog::endl;
+    		if(m_pConn->getStatus() !=  EVXA::OK){ m_Debug << "[DEBUG] ERROR in TestheadConnection constructor" << CUtil::CLog::endl; continue; }
+		m_Debug << "[DEBUG] TestheadConnection object created..." << CUtil::CLog::endl;
 
 		// create program control object, does not check if program is loaded
     		m_pProgCtrl = new ProgramControl(*m_pConn);
-    		if(m_pProgCtrl->getStatus() !=  EVXA::OK){ m_Debug << "ERROR in Program constructor" << CUtil::CLog::endl; continue; }
-		m_Debug << "ProgramControl object created..." << CUtil::CLog::endl;
+    		if(m_pProgCtrl->getStatus() !=  EVXA::OK){ m_Debug << "[DEBUG] ERROR in Program constructor" << CUtil::CLog::endl; continue; }
+		m_Debug << "[DEBUG] ProgramControl object created..." << CUtil::CLog::endl;
 
 		// create notification object
     		m_pState = new CStateNotification(*m_pConn);
-    		if(m_pState->getStatus() !=  EVXA::OK) { m_Debug << "ERROR in statePtr constructor" << CUtil::CLog::endl; continue; }
-		m_Debug << "CStateNotification object created..." << CUtil::CLog::endl;
+    		if(m_pState->getStatus() !=  EVXA::OK) { m_Debug << "[DEBUG] ERROR in statePtr constructor" << CUtil::CLog::endl; continue; }
+		m_Debug << "[DEBUG] CStateNotification object created..." << CUtil::CLog::endl;
 
 		// lets convert our tester name from std::string to crappy old C style string because the stupid software team 
 		// who designed EVXA libraries sucks so bad and too lazy to set string arguments as constants...
@@ -68,8 +68,8 @@ bool CTester::connect(const std::string& strTesterName, int nAttempts)
 
 		// create stream client
     		m_pEvxio = new CEvxioStreamClient(szTesterName, m_nHead);
-    		if(m_pEvxio->getStatus() != EVXA::OK){ m_Debug << "ERROR in EvxioStreamClient constructor" << CUtil::CLog::endl; continue; }
-		m_Debug << "CEvxioStreamClient object created..." << CUtil::CLog::endl;
+    		if(m_pEvxio->getStatus() != EVXA::OK){ m_Debug << "[DEBUG] ERROR in EvxioStreamClient constructor" << CUtil::CLog::endl; continue; }
+		m_Debug << "[DEBUG] CEvxioStreamClient object created..." << CUtil::CLog::endl;
 
 		// if we reached this point, we are able connect to tester. let's connect to evx stream now...
 		// same issue here... i could have used stringstream but forced to use C style string because the damn EVXA class
@@ -77,15 +77,15 @@ bool CTester::connect(const std::string& strTesterName, int nAttempts)
 		char szPid[1024] = "";
 		sprintf(szPid, "client_%d", getpid());
 
-    		if(m_pEvxio->ConnectEvxioStreams(m_pConn, szPid) != EVXA::OK){ m_Debug << "ERROR Connecting to evxio" << CUtil::CLog::endl; continue; }
+    		if(m_pEvxio->ConnectEvxioStreams(m_pConn, szPid) != EVXA::OK){ m_Debug << "[DEBUG] ERROR Connecting to evxio" << CUtil::CLog::endl; continue; }
     		else
 		{
 			// once the tester objects are created, let's wait until tester is ready
 		  	while(!m_pTester->isTesterReady(m_nHead)) 
 			{
-				m_Debug << "Tester NOT yet ready..." << CUtil::CLog::endl;
+				m_Debug << "[DEBUG] Tester NOT yet ready..." << CUtil::CLog::endl;
 			}
-			m_Debug << "Tester ready for use." << CUtil::CLog::endl;
+			m_Debug << "[DEBUG] Tester ready for use." << CUtil::CLog::endl;
 		  	return true; 	 
 		}
   	}

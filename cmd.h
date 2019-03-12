@@ -38,7 +38,7 @@ evx_dlog_clear_methods [ <dlog_index> ]
 evx_dlog_failcount <n>
 evx_dlog_file_destination <dlog_method_name> <file name>	
 evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 		[done]
-evx_dlog_methods [ <dlog_index> ]						[done]
+evx_dlog_methods [ <dlog_index> ]						5 [done]
 evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>			[done]
 evx_dlog_testID [-m <method> | -n <dlog_index>] <string>			[done]
 evx_dlog_type [-m <method> | -n <dlog_index> ] <type> 				[done]
@@ -374,10 +374,40 @@ execute_flow <type> [-nowait|-wait <seconds>]]
 class CExecFlow: public CCmdBase
 {
 public:
-	CExecFlow():CCmdBase("evx_dlog_testID")
+	CExecFlow():CCmdBase("execute_flow")
 	{
 		addChild( new CArg("-nowait") );
 		addChild( new CArg("-wait") );
+		addChild( new CArg("OnStart") );
+		addChild( new CArg("OnRestart") );
+		addChild( new CArg("OnLoad") );
+		addChild( new CArg("OnUnload") );
+		addChild( new CArg("OnReset") );
+		addChild( new CArg("OnRunTimeError") );
+		addChild( new CArg("OnHalt") );
+		addChild( new CArg("OnFault") );
+		addChild( new CArg("OnPowerDown") );
+		addChild( new CArg("OnBeginLot") );
+		addChild( new CArg("OnEndLot") );
+		addChild( new CArg("OnDebug") );
+		addChild( new CArg("OnGpidSrq") );
+		addChild( new CArg("OnInitFlow") );
+		addChild( new CArg("OnAfterBin") );
+		addChild( new CArg("OnWaferStart") );
+		addChild( new CArg("OnWaferEnd") );
+		addChild( new CArg("OnBinOverflow") );
+		addChild( new CArg("Suspend") );
+		addChild( new CArg("Resume") );
+		addChild( new CArg("OnUsr0") );
+		addChild( new CArg("OnUsr1") );
+		addChild( new CArg("OnUsr2") );
+		addChild( new CArg("OnUsr3") );
+		addChild( new CArg("OnUsr4") );
+		addChild( new CArg("OnUsr5") );
+		addChild( new CArg("OnUsr6") );
+		addChild( new CArg("OnUsr7") );
+		addChild( new CArg("OnUsr8") );
+		addChild( new CArg("OnUsr9") );
 	}
 	virtual bool exec();
 };

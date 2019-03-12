@@ -1935,3 +1935,43 @@ bool CDebug::exec()
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+execute_flow <type> [-nowait|-wait <seconds>]]
+-	argument sequence doesn't matter. 
+-	id -nowait is used, cex will not wait for the exec flow to finish. cex will exit 
+	immediately
+-	by default, -nowait is not used while -wait <t> t = 0
+-	if multiple -wait <t> is used, the last one gets the dibs
+-	if invalid argument is used before <type>, ERROR; otherwise, it ignores the invalid
+	argument even when used before -wait <t> and -nowait
+------------------------------------------------------------------------------------------ */
+bool CExecFlow::exec()
+{
+	// if -help, let's do it and exit
+	if ( getChild("-help")->has("ok") )
+	{ 
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                      execute_flow                    L T X" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
+	{
+		CArg* p = getChild( *it );
+	}
+
+	// if there's no <type>
+	if (getValue().empty())
+	{
+		m_Log << "CEX Error: " << name() << ": Missing type to the execute_flow command." << CUtil::CLog::endl;
+		return false;
+	}
+
+
+	return true;
+}
+
+

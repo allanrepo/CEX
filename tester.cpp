@@ -135,16 +135,17 @@ void CTester::loop()
 			perror("main_serverLoop select failed ");
 		}
 
-		if(FD_ISSET(fileno(stdin), &read_fd)) // handle requests from stdin
+		// handle requests from stdin
+		if(FD_ISSET(fileno(stdin), &read_fd)) 
 		{
 			char buf[1024] = "";
 			read(fileno(stdin), buf, 1024);
 			fprintf(stdout, ">> %s\n", buf);
 		}
 
-
+		//handle requests for state notifications.
 		if((stateSockId > 0) && (FD_ISSET(stateSockId, &read_fd))) 
-		{//handle requests for state notifications.
+		{
 			if(m_pState->respond(stateSockId) != EVXA::OK) 
 			{
 				const char *errbuf = m_pState->getStatusBuffer();
@@ -152,8 +153,10 @@ void CTester::loop()
 				return ;
 			}  
 		}
+
+		//handle requests for evxio notifications.
 		if((evxioSockId > 0) && (FD_ISSET(evxioSockId, &read_fd))) 
-		{//handle requests for evxio notifications.
+		{
 			if(m_pEvxio->streamsRespond() != EVXA::OK) 
 			{
 		//    const char *errbuf = TesterObjects.evxioPtr->getStatusBuffer();

@@ -1907,6 +1907,13 @@ bool CDlogType::exec()
 bool CDebug::exec()
 {
 	CTester& T = CTester::instance();
+
+	m_Log << "Path: >" << T.ProgCtrl()->getProgramPath() << "<" << CUtil::CLog::endl;
+	m_Log << "Name: >" << T.ProgCtrl()->getProgramName() << "<" << CUtil::CLog::endl;
+
+	return true;
+
+
 	m_Log << "Num Datalogs: " << T.ProgCtrl()->getNumDatalogs() << CUtil::CLog::endl;
 	for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
 	{
@@ -2076,6 +2083,53 @@ bool CExecFlow::exec()
 	m_Debug << "[DEBUG] Started Executing " << getValue() << "[" << type << "]..." << CUtil::CLog::endl;
 	T.ProgCtrl()->executeFlow( type, getChild("-nowait")->has("ok")? EVXA::NO_WAIT : EVXA::WAIT );
 	m_Debug << "[DEBUG] Done: -nowait " << (getChild("-nowait")->has("ok")? "enabled" : "disabled") << "." << CUtil::CLog::endl;
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+save
+------------------------------------------------------------------------------------------ */
+bool CSave::exec()
+{
+	// if -help, let's do it and exit
+	if ( getChild("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                          evx_dlog_type                         L T X" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	// can't accept any arguments
+	if (m_Args.size())
+	{
+		m_Log << "CEX Error: "<< name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// ensure there's program loaded
+	CTester& T = CTester::instance();
+	if (!T.ProgCtrl()->isProgramLoaded())
+	{	
+		m_Log << "CEX Error: There is no program loaded. " << CUtil::CLog::endl;
+		return false;
+	}
+	
+	const char* p = T.ProgCtrl()->getProgramPath();
+	if (p)
+	{
+		T.ProgCtrl()->save(p);
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log << "CEX Error: Error in saving " << p << CUtil::CLog::endl;
+			return false;
+		}	
+		else m_Log << "CEX: Program save complete. "<< CUtil::CLog::endl;
+	}
+	else m_Debug << "[DEBUG] A call to getProgramPath() did not return anything. Make sure you have program loaded." << CUtil::CLog::endl;
+
 	return true;
 }
 

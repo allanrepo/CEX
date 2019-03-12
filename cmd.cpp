@@ -601,6 +601,13 @@ bool CUnload::exec()
 					m_Log << "CEX Error: unload: '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
 					return false;
 				}		
+				// check if next arg's value is within dlog method's range
+				if ( CUtil::toLong( *it ) < 0 )
+				{
+					m_Log << "CEX Error: " << name() << ": Invalid wait time (" << (*it) << ")." << CUtil::CLog::endl;
+					return false;
+				}
+
 				// let's get the number and store it in -wait arg object
 				//nWait = toLong( (*it) );
 				p->setValue( (*it) );		
@@ -1961,6 +1968,46 @@ bool CExecFlow::exec()
 	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{
 		CArg* p = getChild( *it );
+
+		// must be invalid argument. 
+		if (!p)
+		{
+			// if we haven't found <type> yet, it's ERROR
+			if (getValue().empty())
+			{
+				m_Log << "CEX Error: execute_flow: Unknown parameter '" << (*it) << "'." << CUtil::CLog::endl;
+				return false;
+			}
+			// ignore if we already have <type> and move to next argument
+			else continue;
+		}
+
+		// if -wait is found, let's take the next arg as <t>.
+		if (p->is("-wait"))
+		{
+			// is there no more argument after '-wait'?
+			if (++it == m_Args.end())
+			{
+				m_Log << "CEX Error: unload: 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+				return false;
+			}
+			// is the argument after '-wait' a number?
+			if ( !CUtil::isInteger( (*it) ) )
+			{
+				m_Log << "CEX Error: unload: '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+				return false;
+			}		
+			// let's get the number and store it in -wait arg object
+			//nWait = toLong( (*it) );
+			p->setValue( (*it) );		
+			
+			// we also set -nowait arg object as disabled
+			getChild("-nowait")->setValue("");
+			continue;								
+		}
+		
+				
+				
 	}
 
 	// if there's no <type>

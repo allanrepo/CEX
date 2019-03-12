@@ -368,6 +368,21 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
+-c <execute_flow> opt class
+execute_flow <type> [-nowait|-wait <seconds>]]
+------------------------------------------------------------------------------------------ */
+class CExecFlow: public CCmdBase
+{
+public:
+	CExecFlow():CCmdBase("evx_dlog_testID")
+	{
+		addChild( new CArg("-nowait") );
+		addChild( new CArg("-wait") );
+	}
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
 
 ------------------------------------------------------------------------------------------ */
 class CDebug: public CCmdBase

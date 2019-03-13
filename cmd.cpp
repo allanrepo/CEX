@@ -111,7 +111,7 @@ bool CCmd::scan(std::list< std::string >& Args)
 					a.push_back(arg);
 					continue;
 				}				
-			}
+			} 
 			// at this point, we found a single exact match. let's handle it in the next codes
 		}
 
@@ -183,6 +183,14 @@ bool CCmd::scan(std::list< std::string >& Args)
 	if (!getValue().empty())
 	{
 		CArg* pCmd = getChild( getValue() );
+
+		// we know there's a valid <command>, if -h[elp] is used prior to -c, let's move it to -c
+		if (parent()->getChild("-help")->has("ok"))
+		{
+			parent()->getChild("-help")->setValue("");
+			pCmd->getChild("-help")->setValue("ok");
+		}
+
 		if (pCmd) return pCmd->scan(a);
 	}
 
@@ -196,25 +204,7 @@ execute get_head
 ------------------------------------------------------------------------------------------ */
 bool CGetHead::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "**********************************************************************" << CUtil::CLog::endl;
-		m_Log << "L T X                         get_head                           L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-	 	m_Log << "       get_head - get_head prints the number of the head currently " << CUtil::CLog::endl;
-		m_Log << "		   in use." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-	 	m_Log << "       get_head" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-	 	m_Log << "       The command get_head prints the head number that the tester " << CUtil::CLog::endl;
-		m_Log << "	is currently using. " << CUtil::CLog::endl;
-		m_Log << "**********************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	if (m_Args.size())
 	{		
@@ -230,35 +220,18 @@ bool CGetHead::exec()
 
 /* ------------------------------------------------------------------------------------------
 execute cex_version
--	there should be no options
+-	there should be no options    
 ------------------------------------------------------------------------------------------ */
-bool CCexVersion::exec()
-{
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "***********************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                         cex_version                        L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        cex_version - print version information" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        cex_version" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        Print the version information. " << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "***********************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+bool CCexVersion::exec()   
+{  
+	if ( getChild("-help")->has("ok") ) return help();
 
-	if (m_Args.size())
+	if (m_Args.size())   
 	{		
 		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
 		return false;
-	}
-	else
+	} 
+	else 
 	{
 		m_Log << " " << CUtil::CLog::endl;
 		m_Log << "**********************************************************************" << CUtil::CLog::endl;
@@ -276,25 +249,7 @@ execute get_name
 ------------------------------------------------------------------------------------------ */
 bool CGetName::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "********************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                         get_name                        L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        get_name - get_name prints the name of the current tester." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        get_name" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The command get_name prints the name of the tester that is" << CUtil::CLog::endl;
-		m_Log << "        currently being used." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "********************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	if (m_Args.size())
 	{		
@@ -314,25 +269,7 @@ execute get_username
 ------------------------------------------------------------------------------------------ */
 bool CGetUserName::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                           get_username                          L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        get_username" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
-		m_Log << "        by the login name." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 	
 	if (m_Args.size())
 	{		
@@ -351,25 +288,8 @@ execute program_loaded
 ------------------------------------------------------------------------------------------ */
 bool CProgramLoaded::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                           program_loaded                          L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        get_username" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
-		m_Log << "        by the login name." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
+
 	if (m_Args.size())
 	{		
 		m_Log << "CEX Error: " << name() << ": Unknown option '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
@@ -389,25 +309,7 @@ execute program_load_done
 ------------------------------------------------------------------------------------------ */
 bool CProgramLoadDone::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                           program_load_done                      L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        get_username" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
-		m_Log << "        by the login name." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	if (m_Args.size())
 	{		
@@ -428,31 +330,7 @@ execute load
 ------------------------------------------------------------------------------------------ */
 bool CLoad::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "*****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                            load                                  L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        load - load the specified program into the tester" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        load <pathname> [-display]" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The load command sends the indicated file to the tester to be" << CUtil::CLog::endl;
-		m_Log << "        loaded as a Cadence test program. If the file cannot be  opened" << CUtil::CLog::endl;
- 		m_Log << "       or  loaded,  or  has an incorrect \"VTI  Version\" stamp, an error" << CUtil::CLog::endl;
- 		m_Log << "       message results. " << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "        If \"-display\" is given, Cex will display all the applicable windows " << CUtil::CLog::endl;
-		m_Log << "        with the load including errorTool, tpa_server, led, and binTool." << CUtil::CLog::endl;
-		m_Log << "        By default, only the errorTool icon will be visible." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "*****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	std::vector< std::string > v;
 	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
@@ -530,37 +408,7 @@ scan options for unload
 ------------------------------------------------------------------------------------------ */
 bool CUnload::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "********************************************************************" << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        unload - unload the loaded program" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "               unload [-wait <seconds> | -nowait] [-dontsave]" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        unload  removes  the  currently  loaded  Test Program, if one is" << CUtil::CLog::endl;
-		m_Log << "        loaded, running  its on_unload procedure if it has one. " << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "        The default syntax is \"unload\" with no arguments, which performs" << CUtil::CLog::endl;
-		m_Log << "        the unload, prompts to save the Cadence program if necessary, and" << CUtil::CLog::endl;
-		m_Log << "        waits forever until the unload is finished." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "        The \"-wait\" flag allows the user to specify the number of seconds" << CUtil::CLog::endl;
-		m_Log << "        to wait for the program unload before timing out. If this flag is " << CUtil::CLog::endl;
-		m_Log << "        not specified, the program defaults to wait mode with no timeout." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "        The \"-nowait\" flag can be used to force the process to return " << CUtil::CLog::endl;
-		m_Log << "        without waiting for the unload command to complete." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "        The \"-dontsave\" flag disables the prompt for saving the Cadence " << CUtil::CLog::endl;
-		m_Log << "        program if it has changed since the last save." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "********************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	// set default values
 	getChild("-nowait")->setValue(""); // false. waiting by default
@@ -702,57 +550,7 @@ handle start command
 ------------------------------------------------------------------------------------------ */
 bool CStart::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "***********************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                         start                              L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        start - run the test program beginning with the on_start procedure" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        start [-ntimes <loop count> [-wait<seconds>]]" << CUtil::CLog::endl;
-		m_Log << "              [-nowait]" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        start  begins execution of the loaded program with the procedure" << CUtil::CLog::endl;
-		m_Log << "        on_start. The  optional -ntimes <loop count> specifies how  many" << CUtil::CLog::endl;
- 		m_Log << "       times  the  program  is  to be  executed. If -wait is specified," << CUtil::CLog::endl;
-		m_Log << "        cex waits the specified number of seconds   before  issuing  the" << CUtil::CLog::endl;
-		m_Log << "        next  start.  Here  the  looping  is  done  by  cex,  not by the" << CUtil::CLog::endl;
-		m_Log << "        tester. cex waits for the  program  to  be  started  loop  count" << CUtil::CLog::endl;
-		m_Log << "        times  before  terminating.   If  -nowait is specified, cex puts" << CUtil::CLog::endl;
- 		m_Log << "       the  request  to  run  into  the  tester's  command   queue  and" << CUtil::CLog::endl;
- 		m_Log << "       terminates,  freeing  the  shell  for  use.  Note  that  -nowait" << CUtil::CLog::endl;
- 		m_Log << "       cannot be used with -ntimes. " << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "        Example 1: Start the test program run without waiting for a response" << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "             cex -t <tester> -c start -nowait" << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "        Example 2: Run the test program for 10 loops, waiting 2 seconds " << CUtil::CLog::endl;
-		m_Log << "                   between runs" << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "             cex -t <tester> -c start -ntimes 10 -wait 2" << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
- 		m_Log << "       Example 3:" << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "        If you would like to use -ntimes but still be able to work in " << CUtil::CLog::endl;
-		m_Log << "        the same shell, run the cex command in the background with the  " << CUtil::CLog::endl;
-		m_Log << "        ampersand symbol \"&\". For example:" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "             cex -t <tester> -c start -ntimes 2000 -wait 4 &" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The above command runs the currently loaded program 2000  times," << CUtil::CLog::endl;
-		m_Log << "        waiting  4  seconds   between  runs. This occurs as a background" << CUtil::CLog::endl;
-		m_Log << "        process and the  shell  prompt  returns   immediately.  See  the" << CUtil::CLog::endl;
-		m_Log << "        manual  for  your specific shell regarding control of background" << CUtil::CLog::endl;
-		m_Log << "        processes. " << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "********************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	// defaults
 	m_bLoop = false; // no loop
@@ -883,25 +681,7 @@ execute get_exp
 ------------------------------------------------------------------------------------------ */
 bool CGetExp::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                           get_exp                      L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        get_username" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
-		m_Log << "        by the login name." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	if (!m_Args.size())
 	{		
@@ -975,25 +755,7 @@ scan args and execute evx_summary
 ------------------------------------------------------------------------------------------ */
 bool CEvxSummary::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                           evx_summary                      L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        get_username" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
-		m_Log << "        by the login name." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	// if there's no options, then it's just a query
 	if (!m_Args.size()) return true;
@@ -1180,25 +942,7 @@ evx_dlog_methods [ <dlog_index> ]
 ------------------------------------------------------------------------------------------ */
 bool CDlogMethods::exec()
 {
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                           evx_dlog_methods                          L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        get_username" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
-		m_Log << "        by the login name." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	// strictly accept only 1 argument
 	if (m_Args.size() > 1)
@@ -1282,26 +1026,7 @@ evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq>
 ------------------------------------------------------------------------------------------ */
 bool CDlogFileFreq::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                          evx_dlog_file_freq                         L T X" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " NAME" << CUtil::CLog::endl;
-		m_Log << "        get_username - get_username prints the current session owner." << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << " SYNOPSIS" << CUtil::CLog::endl;
-		m_Log << "        get_username" << CUtil::CLog::endl;
-		m_Log << "        " << CUtil::CLog::endl;
-		m_Log << "        The command get_username prints the current session owner identified" << CUtil::CLog::endl;
-		m_Log << "        by the login name." << CUtil::CLog::endl;
-		m_Log << "" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	CTester& T = CTester::instance();
 
@@ -1445,16 +1170,7 @@ evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>
 ------------------------------------------------------------------------------------------ */
 bool CDlogSampleRate::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                      evx_dlog_sample_rate                    L T X" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	CTester& T = CTester::instance();
 
@@ -1608,16 +1324,7 @@ evx_dlog_testID [-m <method> | -n <dlog_index>] <string>
 ------------------------------------------------------------------------------------------ */
 bool CDlogTestID::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                          evx_dlog_testID                         L T X" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	CTester& T = CTester::instance();
 
@@ -1765,16 +1472,7 @@ evx_dlog_type [-m <method> | -n <dlog_index> ] <type>
 ------------------------------------------------------------------------------------------ */
 bool CDlogType::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                          evx_dlog_type                         L T X" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	CTester& T = CTester::instance();
 
@@ -1963,16 +1661,7 @@ execute_flow <type> [-nowait|-wait <seconds>]]
 ------------------------------------------------------------------------------------------ */
 bool CExecFlow::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{ 
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                      execute_flow                    L T X" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{
@@ -2091,16 +1780,7 @@ save
 ------------------------------------------------------------------------------------------ */
 bool CSave::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                          evx_dlog_type                         L T X" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	// can't accept any arguments
 	if (m_Args.size())
@@ -2138,16 +1818,7 @@ save_as <program_name>
 ------------------------------------------------------------------------------------------ */
 bool CSaveAs::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                          save_as                         L T X" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	// no arguments? 
 	if (!m_Args.size())
@@ -2194,16 +1865,7 @@ restart
 ------------------------------------------------------------------------------------------ */
 bool CRestart::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                          restart                         L T X" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{
@@ -2255,21 +1917,10 @@ evx_dfilter [-m <method> | -n <dlog_index>] [<filter>]
 	-	only checks if both are used after all args are scanned. so even if
 		both were used, if there were multiple invalid args or <filters>, it
 		will complain of multiple file names found instead
-
-
 ------------------------------------------------------------------------------------------ */
 bool CDFilter::exec()
 {
-	// if -help, let's do it and exit
-	if ( getChild("-help")->has("ok") )
-	{
-		m_Log << " " << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " L T X                          evx_dfilter                         L T X" << CUtil::CLog::endl;
-		m_Log << "****************************************************************************" << CUtil::CLog::endl;
-		m_Log << " " << CUtil::CLog::endl;
-		return true;
-	}
+	if ( getChild("-help")->has("ok") ) return help();
 
 	CTester& T = CTester::instance();
 

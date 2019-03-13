@@ -73,6 +73,7 @@ protected:
 	CUtil::CLog& m_Log;
 	CUtil::CLog& m_Debug;
 	std::list< std::string > m_Args;
+	std::stringstream m_strHelpFile;
 
 public:
 	CCmdBase(const std::string& n = ""):CArg(n), m_Log(CTester::instance().m_Log), m_Debug(CTester::instance().m_Debug)
@@ -84,6 +85,32 @@ public:
 	{
 		// store args and let <command> parse them during exec()
 		m_Args = Args;
+		return true;
+	}
+	// print help for specific command
+	bool help()
+	{
+		std::ifstream fs;
+		fs.open(m_strHelpFile.str().c_str(), std::ios::in );	
+		if (!fs.is_open())
+		{
+			m_Log << "CEX Error: " << name() << ": Can't open help file '";
+			m_Log << m_strHelpFile.str() << "'" << CUtil::CLog::endl;
+			return false;
+		}			
+
+		fs.seekg(0, fs.end);
+		int n = fs.tellg();
+		fs.seekg(0, fs.beg);
+
+		if (n <= 0) return false;
+
+		char* buff = new char[n];
+		fs.read(buff, n);
+		fs.close();
+
+		m_Log << CUtil::CLog::endl << buff << CUtil::CLog::endl;
+
 		return true;
 	}
 };
@@ -118,7 +145,10 @@ public:
 class CGetHead: public CCmdBase
 {
 public:
-	CGetHead():CCmdBase("get_head"){}
+	CGetHead():CCmdBase("get_head")
+	{
+		m_strHelpFile << "./help/gethead.hlp";
+	}
 	virtual bool exec();
 };
 
@@ -128,7 +158,7 @@ public:
 class CCexVersion: public CCmdBase
 {
 public:
-	CCexVersion():CCmdBase("cex_version"){}
+	CCexVersion():CCmdBase("cex_version"){ m_strHelpFile << "./help/cex_version.hlp"; }
 	virtual bool exec();
 };
 
@@ -138,7 +168,7 @@ public:
 class CGetName: public CCmdBase
 {
 public:
-	CGetName():CCmdBase("get_name"){}
+	CGetName():CCmdBase("get_name"){ m_strHelpFile << "./help/getname.hlp"; }
 	virtual bool exec();
 };
 
@@ -148,7 +178,7 @@ public:
 class CGetUserName: public CCmdBase
 {
 public:
-	CGetUserName():CCmdBase("get_username"){}
+	CGetUserName():CCmdBase("get_username"){ m_strHelpFile << "./help/get_username.hlp"; }
 	virtual bool exec();
 };
 
@@ -158,7 +188,7 @@ public:
 class CProgramLoaded: public CCmdBase
 {
 public:
-	CProgramLoaded():CCmdBase("program_loaded"){}
+	CProgramLoaded():CCmdBase("program_loaded"){ m_strHelpFile << "./help/programloaded.hlp"; }
 	virtual bool exec();
 };
 
@@ -168,7 +198,7 @@ public:
 class CProgramLoadDone: public CCmdBase
 {
 public:
-	CProgramLoadDone():CCmdBase("program_load_done"){}
+	CProgramLoadDone():CCmdBase("program_load_done"){ m_strHelpFile << "./help/programloaddone.hlp"; }
 	virtual bool exec();
 };
 
@@ -180,6 +210,7 @@ class CLoad: public CCmdBase
 public:
 	CLoad():CCmdBase("load")
 	{
+	 	m_strHelpFile << "./help/load.hlp"; 
 		addChild( new CArg("-display") );
 	}
 	virtual bool exec();
@@ -193,6 +224,7 @@ class CUnload: public CCmdBase
 public:
 	CUnload():CCmdBase("unload")
 	{
+		m_strHelpFile << "./help/unload.hlp";
 		addChild( new CArg("-wait") );
 		addChild( new CArg("-nowait") );
 		addChild( new CArg("-dontsave") );
@@ -215,6 +247,7 @@ private:
 public:
 	CStart():CCmdBase("start")
 	{
+		m_strHelpFile << "./help/start.hlp";
 		addChild( new CArg("-wait") );
 		addChild( new CArg("-nowait") );
 		addChild( new CArg("-ntimes") );
@@ -230,6 +263,7 @@ class CGetExp: public CCmdBase
 public:
 	CGetExp():CCmdBase("get_exp")
 	{
+		m_strHelpFile << "./help/getexp.hlp";
 		addChild( new CArg("expression") );
 		addChild( new CArg("value") );
 		addChild( new CArg("multi_value") );
@@ -249,6 +283,8 @@ private:
 public:
 	CEvxSummary():CCmdBase("evx_summary"), m_strInvalidArg()
 	{
+		m_strHelpFile << "./help/evxsummary.hlp";
+
 		// configure arguments for -command <evx_summary> <site>
 		CArg* pSite = new CArg("site");
 		pSite->addChild( new CArg("on") );
@@ -306,7 +342,7 @@ evx_dlog_methods [ <dlog_index> ]
 class CDlogMethods: public CCmdBase
 {
 public:
-	CDlogMethods():CCmdBase("evx_dlog_methods"){}
+	CDlogMethods():CCmdBase("evx_dlog_methods"){ m_strHelpFile << "./help/evxdlogmethods.hlp"; }
 	virtual bool exec();
 };
 

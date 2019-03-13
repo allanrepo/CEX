@@ -10,6 +10,14 @@ bool CHelp::exec()
 }
 
 /* ------------------------------------------------------------------------------------------
+prints out general help
+------------------------------------------------------------------------------------------ */
+bool CCexHelp::exec()
+{
+	return help();
+}
+
+/* ------------------------------------------------------------------------------------------
 processes all args past -c[ommand]
 -	-t[ester] <tester> can still be called after -c[ommand] so it's processed here
 -	-c[ommand] arg object will contain the <command> as it's value if a valid 

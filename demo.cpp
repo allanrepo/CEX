@@ -42,6 +42,8 @@ int main(int argc, char **argv)
 	T.addCmd(new CDebug());
 	T.addCmd(new CExecFlow());
 	T.addCmd(new CSave());
+	T.addCmd(new CSaveAs());
+	T.addCmd(new CRestart());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

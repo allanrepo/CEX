@@ -10,6 +10,15 @@
 #include <vector>
 #include <arg.h>
 #include <cex.h>
+/*
+ for SPR
+
+
+ProgramControl.restart(int noWait = 0)
+-	argument is not int, it's EVXA::WAIT or EVXA:NO_WAIT
+
+
+*/
 
 /*
 
@@ -38,7 +47,7 @@ evx_dlog_clear_methods [ <dlog_index> ]
 evx_dlog_failcount <n>
 evx_dlog_file_destination <dlog_method_name> <file name>	
 evx_dlog_file_freq [-m <method> | -n <dlog_index> ] <file freq> 		[done]
-evx_dlog_methods [ <dlog_index> ]						5 [done]
+evx_dlog_methods [ <dlog_index> ]						[done]
 evx_dlog_sample_rate [-m <method> | -n <dlog_index>] <n>			[done]
 evx_dlog_testID [-m <method> | -n <dlog_index>] <string>			[done]
 evx_dlog_type [-m <method> | -n <dlog_index> ] <type> 				[done]
@@ -51,8 +60,8 @@ reset_program
 reset_tester <options>
 restart
 sampling on | off [-tnum <test number> [-start_after <int> -interval <int>]]
-save
-save_as <program name>
+save										[done]
+save_as <program name>								[done]
 */
 
 /* ------------------------------------------------------------------------------------------
@@ -413,12 +422,39 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
-
+-c <save> opt class
+save
 ------------------------------------------------------------------------------------------ */
 class CSave: public CCmdBase
 {
 public:
 	CSave():CCmdBase("save"){}
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <save_as> opt class
+save_as <program_name
+------------------------------------------------------------------------------------------ */
+class CSaveAs: public CCmdBase
+{
+public:
+	CSaveAs():CCmdBase("save_as"){}
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <restart> opt class
+restart
+------------------------------------------------------------------------------------------ */
+class CRestart: public CCmdBase
+{
+public:
+	CRestart():CCmdBase("restart")
+	{
+		addChild( new CArg("-nowait") );
+	}
+
 	virtual bool exec();
 };
 

@@ -2133,4 +2133,114 @@ bool CSave::exec()
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+save_as <program_name>
+------------------------------------------------------------------------------------------ */
+bool CSaveAs::exec()
+{
+	// if -help, let's do it and exit
+	if ( getChild("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                          save_as                         L T X" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	// no arguments? 
+	if (!m_Args.size())
+	{
+		m_Log << "CEX Error: " << name() << ": Missing test program name (ltx/cex)" << CUtil::CLog::endl;
+		return false;
+	}
+
+	// more than one arguments?? 
+	if (m_Args.size() > 1)
+	{
+		m_Log << "CEX Error: " << name() << ": Multiple program names found, '";
+		for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++) m_Log << "'" << (*it) << "', ";
+		m_Log << CUtil::CLog::endl;
+		return false;
+	}
+
+	// ensure there's program loaded
+	CTester& T = CTester::instance();
+	if (!T.ProgCtrl()->isProgramLoaded())
+	{	
+		m_Log << "CEX Error: There is no program loaded. " << CUtil::CLog::endl;
+		return false;
+	}
+	
+	const char* p = T.ProgCtrl()->getProgramPath();
+	if (p)
+	{
+		T.ProgCtrl()->save((*m_Args.begin()).c_str());
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log << "CEX Error: Error in saving as " << (*m_Args.begin()) << CUtil::CLog::endl;
+			return false;
+		}	
+		else m_Log << "CEX: Program was saved as " << (*m_Args.begin()) << "." << CUtil::CLog::endl;
+	}
+	else m_Debug << "[DEBUG] A call to getProgramPath() did not return anything. Make sure you have program loaded." << CUtil::CLog::endl;
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+restart
+------------------------------------------------------------------------------------------ */
+bool CRestart::exec()
+{
+	// if -help, let's do it and exit
+	if ( getChild("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                          restart                         L T X" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
+	{
+		CArg* p = getChild( *it );
+
+		// must be invalid argument. 
+		if (!p)
+		{
+			m_Log << "CEX Error: execute_flow: Unknown option '" << (*it) << "'." << CUtil::CLog::endl;
+			return false;
+		}
+
+		// if -wait is found, let's take the next arg as <t>.
+		if (p->is("-nowait"))
+		{
+			p->setValue("ok");
+			continue;
+		}		
+	}
+
+	// ensure there's program loaded
+	CTester& T = CTester::instance();
+	if (!T.ProgCtrl()->isProgramLoaded())
+	{	
+		m_Log << "CEX Error: There is no program loaded. " << CUtil::CLog::endl;
+		return false;
+	}
+	
+	T.ProgCtrl()->restart( getChild("-nowait")->has("ok")? EVXA::NO_WAIT : EVXA::WAIT );		
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: Error on restart()" << CUtil::CLog::endl;
+		return false;
+	}	
+
+	return true;
+}
+
+
 

@@ -1,5 +1,5 @@
  
- L T X                         program_loaded                     L T X
+ L T X                         program_loaded_done                   L T X
  
  NAME
         program_load_done - Prompts whether or not a program completed loading.

@@ -355,6 +355,7 @@ class CDlogFileFreq: public CCmdBase
 public:
 	CDlogFileFreq():CCmdBase("evx_dlog_file_freq")
 	{
+		m_strHelpFile << "./help/evxdlogfilefreq.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 		addChild( new CArg("Lot") );
@@ -374,6 +375,7 @@ class CDlogType: public CCmdBase
 public:
 	CDlogType():CCmdBase("evx_dlog_type")
 	{
+		m_strHelpFile << "./help/evxdlogtype.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 		addChild( new CArg("Production") );
@@ -391,6 +393,7 @@ class CDlogSampleRate: public CCmdBase
 public:
 	CDlogSampleRate():CCmdBase("evx_dlog_sample_rate")
 	{
+		m_strHelpFile << "./help/evxdlogsamplerate.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 	}
@@ -406,6 +409,7 @@ class CDlogTestID: public CCmdBase
 public:
 	CDlogTestID():CCmdBase("evx_dlog_testID")
 	{
+		m_strHelpFile << "./help/evxdlogtestid.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 	}
@@ -421,6 +425,7 @@ class CExecFlow: public CCmdBase
 public:
 	CExecFlow():CCmdBase("execute_flow")
 	{
+		m_strHelpFile << "./help/executeflow.hlp";
 		addChild( new CArg("-nowait") );
 		addChild( new CArg("-wait") );
 		addChild( new CArg("OnStart") );
@@ -464,7 +469,7 @@ save
 class CSave: public CCmdBase
 {
 public:
-	CSave():CCmdBase("save"){}
+	CSave():CCmdBase("save"){ m_strHelpFile << "./help/save.hlp"; }
 	virtual bool exec();
 };
 
@@ -475,7 +480,7 @@ save_as <program_name
 class CSaveAs: public CCmdBase
 {
 public:
-	CSaveAs():CCmdBase("save_as"){}
+	CSaveAs():CCmdBase("save_as"){ m_strHelpFile << "./help/saveas.hlp"; }
 	virtual bool exec();
 };
 
@@ -488,6 +493,7 @@ class CRestart: public CCmdBase
 public:
 	CRestart():CCmdBase("restart")
 	{
+		m_strHelpFile << "./help/restart.hlp";
 		addChild( new CArg("-nowait") );
 	}
 
@@ -503,6 +509,7 @@ class CDFilter: public CCmdBase
 public:
 	CDFilter():CCmdBase("evx_dfilter")
 	{
+		m_strHelpFile << "./help/evxdfilter.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 		addChild( new CArg("on") );

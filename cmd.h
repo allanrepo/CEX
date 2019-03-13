@@ -62,6 +62,14 @@ restart										[done]
 sampling on | off [-tnum <test number> [-start_after <int> -interval <int>]]
 save										[done]
 save_as <program name>								[done]
+list										[done]
+list_active_objects
+list_boards									[done]
+list_clients
+list_extintf_objects								[done]
+list_flows									[done]
+list_maps									[done]
+list_wafers									[done]
 */
 
 /* ------------------------------------------------------------------------------------------
@@ -510,7 +518,6 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
--c <evx_dfilter> opt class
 evx_dfilter [-m <method> | -n <dlog_index>] [<filter>]
 ------------------------------------------------------------------------------------------ */
 class CDFilter: public CCmdBase
@@ -530,7 +537,6 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
--c <list_active_objects> opt class
 list_active_objects
 ------------------------------------------------------------------------------------------ */
 class CListActiveObjects: public CCmdBase
@@ -541,7 +547,6 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
--c <list_boards> opt class
 list_boards
 ------------------------------------------------------------------------------------------ */
 class CListBoards: public CCmdBase
@@ -552,8 +557,7 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
--c <list_boards> opt class
-list_boards
+list_wafers
 ------------------------------------------------------------------------------------------ */
 class CListWafers: public CCmdBase
 {
@@ -563,7 +567,36 @@ public:
 };
 
 /* ------------------------------------------------------------------------------------------
--c <list> opt class
+list_flows
+------------------------------------------------------------------------------------------ */
+class CListFlows: public CCmdBase
+{
+public:
+	CListFlows():CCmdBase("list_flows"){ m_strHelpFile = "listflows.hlp"; }
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+list_maps
+------------------------------------------------------------------------------------------ */
+class CListMaps: public CCmdBase
+{
+public:
+	CListMaps():CCmdBase("list_maps"){ m_strHelpFile = "listmaps.hlp"; }
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+list_extintf_objects
+------------------------------------------------------------------------------------------ */
+class CListExtIntfObjects: public CCmdBase
+{
+public:
+	CListExtIntfObjects():CCmdBase("list_extintf_objects"){ m_strHelpFile = "listextintfobjects.hlp"; }
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
 list
 ------------------------------------------------------------------------------------------ */
 class CList: public CCmdBase

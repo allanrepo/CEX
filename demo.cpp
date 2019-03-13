@@ -50,6 +50,9 @@ int main(int argc, char **argv)
 	//T.addCmd(new CListActiveObjects());
 	T.addCmd(new CListBoards());
 	T.addCmd(new CListWafers());
+	T.addCmd(new CListFlows());
+	T.addCmd(new CListMaps());
+	T.addCmd(new CListExtIntfObjects());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

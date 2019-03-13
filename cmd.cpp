@@ -2269,6 +2269,149 @@ bool CListWafers::exec()
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+list_flows
+------------------------------------------------------------------------------------------ */
+bool CListFlows::exec()
+{
+	if ( getChild("-help")->has("ok") ) return help();
+
+	// can't accept any arguments
+	if (m_Args.size())
+	{
+		m_Log << "CEX Error: "<< name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	CTester& T = CTester::instance();
+
+	// get num boards
+	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveFlow);
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: Could not get the number of Active Flow's. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		return false;
+	}
+
+	// start reading boards and print into buffer.
+	m_Log.immediate = false;
+	m_Log << CUtil::CLog::endl;
+	m_Log << "   Currently available Flow's" << CUtil::CLog::endl;
+	m_Log << "--------------------------------------------" << CUtil::CLog::endl;
+
+	for (int i = 0; i < n; i++)
+	{
+		const char* p = T.ProgCtrl()->returnActiveObjects(EVX_ActiveFlow, i);
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log.clear();
+			m_Log.immediate = true;
+			m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
+			return false;
+		}
+		else m_Log << " " << p << CUtil::CLog::endl;
+	}
+	m_Log << CUtil::CLog::endl;
+	
+	// once all boards were read, flush the buffer to display list
+	m_Log.flush();
+	m_Log.immediate = true;
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+list_maps
+------------------------------------------------------------------------------------------ */
+bool CListMaps::exec()
+{
+	if ( getChild("-help")->has("ok") ) return help();
+
+	// can't accept any arguments
+	if (m_Args.size())
+	{
+		m_Log << "CEX Error: "<< name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	CTester& T = CTester::instance();
+
+	// get num boards
+	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveBinmap);
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: Could not get the number of Active Bin Map's. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		return false;
+	}
+
+	// start reading boards and print into buffer.
+	m_Log.immediate = false;
+	m_Log << CUtil::CLog::endl;
+	m_Log << "   Currently available Bin Map's" << CUtil::CLog::endl;
+	m_Log << "--------------------------------------------" << CUtil::CLog::endl;
+
+	for (int i = 0; i < n; i++)
+	{
+		const char* p = T.ProgCtrl()->returnActiveObjects(EVX_ActiveBinmap, i);
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log.clear();
+			m_Log.immediate = true;
+			m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
+			return false;
+		}
+		else m_Log << " " << p << CUtil::CLog::endl;
+	}
+	m_Log << CUtil::CLog::endl;
+	
+	// once all boards were read, flush the buffer to display list
+	m_Log.flush();
+	m_Log.immediate = true;
+	return true; 
+}
+
+/* ------------------------------------------------------------------------------------------
+list_extintf_objects
+------------------------------------------------------------------------------------------ */
+bool CListExtIntfObjects::exec()
+{
+	if ( getChild("-help")->has("ok") ) return help();
+
+	// can't accept any arguments
+	if (m_Args.size())
+	{
+		m_Log << "CEX Error: "<< name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// get list of interface objects
+	std::vector< std::string > v;
+	CTester& T = CTester::instance();
+	T.ProgCtrl()->getExtInterfaceNames(v);
+
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: Could not get the list of extintf objects. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		return false;
+	}
+
+	// start reading boards and print into buffer.
+	m_Log.immediate = false;
+	m_Log << CUtil::CLog::endl;
+	m_Log << "   Currently available extintf Objects" << CUtil::CLog::endl;
+	m_Log << "--------------------------------------------" << CUtil::CLog::endl;
+
+	for (unsigned int i = 0; i < v.size(); i++)
+	{
+		m_Log << " " << v[i] << CUtil::CLog::endl;
+	}
+	m_Log << CUtil::CLog::endl;
+	
+	// once all boards were read, flush the buffer to display list
+	m_Log.flush();
+	m_Log.immediate = true;
+	return true;
+}
+
 
 
 

@@ -37,10 +37,10 @@ evx_summary <site, partial, final> <full [on||off]> <clear [on||off]>		[done]
 evx_summary [clearfinal || clearpartial]					[done]
 evx_summary output [sublot|lot] [partial|final]					[done]
 evx_summary type [prod|ilqa]
-execute_flow <type> [-nowait|-wait <seconds>]]
+execute_flow <type> [-nowait|-wait <seconds>]]					[done]
 load <program> -display								[done]
 unload -wait <t> -nowait -dontsave							- '-dontsave' not working because both evxa and cex unload command ignores this flag find work around to implement this
-evx_dfilter [-m <method> | -n <dlog_index>] [<filter>]
+evx_dfilter [-m <method> | -n <dlog_index>] [<filter>]				[done]
 evx_dlog_after_failcount <n>
 evx_dlog_before_failcount <n>
 evx_dlog_clear_methods [ <dlog_index> ]
@@ -455,6 +455,25 @@ public:
 		addChild( new CArg("-nowait") );
 	}
 
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <evx_dfilter> opt class
+evx_dfilter [-m <method> | -n <dlog_index>] [<filter>]
+------------------------------------------------------------------------------------------ */
+class CDFilter: public CCmdBase
+{
+public:
+	CDFilter():CCmdBase("evx_dfilter")
+	{
+		addChild( new CArg("-n") );
+		addChild( new CArg("-m") );
+		addChild( new CArg("on") );
+		addChild( new CArg("off") );
+		addChild( new CArg("failonly") );
+		addChild( new CArg("default") );
+	}
 	virtual bool exec();
 };
 

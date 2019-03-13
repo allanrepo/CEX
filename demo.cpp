@@ -44,6 +44,7 @@ int main(int argc, char **argv)
 	T.addCmd(new CSave());
 	T.addCmd(new CSaveAs());
 	T.addCmd(new CRestart());
+	T.addCmd(new CDFilter());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

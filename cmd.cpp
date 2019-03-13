@@ -1908,10 +1908,10 @@ bool CDebug::exec()
 {
 	CTester& T = CTester::instance();
 
-	m_Log << "Path: >" << T.ProgCtrl()->getProgramPath() << "<" << CUtil::CLog::endl;
-	m_Log << "Name: >" << T.ProgCtrl()->getProgramName() << "<" << CUtil::CLog::endl;
+	//m_Log << "Path: >" << T.ProgCtrl()->getProgramPath() << "<" << CUtil::CLog::endl;
+	//m_Log << "Name: >" << T.ProgCtrl()->getProgramName() << "<" << CUtil::CLog::endl;
 
-	return true;
+	//return true;
 
 
 	m_Log << "Num Datalogs: " << T.ProgCtrl()->getNumDatalogs() << CUtil::CLog::endl;
@@ -2242,5 +2242,227 @@ bool CRestart::exec()
 	return true;
 }
 
+
+/* ------------------------------------------------------------------------------------------
+evx_dfilter [-m <method> | -n <dlog_index>] [<filter>]
+-	if invalid arg found, it checks first if another arg (doesn't matter what it is)
+	exists and if true, complains of multiple file names found instead 
+	- if more than 2 invalid args were used, only the first 2 gets complained about
+-	if valid <filter> is received and another arg exists after <filter>, complains of
+	multiple file names found instead
+-	only accepts on, off, failonly as <filters> if neither -n nor -m is used.
+-	complains if both -n and -m is used in any order
+	-	only checks if both are used after all args are scanned. so even if
+		both were used, if there were multiple invalid args or <filters>, it
+		will complain of multiple file names found instead
+
+
+------------------------------------------------------------------------------------------ */
+bool CDFilter::exec()
+{
+	// if -help, let's do it and exit
+	if ( getChild("-help")->has("ok") )
+	{
+		m_Log << " " << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " L T X                          evx_dfilter                         L T X" << CUtil::CLog::endl;
+		m_Log << "****************************************************************************" << CUtil::CLog::endl;
+		m_Log << " " << CUtil::CLog::endl;
+		return true;
+	}
+
+	CTester& T = CTester::instance();
+
+	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
+	{
+		CArg* p = getChild( *it );
+
+		// this arg does not match any of the valid options for this command
+		if (!p)
+		{
+			std::string strFirst(*it);
+			// if another arg exist after invalid, ERROR
+			if (++it != m_Args.end())
+			{
+				m_Log << "CEX Error: " <<name() << ": Multiple command file names found, '" << strFirst << "' and '" << (*it) << "'." << CUtil::CLog::endl;
+				return false;
+			}
+			// doesn't matter what this arg is, we check for validity later. store for now
+			setValue(*(--it));
+			continue;
+		}
+
+		if (p->is("-n"))
+		{
+			// if no arg after -n, ERROR
+			if (++it == m_Args.end())
+			{
+				m_Log << "CEX Error: " << name() << ": 'end of line' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+				return false;
+			}
+			// check if next arg is not an integer, ERROR
+			if (!CUtil::isInteger( *it ))
+			{
+				m_Log << "CEX Error: "  << name() << ": '" << (*it) << "' found where 'integer' expected (ltx/tkn)" << CUtil::CLog::endl;
+				return false;
+			}
+			// check if next arg's value is within dlog method's range
+			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= T.ProgCtrl()->getNumDatalogs() )
+			{
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+				return false;
+			}	
+			// at this point, -n <m> is valid, we save it. 
+			p->setValue( *it );
+		}
+		else if (p->is("-m"))
+		{
+			// if no arg after -m, ERROR
+			if (++it == m_Args.end())
+			{
+				m_Log << "CEX Error: Must specify a valid dlog method with '" << name() << "'." << CUtil::CLog::endl;
+				return false;
+			}
+			// at this point, -m <method> is valid, we save it. 
+			p->setValue( *it );
+		}
+		// it might be any of the valid dlog <filter>
+		else
+		{
+			std::string strFirst(*it);
+			// if another arg exist after invalid, ERROR
+			if (++it != m_Args.end())
+			{
+				m_Log << "CEX Error: " <<name() << ": Multiple command file names found, '" << strFirst << "' and '" << (*it) << "'." << CUtil::CLog::endl;
+				return false;
+			}
+			// doesn't matter what this arg is, we check for validity later. store for now
+			setValue(*(--it));
+			continue;
+		}						
+	}
+
+	// if there's no <filter> we set it to default
+	if ( getValue().empty() ) setValue("on");
+
+	// if both -n and -m were used...
+	if ( getChild("-n")->getValue().size() && getChild("-m")->getValue().size())
+	{
+		m_Log << "CEX Error: Cannot specify BOTH an existing method AND an index." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// if neither -n nor -m were used
+	if ( getChild("-n")->getValue().empty() && getChild("-m")->getValue().empty() )
+	{
+		// is <filter> = "default"? is <filter> invalid?
+		if ( has("default") || !getChild( getValue() ) )
+		{
+			m_Log << "CEX Error: Unknown or invalid filter type (must be on | off | failonly)." << CUtil::CLog::endl;
+			return false;		
+		}
+		
+		// at this point, -n and -m are not used and there's a valid <filter> or it is not specified at all
+		EVX_Filter filter = EVX_FilterOn; // default
+		if ( has("on") ) filter = EVX_FilterOn;
+		if ( has("off") ) filter = EVX_FilterOff;
+		if ( has("failonly") ) filter = EVX_FilterFail;
+
+		// if -n and -m were not specified, we are setting overall datalog setting instead.
+		T.ProgCtrl()->setDatalog(filter);
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log << "CEX Error: Could not get datalog. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+			return false;
+		}
+		else
+		{
+			m_Log << "CEX: Datalogging was turned ";
+			EVX_Filter filter = T.ProgCtrl()->getDatalog();
+			switch(filter)
+			{
+				case EVX_FilterOn:
+					m_Log << "on.";
+					break;
+				case EVX_FilterOff:
+					m_Log << "off.";
+					break;
+				case EVX_FilterFail:
+					m_Log << "failonly.";
+					break;
+				default: break;
+			};	
+			m_Log  << CUtil::CLog::endl;
+			return true;		
+		}
+	}
+
+	// at this point, either -n or -m were used. before we proceed, let's check if <filter> is invalid
+	// *** note that it makes more sense to test it on condition with or without -n and/or -m options but original
+	// CEX has separate check like this so... ***
+	if (!getChild( getValue() ))
+	{
+		m_Log << "CEX Error: Unknown filter type." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// if -n <n> is used
+	if ( getChild("-n")->getValue().size() )
+	{
+		int i = CUtil::toLong( getChild("-n")->getValue() );
+
+		// check if this is valid dlog method
+		std::stringstream val;
+		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+ 
+		if (!val.str().size())
+		{
+			m_Log << "CEX Error: Dlog index " << i << " is not associated with any methods." << CUtil::CLog::endl;
+			return false;
+		}
+		else 
+		{
+			std::stringstream ss;
+			if (has("on")) ss << "Dlog:FilterOn";
+			if (has("off")) ss << "Dlog:FilterOff";
+			if (has("failonly")) ss << "Dlog:FailOnly";
+			if (has("default")) ss << "";
+
+			T.ProgCtrl()->setDatalogString (i, 0, ss.str().c_str() );
+			const char* p = T.ProgCtrl()->getDatalogString(i, 0, 0);
+			m_Log << "CEX: Datalog filter for index " << i << " was set to " << (p?(strlen(p)?p:"default"):"") << "." << CUtil::CLog::endl;
+			return true;
+		}
+	}
+	// if -m <method> is used
+	else 
+	{
+		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+		{
+			std::stringstream val;
+			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+			
+			if (val.str().compare( getChild("-m")->getValue() ) == 0)
+			{
+				std::stringstream ss;
+				if (has("on")) ss << "Dlog:FilterOn";
+				if (has("off")) ss << "Dlog:FilterOff";
+				if (has("failonly")) ss << "Dlog:FailOnly";
+				if (has("default")) ss << "";
+
+				T.ProgCtrl()->setDatalogString (i, 0, ss.str().c_str() );
+				const char* p = T.ProgCtrl()->getDatalogString(i, 0, 0);
+				m_Log << "CEX: Datalog filter for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << (p?(strlen(p)?p:"default"):"") << "." << CUtil::CLog::endl;
+				return true;
+			}
+		}
+		m_Log << "CEX Error: The datalogging method " << getChild("-m")->getValue() << " was not found." << CUtil::CLog::endl;
+		return false;
+	}
+
+	return true;
+}
 
 

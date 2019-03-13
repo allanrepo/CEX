@@ -121,7 +121,7 @@ general help
 class CHelp: public CCmdBase
 {
 public:
-	CHelp(): CCmdBase("-help"){};
+	CHelp(): CCmdBase("-help"){ m_strHelpFile << "./help/cex.hlp"; };
 	virtual bool exec();
 };
 
@@ -145,10 +145,7 @@ public:
 class CGetHead: public CCmdBase
 {
 public:
-	CGetHead():CCmdBase("get_head")
-	{
-		m_strHelpFile << "./help/gethead.hlp";
-	}
+	CGetHead():CCmdBase("get_head"){ m_strHelpFile << "./help/gethead.hlp"; }
 	virtual bool exec();
 };
 

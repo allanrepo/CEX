@@ -6,35 +6,7 @@ prints out general help
 ------------------------------------------------------------------------------------------ */
 bool CHelp::exec()
 {
-	m_Log << "" << CUtil::CLog::endl;
-	m_Log << "LTX CEX usage: " << CUtil::CLog::endl; 
-	m_Log << "cex [-tester <tester name>] [-head(-hd) <head num>]" << CUtil::CLog::endl;
-	m_Log << "     [-timeout] <seconds>" << CUtil::CLog::endl; 
-	m_Log << "     [-debug] [-dm] [-version] [-syntax_check] [-help]" << CUtil::CLog::endl;
-	m_Log << "     [-command <command> <arg1> <arg2> ... <argN>]" << CUtil::CLog::endl;
-	m_Log << "" << CUtil::CLog::endl;
-	m_Log << "Any unambiguous abbreviations are allowed for options to the  cex command" << CUtil::CLog::endl;
-	m_Log << "itself as well as the commands listed below" << CUtil::CLog::endl;
-	m_Log << "As an example you may specify: -c, -co, -com ... -command." << CUtil::CLog::endl;
-	m_Log << "" << CUtil::CLog::endl;
-	m_Log << "The following environment variables are recognized to specify" << CUtil::CLog::endl;
-	m_Log << "the tester environment:                  " << CUtil::CLog::endl;
-	m_Log << "    LTX_TESTER=<tester name>   - specify tester" << CUtil::CLog::endl;
-	m_Log << "    HEAD=<head num>        	 - specify head" << CUtil::CLog::endl;
-	m_Log << "    LTX_CEX_DEBUG          	 - if set causes debugging info to be printed" << CUtil::CLog::endl;
-	m_Log << "    LTX_CEX_VERSION        	 - if set causes version info to be printed" << CUtil::CLog::endl;
-	m_Log << "    LTX_CEX_SYNTAX_CHECK   	 - if set causes syntax to be check, commands are NOT executed" << CUtil::CLog::endl;
-	m_Log << "    LTX_CEX_TIMEOUT=<secs> 	 - if set causes all readback from the tester " << CUtil::CLog::endl;
-	m_Log << "                                 to fail after waiting <secs> seconds." << CUtil::CLog::endl;
-	m_Log << "                                 <secs> <= 0 is ignored." << CUtil::CLog::endl;
-	m_Log << "" << CUtil::CLog::endl;
-	m_Log << "LTX CEX commands:" << CUtil::CLog::endl;
-	m_Log << "    (all commands will accept the options -help, -? to get help)" << CUtil::CLog::endl;
-	m_Log << "add_stream <client name> <stream name>" << CUtil::CLog::endl;
-	m_Log << "cex_help" << CUtil::CLog::endl;
-	m_Log << "cex_version" << CUtil::CLog::endl;
-	m_Log << "clear_memories <options>" << CUtil::CLog::endl;
-	m_Log << "" << CUtil::CLog::endl;
+	return help();
 }
 
 /* ------------------------------------------------------------------------------------------

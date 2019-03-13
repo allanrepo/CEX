@@ -58,7 +58,7 @@ qa_mode off | inline | 100pct
 qa_retest_count <value>
 reset_program
 reset_tester <options>
-restart
+restart										[done]
 sampling on | off [-tnum <test number> [-start_after <int> -interval <int>]]
 save										[done]
 save_as <program name>								[done]

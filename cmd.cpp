@@ -2096,4 +2096,179 @@ bool CDFilter::exec()
 	return true;
 }
 
+/* ------------------------------------------------------------------------------------------
+list
+------------------------------------------------------------------------------------------ */
+bool CList::exec()
+{
+	if ( getChild("-help")->has("ok") ) return help();
+
+	// can't accept any arguments
+	if (m_Args.size())
+	{
+		m_Log << "CEX Error: "<< name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	// ensure there's program loaded
+	CTester& T = CTester::instance();
+	if (!T.ProgCtrl()->isProgramLoaded())
+	{	
+		m_Log << "CEX Error: There is no program loaded. " << CUtil::CLog::endl;
+		return false;
+	} 
+
+	
+	// print loaded program name
+	const char* p = T.ProgCtrl()->getProgramName();
+	if (p)
+	{
+		m_Log << "Loaded Program:" << CUtil::CLog::endl;
+		m_Log << "    " << p << CUtil::CLog::endl;
+	}
+	else m_Debug << "[DEBUG] A call to getProgramName() did not return anything. Make sure you have program loaded." << CUtil::CLog::endl;
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+list_active_objects
+------------------------------------------------------------------------------------------ */
+bool CListActiveObjects::exec()
+{
+	if ( getChild("-help")->has("ok") ) return help();
+
+	// can't accept any arguments
+	if (m_Args.size())
+	{
+		m_Log << "CEX Error: "<< name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	CTester& T = CTester::instance();
+
+	// get num active objects
+	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveAdapter);
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		return false;
+	}
+	else m_Log << "numActiveAdapter: " << n << CUtil::CLog::endl;
+
+
+
+	const char* p = T.ProgCtrl()->getActiveObject(EVX_ActiveAdapter);
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		return false;
+	}
+	else m_Log << "ActiveAdapter: " << p << CUtil::CLog::endl;
+
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+list_boards
+------------------------------------------------------------------------------------------ */
+bool CListBoards::exec()
+{
+	if ( getChild("-help")->has("ok") ) return help();
+
+	// can't accept any arguments
+	if (m_Args.size())
+	{
+		m_Log << "CEX Error: "<< name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	CTester& T = CTester::instance();
+
+	// get num boards
+	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveAdapter);
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: Could not get the number of Active Adapter Board's. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		return false;
+	}
+
+	// start reading boards and print into buffer.
+	m_Log.immediate = false;
+	m_Log << CUtil::CLog::endl;
+	m_Log << "  Currently available Adapter Board's" << CUtil::CLog::endl;
+	m_Log << "--------------------------------------------" << CUtil::CLog::endl;
+
+	for (int i = 0; i < n; i++)
+	{
+		const char* p = T.ProgCtrl()->returnActiveObjects(EVX_ActiveAdapter, i);
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log.clear();
+			m_Log.immediate = true;
+			m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
+			return false;
+		}
+		else m_Log << " " << p << CUtil::CLog::endl;
+	}
+	m_Log << CUtil::CLog::endl;
+	
+	// once all boards were read, flush the buffer to display list
+	m_Log.flush();
+	m_Log.immediate = true;
+	return true;
+}
+
+/* ------------------------------------------------------------------------------------------
+list_wafers
+------------------------------------------------------------------------------------------ */
+bool CListWafers::exec()
+{
+	if ( getChild("-help")->has("ok") ) return help();
+
+	// can't accept any arguments
+	if (m_Args.size())
+	{
+		m_Log << "CEX Error: "<< name() << ": Unknown parameter '" << (*m_Args.begin()) << "'." << CUtil::CLog::endl;
+		return false;
+	}
+
+	CTester& T = CTester::instance();
+
+	// get num boards
+	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveWafer);
+	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	{
+		m_Log << "CEX Error: Could not get the number of Active Wafer's. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		return false;
+	}
+
+	// start reading boards and print into buffer.
+	m_Log.immediate = false;
+	m_Log << CUtil::CLog::endl;
+	m_Log << "   Currently available Wafer's" << CUtil::CLog::endl;
+	m_Log << "--------------------------------------------" << CUtil::CLog::endl;
+
+	for (int i = 0; i < n; i++)
+	{
+		const char* p = T.ProgCtrl()->returnActiveObjects(EVX_ActiveWafer, i);
+		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		{
+			m_Log.clear();
+			m_Log.immediate = true;
+			m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
+			return false;
+		}
+		else m_Log << " " << p << CUtil::CLog::endl;
+	}
+	m_Log << CUtil::CLog::endl;
+	
+	// once all boards were read, flush the buffer to display list
+	m_Log.flush();
+	m_Log.immediate = true;
+	return true;
+}
+
+
+
 

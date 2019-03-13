@@ -46,6 +46,10 @@ int main(int argc, char **argv)
 	T.addCmd(new CRestart());
 	T.addCmd(new CDFilter());
 	T.addCmd(new CCexHelp());
+	T.addCmd(new CList());
+	//T.addCmd(new CListActiveObjects());
+	T.addCmd(new CListBoards());
+	T.addCmd(new CListWafers());
 
 	// parse command line args and execute 
 	if (T.scan(argc, argv)) T.exec();

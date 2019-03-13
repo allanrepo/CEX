@@ -73,7 +73,7 @@ protected:
 	CUtil::CLog& m_Log;
 	CUtil::CLog& m_Debug;
 	std::list< std::string > m_Args;
-	std::stringstream m_strHelpFile;
+	std::string m_strHelpFile;
 
 public:
 	CCmdBase(const std::string& n = ""):CArg(n), m_Log(CTester::instance().m_Log), m_Debug(CTester::instance().m_Debug)
@@ -90,12 +90,14 @@ public:
 	// print help for specific command
 	bool help()
 	{
+		if (m_strHelpFile.empty()) return false;
+		m_strHelpFile.insert(0, "./help/");
 		std::ifstream fs;
-		fs.open(m_strHelpFile.str().c_str(), std::ios::in );	
+		fs.open(m_strHelpFile.c_str(), std::ios::in );	
 		if (!fs.is_open())
 		{
 			m_Log << "CEX Error: " << name() << ": Can't open help file '";
-			m_Log << m_strHelpFile.str() << "'" << CUtil::CLog::endl;
+			m_Log << m_strHelpFile << "'" << CUtil::CLog::endl;
 			return false;
 		}			
 
@@ -121,7 +123,7 @@ general help
 class CHelp: public CCmdBase
 {
 public:
-	CHelp(): CCmdBase("-help"){ m_strHelpFile << "./help/cex.hlp"; };
+	CHelp(): CCmdBase("-help"){ m_strHelpFile = "cex.hlp"; };
 	virtual bool exec();
 };
 
@@ -131,7 +133,7 @@ general help
 class CCexHelp: public CCmdBase
 {
 public:
-	CCexHelp(): CCmdBase("cex_help"){ m_strHelpFile << "./help/cex.hlp"; };
+	CCexHelp(): CCmdBase("cex_help"){ m_strHelpFile = "cex.hlp"; };
 	virtual bool exec();
 };
 
@@ -155,7 +157,7 @@ public:
 class CGetHead: public CCmdBase
 {
 public:
-	CGetHead():CCmdBase("get_head"){ m_strHelpFile << "./help/gethead.hlp"; }
+	CGetHead():CCmdBase("get_head"){ m_strHelpFile = "gethead.hlp"; }
 	virtual bool exec();
 };
 
@@ -165,7 +167,7 @@ public:
 class CCexVersion: public CCmdBase
 {
 public:
-	CCexVersion():CCmdBase("cex_version"){ m_strHelpFile << "./help/cex_version.hlp"; }
+	CCexVersion():CCmdBase("cex_version"){ m_strHelpFile = "cex_version.hlp"; }
 	virtual bool exec();
 };
 
@@ -175,7 +177,7 @@ public:
 class CGetName: public CCmdBase
 {
 public:
-	CGetName():CCmdBase("get_name"){ m_strHelpFile << "./help/getname.hlp"; }
+	CGetName():CCmdBase("get_name"){ m_strHelpFile = "getname.hlp"; }
 	virtual bool exec();
 };
 
@@ -185,7 +187,7 @@ public:
 class CGetUserName: public CCmdBase
 {
 public:
-	CGetUserName():CCmdBase("get_username"){ m_strHelpFile << "./help/get_username.hlp"; }
+	CGetUserName():CCmdBase("get_username"){ m_strHelpFile = "get_username.hlp"; }
 	virtual bool exec();
 };
 
@@ -195,7 +197,7 @@ public:
 class CProgramLoaded: public CCmdBase
 {
 public:
-	CProgramLoaded():CCmdBase("program_loaded"){ m_strHelpFile << "./help/programloaded.hlp"; }
+	CProgramLoaded():CCmdBase("program_loaded"){ m_strHelpFile = "programloaded.hlp"; }
 	virtual bool exec();
 };
 
@@ -205,7 +207,7 @@ public:
 class CProgramLoadDone: public CCmdBase
 {
 public:
-	CProgramLoadDone():CCmdBase("program_load_done"){ m_strHelpFile << "./help/programloaddone.hlp"; }
+	CProgramLoadDone():CCmdBase("program_load_done"){ m_strHelpFile = "programloaddone.hlp"; }
 	virtual bool exec();
 };
 
@@ -217,7 +219,7 @@ class CLoad: public CCmdBase
 public:
 	CLoad():CCmdBase("load")
 	{
-	 	m_strHelpFile << "./help/load.hlp"; 
+	 	m_strHelpFile = "load.hlp"; 
 		addChild( new CArg("-display") );
 	}
 	virtual bool exec();
@@ -231,7 +233,7 @@ class CUnload: public CCmdBase
 public:
 	CUnload():CCmdBase("unload")
 	{
-		m_strHelpFile << "./help/unload.hlp";
+		m_strHelpFile = "unload.hlp";
 		addChild( new CArg("-wait") );
 		addChild( new CArg("-nowait") );
 		addChild( new CArg("-dontsave") );
@@ -254,7 +256,7 @@ private:
 public:
 	CStart():CCmdBase("start")
 	{
-		m_strHelpFile << "./help/start.hlp";
+		m_strHelpFile = "start.hlp";
 		addChild( new CArg("-wait") );
 		addChild( new CArg("-nowait") );
 		addChild( new CArg("-ntimes") );
@@ -270,7 +272,7 @@ class CGetExp: public CCmdBase
 public:
 	CGetExp():CCmdBase("get_exp")
 	{
-		m_strHelpFile << "./help/getexp.hlp";
+		m_strHelpFile = "getexp.hlp";
 		addChild( new CArg("expression") );
 		addChild( new CArg("value") );
 		addChild( new CArg("multi_value") );
@@ -290,7 +292,7 @@ private:
 public:
 	CEvxSummary():CCmdBase("evx_summary"), m_strInvalidArg()
 	{
-		m_strHelpFile << "./help/evxsummary.hlp";
+		m_strHelpFile = "evxsummary.hlp";
 
 		// configure arguments for -command <evx_summary> <site>
 		CArg* pSite = new CArg("site");
@@ -349,7 +351,7 @@ evx_dlog_methods [ <dlog_index> ]
 class CDlogMethods: public CCmdBase
 {
 public:
-	CDlogMethods():CCmdBase("evx_dlog_methods"){ m_strHelpFile << "./help/evxdlogmethods.hlp"; }
+	CDlogMethods():CCmdBase("evx_dlog_methods"){ m_strHelpFile = "evxdlogmethods.hlp"; }
 	virtual bool exec();
 };
 
@@ -362,7 +364,7 @@ class CDlogFileFreq: public CCmdBase
 public:
 	CDlogFileFreq():CCmdBase("evx_dlog_file_freq")
 	{
-		m_strHelpFile << "./help/evxdlogfilefreq.hlp";
+		m_strHelpFile = "evxdlogfilefreq.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 		addChild( new CArg("Lot") );
@@ -382,7 +384,7 @@ class CDlogType: public CCmdBase
 public:
 	CDlogType():CCmdBase("evx_dlog_type")
 	{
-		m_strHelpFile << "./help/evxdlogtype.hlp";
+		m_strHelpFile = "evxdlogtype.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 		addChild( new CArg("Production") );
@@ -400,7 +402,7 @@ class CDlogSampleRate: public CCmdBase
 public:
 	CDlogSampleRate():CCmdBase("evx_dlog_sample_rate")
 	{
-		m_strHelpFile << "./help/evxdlogsamplerate.hlp";
+		m_strHelpFile = "evxdlogsamplerate.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 	}
@@ -416,7 +418,7 @@ class CDlogTestID: public CCmdBase
 public:
 	CDlogTestID():CCmdBase("evx_dlog_testID")
 	{
-		m_strHelpFile << "./help/evxdlogtestid.hlp";
+		m_strHelpFile = "evxdlogtestid.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 	}
@@ -432,7 +434,7 @@ class CExecFlow: public CCmdBase
 public:
 	CExecFlow():CCmdBase("execute_flow")
 	{
-		m_strHelpFile << "./help/executeflow.hlp";
+		m_strHelpFile = "executeflow.hlp";
 		addChild( new CArg("-nowait") );
 		addChild( new CArg("-wait") );
 		addChild( new CArg("OnStart") );
@@ -476,7 +478,7 @@ save
 class CSave: public CCmdBase
 {
 public:
-	CSave():CCmdBase("save"){ m_strHelpFile << "./help/save.hlp"; }
+	CSave():CCmdBase("save"){ m_strHelpFile = "save.hlp"; }
 	virtual bool exec();
 };
 
@@ -487,7 +489,7 @@ save_as <program_name
 class CSaveAs: public CCmdBase
 {
 public:
-	CSaveAs():CCmdBase("save_as"){ m_strHelpFile << "./help/saveas.hlp"; }
+	CSaveAs():CCmdBase("save_as"){ m_strHelpFile = "saveas.hlp"; }
 	virtual bool exec();
 };
 
@@ -500,7 +502,7 @@ class CRestart: public CCmdBase
 public:
 	CRestart():CCmdBase("restart")
 	{
-		m_strHelpFile << "./help/restart.hlp";
+		m_strHelpFile = "restart.hlp";
 		addChild( new CArg("-nowait") );
 	}
 
@@ -516,7 +518,7 @@ class CDFilter: public CCmdBase
 public:
 	CDFilter():CCmdBase("evx_dfilter")
 	{
-		m_strHelpFile << "./help/evxdfilter.hlp";
+		m_strHelpFile = "evxdfilter.hlp";
 		addChild( new CArg("-n") );
 		addChild( new CArg("-m") );
 		addChild( new CArg("on") );
@@ -526,6 +528,52 @@ public:
 	}
 	virtual bool exec();
 };
+
+/* ------------------------------------------------------------------------------------------
+-c <list_active_objects> opt class
+list_active_objects
+------------------------------------------------------------------------------------------ */
+class CListActiveObjects: public CCmdBase
+{
+public:
+	CListActiveObjects():CCmdBase("list_active_objects"){ m_strHelpFile = "listactiveobjects.hlp"; }
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <list_boards> opt class
+list_boards
+------------------------------------------------------------------------------------------ */
+class CListBoards: public CCmdBase
+{
+public:
+	CListBoards():CCmdBase("list_boards"){ m_strHelpFile = "listboards.hlp"; }
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <list_boards> opt class
+list_boards
+------------------------------------------------------------------------------------------ */
+class CListWafers: public CCmdBase
+{
+public:
+	CListWafers():CCmdBase("list_wafers"){ m_strHelpFile = "listwafers.hlp"; }
+	virtual bool exec();
+};
+
+/* ------------------------------------------------------------------------------------------
+-c <list> opt class
+list
+------------------------------------------------------------------------------------------ */
+class CList: public CCmdBase
+{
+public:
+	CList():CCmdBase("list"){ m_strHelpFile = "list.hlp"; }
+	virtual bool exec();
+};
+
+
 
 /* ------------------------------------------------------------------------------------------
 -c <save> opt class

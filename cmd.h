@@ -98,8 +98,11 @@ public:
 	// print help for specific command
 	bool help()
 	{
+		// if no filename we bail. otherwise, append with dir path
 		if (m_strHelpFile.empty()) return false;
 		m_strHelpFile.insert(0, "./help/");
+
+		// open the help file 
 		std::ifstream fs;
 		fs.open(m_strHelpFile.c_str(), std::ios::in );	
 		if (!fs.is_open())
@@ -109,16 +112,20 @@ public:
 			return false;
 		}			
 
+		// get the size of file in bytes
 		fs.seekg(0, fs.end);
 		int n = fs.tellg();
 		fs.seekg(0, fs.beg);
 
+		// is there content in the file?
 		if (n <= 0) return false;
 
+		// copy the file content into buffer
 		char* buff = new char[n];
 		fs.read(buff, n);
 		fs.close();
 
+		// print out the contents
 		m_Log << CUtil::CLog::endl << buff << CUtil::CLog::endl;
 
 		return true;
@@ -157,6 +164,11 @@ public:
 		addChild( &CTester::instance() );
 	} 
 	virtual bool scan(std::list< std::string >& Args);
+
+	void clear( CArg* pCmd )
+	{
+		
+	}
 };
 
 /* ------------------------------------------------------------------------------------------

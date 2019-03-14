@@ -115,6 +115,14 @@ void CTester::loop()
 {
 	while(true)
 	{
+		std::string s;
+		std::cout << "cex>";
+		std::cin >> s;
+		std::cout << s << std::endl;
+
+		
+
+		continue;
 		fd_set read_fd;
 		int stateSockId = m_pState->getSocketId();
 		int evxioSockId = m_pEvxio->getEvxioSocketId();
@@ -128,6 +136,8 @@ void CTester::loop()
 
 		int num_fds = ((stateSockId > evxioSockId) ? stateSockId : evxioSockId);
 		num_fds = ((num_fds > errorSockId) ? num_fds + 1 : errorSockId +1);
+			
+		
 
 		int num_ready;
 		if((num_ready = select(num_fds, &read_fd, NULL, NULL, NULL)) < 0) 
@@ -140,7 +150,7 @@ void CTester::loop()
 		{
 			char buf[1024] = "";
 			read(fileno(stdin), buf, 1024);
-			fprintf(stdout, ">> %s\n", buf);
+			fprintf(stdout, "%s\n", buf);
 		}
 
 		//handle requests for state notifications.

@@ -153,6 +153,7 @@ bool CCex::scan(std::list< std::string >& Args)
 		{
 			std::list< std::string > c;
 			c.splice(c.begin(), Args, ++it, Args.end() );
+			v[0]->setValue(""); // clear it's value before we proceed
 			return v[0]->scan(c);			
 		}	
 	}
@@ -202,5 +203,37 @@ bool CCex::exec()
 	return true;
 }
 
+
+
+/* ------------------------------------------------------------------------------------------
+ 
+------------------------------------------------------------------------------------------ */
+void CCex::loop()
+{
+	while(true)
+	{
+		std::string s;
+		std::cout << "cex>";
+		std::cin >> s;
+		std::cout << s << std::endl;
+		
+		// parse entry string and store each words in list
+		std::list< std::string > v;
+
+		// clear the -c[ommand] 
+		getChild("-command")->setValue("");
+
+		// pass it to -c[ommand] to find the <command>
+		// returns true if no error is found
+		if ( !getChild("-command")->scan(v) ) 
+		{
+			continue;
+		}
+
+		CArg* pCmd = getChild("-command");
+		pCmd = pCmd->getChild( pCmd->getValue() );
+		if (pCmd) pCmd->exec();
+	}
+}
 
 

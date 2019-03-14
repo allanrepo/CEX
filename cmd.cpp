@@ -163,15 +163,20 @@ bool CCmd::scan(std::list< std::string >& Args)
 	if (!getValue().empty())
 	{
 		CArg* pCmd = getChild( getValue() );
-
-		// we know there's a valid <command>, if -h[elp] is used prior to -c, let's move it to -c
-		if (parent()->getChild("-help")->has("ok"))
+		if (pCmd)
 		{
-			parent()->getChild("-help")->setValue("");
-			pCmd->getChild("-help")->setValue("ok");
-		}
+			// let's clear the the value of this <command> as well as the values of its children recursively
+			clear( pCmd );
 
-		if (pCmd) return pCmd->scan(a);
+			// we know there's a valid <command>, if -h[elp] is used prior to -c, let's move it to -c
+			if (parent()->getChild("-help")->has("ok"))
+			{
+				parent()->getChild("-help")->setValue("");
+				pCmd->getChild("-help")->setValue("ok");
+			}
+			// let's scan the args now for this <command>
+			return pCmd->scan(a);
+		}
 	}
 
 	// if there's no <command> then we don't do anything. let tester go into loop mode.

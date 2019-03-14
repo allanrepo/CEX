@@ -36,6 +36,11 @@ public:
 	// add commands
 	void addCmd( CArg* pCmd );
 
+	void clear( CArg* pCmd );
+
+	// enter into loop and monitor command line entries
+	void loop();
+
 	// virtual methods from CArg to be overriden
 	virtual bool exec();
 	virtual bool scan(std::list< std::string >& Args);	

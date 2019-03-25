@@ -106,7 +106,7 @@ void CTester::disconnect()
 	SAFE_DELETE( m_pProgCtrl );
 	SAFE_DELETE( m_pState );
 	SAFE_DELETE( m_pEvxio );
-}
+} 
 
 /* ------------------------------------------------------------------------------------------
 application's loop
@@ -115,14 +115,6 @@ void CTester::loop()
 {
 	while(true)
 	{
-		std::string s;
-		std::cout << "cex>";
-		std::cin >> s;
-		std::cout << s << std::endl;
-
-		
-
-		continue;
 		fd_set read_fd;
 		int stateSockId = m_pState->getSocketId();
 		int evxioSockId = m_pEvxio->getEvxioSocketId();
@@ -187,4 +179,11 @@ void CTester::loop()
 		}
 	}
 }
+
+ProgramControl* const ProgCtrl()
+{
+	CTester& T = CTester::instance();
+	return T.ProgCtrl();
+}
+
 

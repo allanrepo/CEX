@@ -194,10 +194,10 @@ bool CCex::exec()
 		CArg* pCmd = getChild("-command")->getChild( cmd );
 
 		if (pCmd) pCmd->exec();
-		else m_Tester.loop();
+		else loop();
 	}
 	// if not, let's get into loop
-	else m_Tester.loop();
+	else loop();
 
 	m_Tester.disconnect();
 	return true;
@@ -215,8 +215,7 @@ void CCex::loop()
 		std::string s;
 		std::cout << "cex>";
 		std::cin >> s;
-		std::cout << s << std::endl;
-		
+
 		// parse entry string and store each words in list
 		std::list< std::string > v;
 

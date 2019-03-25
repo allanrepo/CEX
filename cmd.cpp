@@ -136,8 +136,7 @@ bool CCmd::scan(std::list< std::string >& Args)
 				// if -h[elp] is found before -t[ester], we disable connection
 				if (!bTester)
 				{
-					CTester& T = CTester::instance();
-					T.getChild("connect")->setValue("");					
+					CTester::instance().getChild("connect")->setValue("");					
 				}
 				// enable help for this <command>
 				getChild( getValue() )->getChild("-help")->setValue("ok");
@@ -271,7 +270,7 @@ bool CGetUserName::exec()
 /* ------------------------------------------------------------------------------------------
 execute program_loaded
 ------------------------------------------------------------------------------------------ */
-bool CProgramLoaded::exec()
+bool CProgramLoaded::exec()   
 {
 	if ( getChild("-help")->has("ok") ) return help();
 
@@ -282,8 +281,7 @@ bool CProgramLoaded::exec()
 	}
 	else
 	{
-		CTester& T = CTester::instance();
-		if (T.ProgCtrl()->isProgramLoaded()) m_Log << "CEX: Program " << T.ProgCtrl()->getProgramName() << " is currently loaded." << CUtil::CLog::endl;
+		if (ProgCtrl()->isProgramLoaded()) m_Log << "CEX: Program " << ProgCtrl()->getProgramName() << " is currently loaded." << CUtil::CLog::endl;
 		else m_Log << "CEX: There is currently no program loaded." << CUtil::CLog::endl;
 	}
 	return true;
@@ -303,8 +301,7 @@ bool CProgramLoadDone::exec()
 	}
 	else
 	{
-		CTester& T = CTester::instance();
-		if (T.ProgCtrl()->isProgramLoadDone()) m_Log << "CEX: Program " << T.ProgCtrl()->getProgramName() << " is done loading." << CUtil::CLog::endl;
+		if (ProgCtrl()->isProgramLoadDone()) m_Log << "CEX: Program " << ProgCtrl()->getProgramName() << " is done loading." << CUtil::CLog::endl;
 		else m_Log << "CCEX: Program is not done loading." << CUtil::CLog::endl;
 	}
 	return true;
@@ -348,29 +345,28 @@ bool CLoad::exec()
 	// found only one program as option, we store that
 	else setValue( v[0] );
 
-	CTester& T = CTester::instance();
 
 	// is there any program loaded? if yes, ERROR
-	if (T.ProgCtrl()->isProgramLoaded())
+	if (ProgCtrl()->isProgramLoaded())
 	{
-		m_Log << "CEX Error: Another program '" << T.ProgCtrl()->getProgramName() << "' is already loaded." << CUtil::CLog::endl;
+		m_Log << "CEX Error: Another program '" << ProgCtrl()->getProgramName() << "' is already loaded." << CUtil::CLog::endl;
 		return false;
 	}
 
 	// let's load program!
 	m_Log << "CEX: Program " << getValue() << " is loading " << (getChild("-display")->has("ok")? "WITH" : "WITHOUT") << " display..." << CUtil::CLog::endl;
-	T.ProgCtrl()->load( getValue().c_str(), EVXA::WAIT, getChild("-display")->has("ok")? EVXA::DISPLAY : EVXA::NO_DISPLAY );
+	ProgCtrl()->load( getValue().c_str(), EVXA::WAIT, getChild("-display")->has("ok")? EVXA::DISPLAY : EVXA::NO_DISPLAY );
 
 	// did something bad happend when we tried to load program?
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
 		m_Log << "CEX Error: Error in loading " << getValue()  << CUtil::CLog::endl;
 		return false;
 	} 
 	// can we check if program is actually loaded?
-	if ( T.ProgCtrl()->isProgramLoaded() )
+	if ( ProgCtrl()->isProgramLoaded() )
 	{
-		m_Log << "CEX: Loaded program " << T.ProgCtrl()->getProgramName() << "." << CUtil::CLog::endl;
+		m_Log << "CEX: Loaded program " << ProgCtrl()->getProgramName() << "." << CUtil::CLog::endl;
 		return true;
 	}
 	else
@@ -482,40 +478,39 @@ bool CUnload::exec()
 	}
 
 	// EXECUTION time!
-	CTester& T = CTester::instance();
 	bool bWait = !getChild("-nowait")->has("ok");		
 	long nWait = getChild("-wait")->getValue().empty()? 0 : CUtil::toLong( getChild("-wait")->getValue() );
 	bool bDontSave = getChild("-dontsave")->has("ok");
 
 	// unload the program
-	if ( !T.ProgCtrl()->isProgramLoaded() )
+	if ( !ProgCtrl()->isProgramLoaded() )
 	{
 		m_Log << "CEX Error: There is no program loaded." << CUtil::CLog::endl;
 		return false;
 	}
 
-	const char* szProgramName =  T.ProgCtrl()->getProgramName();
+	const char* szProgramName =  ProgCtrl()->getProgramName();
 	m_Log << "CEX: Program " << szProgramName << " is unloading. This may take a few moments...." << CUtil::CLog::endl;
 
 	// execute evxa command to unload program
 	// if nWait = 0, it will wait forever
 	// bSave is ignored by evxa and original CEX command so must figure a work around to implement this behavior
-	T.ProgCtrl()->unload( bWait? EVXA::WAIT : EVXA::NO_WAIT, nWait, bDontSave );
+	ProgCtrl()->unload( bWait? EVXA::WAIT : EVXA::NO_WAIT, nWait, bDontSave );
 
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
 		m_Log << "CEX Error: Error in unloading " << szProgramName << CUtil::CLog::endl;
 		return false;
 	}
 
-	if ( !T.ProgCtrl()->isProgramLoaded() || !bWait)
+	if ( !ProgCtrl()->isProgramLoaded() || !bWait)
 	{
 		m_Log << "CEX: Unloaded program " << szProgramName << "." << CUtil::CLog::endl;
 		return true;
 	}
 	else
 	{
-		m_Log << "CEX Error: Program " << T.ProgCtrl()->getProgramName() << " is still loaded." << CUtil::CLog::endl;
+		m_Log << "CEX Error: Program " << ProgCtrl()->getProgramName() << " is still loaded." << CUtil::CLog::endl;
 		return false;
 	}
 	return true;
@@ -642,12 +637,11 @@ bool CStart::exec()
 	}	
 
 	// EXECUTION time!
-	CTester& T = CTester::instance();
 	for (int i = 0; i < m_nLoop; i++)
 	{
 		if (m_bLoop) m_Log << "Looping (" << i + 1 << "/" << m_nLoop << ")" << CUtil::CLog::endl; // replicate original CEX printing this on loop
 
-		T.ProgCtrl()->start( m_bExitAfterExec? EVXA::NO_WAIT : EVXA::WAIT );
+		ProgCtrl()->start( m_bExitAfterExec? EVXA::NO_WAIT : EVXA::WAIT );
 
 		// if -nowait, we immediately exit after executing
 		if (m_bExitAfterExec) return true;
@@ -711,13 +705,12 @@ bool CGetExp::exec()
 	else pMode->setValue("ok");
 
 	// EXECUTION time!
-	CTester& T = CTester::instance();
 	EVX_EXPR_DISPLAY_MODE nDisplayMode;
 	if ( getChild("expression")->has("ok") ) nDisplayMode = EVX_SHOW_EXPRESSION;
 	if ( getChild("value")->has("ok") ) nDisplayMode = EVX_SHOW_VALUE;
 	if ( getChild("multi_value")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_VALUE;
 	if ( getChild("multi_range")->has("ok") ) nDisplayMode = EVX_SHOW_MULTI_RANGE;
-	m_Log << T.ProgCtrl()->getExpression( getValue().c_str(), nDisplayMode) << CUtil::CLog::endl;
+	m_Log << ProgCtrl()->getExpression( getValue().c_str(), nDisplayMode) << CUtil::CLog::endl;
 	
 	return true;
 }
@@ -797,25 +790,24 @@ bool CEvxSummary::exec()
 	if (it != m_Args.end()) m_strInvalidArg = *it;
 
 	// EXECUTION time!
-	CTester& T = CTester::instance();
 	if (has("site"))
 	{
 		// do the job. note that we only care about first option of <site>
-		if ( getChild("site")->getChild("on")->has("ok") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::ON);		
-		else if ( getChild("site")->getChild("off")->has("ok") ) T.ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::OFF);
-		else T.ProgCtrl()->setSummary(EVX_UpdateBreakout, T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
+		if ( getChild("site")->getChild("on")->has("ok") ) ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::ON);		
+		else if ( getChild("site")->getChild("off")->has("ok") ) ProgCtrl()->setSummary(EVX_UpdateBreakout, EVXA::OFF);
+		else ProgCtrl()->setSummary(EVX_UpdateBreakout, ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? EVXA::OFF : EVXA::ON);
 
 		// display results 
 		m_Log << "CEX: evx_summary " << getValue() << " option has been ";
 		m_Log << ( (getChild("site")->getChild("on")->has("ok") || getChild("site")->getChild("off")->has("ok") )? "set":"toggled") << " to ";
-		m_Log << (T.ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+		m_Log << (ProgCtrl()->getSummary(EVX_UpdateBreakout) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
 		return true;
 	}
 
 	else if (has("clearfinal") || has("clearpartial"))
 	{
-		if (has("clearfinal")) T.ProgCtrl()->clearFinalSummary();
-		else T.ProgCtrl()->clearPartialSummary();
+		if (has("clearfinal")) ProgCtrl()->clearFinalSummary();
+		else ProgCtrl()->clearPartialSummary();
 		m_Log << "CEX: cleared "<< (has("clearfinal")? "final":"partial") << " summary." << CUtil::CLog::endl;
 		return true;
 	}	
@@ -838,16 +830,16 @@ bool CEvxSummary::exec()
 			else continue;
 
 			// do the job
-			if ( pOpt->getChild("on")->has("ok") ) T.ProgCtrl()->setSummary(st, EVXA::ON);
-			else if ( pOpt->getChild("off")->has("ok") ) T.ProgCtrl()->setSummary(st, EVXA::OFF);
-			else T.ProgCtrl()->setSummary(st, T.ProgCtrl()->getSummary(st) == EVXA::ON? EVXA::OFF : EVXA::ON);
+			if ( pOpt->getChild("on")->has("ok") ) ProgCtrl()->setSummary(st, EVXA::ON);
+			else if ( pOpt->getChild("off")->has("ok") ) ProgCtrl()->setSummary(st, EVXA::OFF);
+			else ProgCtrl()->setSummary(st, ProgCtrl()->getSummary(st) == EVXA::ON? EVXA::OFF : EVXA::ON);
 
 			// display results 
 			m_Log << "CEX: evx_summary ";
 			m_Log << (pOpt->is("site")? "": pSummary->name());
 			m_Log << (pOpt->is("site")? "": " ") << pOpt->name();
 			m_Log << " option has been " << ( (pOpt->getChild("on")->has("ok") || pOpt->getChild("off")->has("ok"))? "set":"toggled") << " to ";
-			m_Log << (T.ProgCtrl()->getSummary(st) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
+			m_Log << (ProgCtrl()->getSummary(st) == EVXA::ON? "ON" : "OFF") << "." << CUtil::CLog::endl;
 		}
 		// do we have invalid arg?
 		if ( m_strInvalidArg.length() )
@@ -868,20 +860,20 @@ bool CEvxSummary::exec()
 		}
 
 		// get settings from arg options
-		if (getChild("output")->getChild("lot")->has("ok")) T.ProgCtrl()->setLotTypeSummary(EVX_LOT_SUMMARY);
-		if (getChild("output")->getChild("sublot")->has("ok")) T.ProgCtrl()->setLotTypeSummary(EVX_SUBLOT_SUMMARY);
-		if (getChild("output")->getChild("final")->has("ok")){ T.ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::ON); T.ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::OFF); }
-		if (getChild("output")->getChild("partial")->has("ok")){ T.ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::OFF); T.ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::ON); }
+		if (getChild("output")->getChild("lot")->has("ok")) ProgCtrl()->setLotTypeSummary(EVX_LOT_SUMMARY);
+		if (getChild("output")->getChild("sublot")->has("ok")) ProgCtrl()->setLotTypeSummary(EVX_SUBLOT_SUMMARY);
+		if (getChild("output")->getChild("final")->has("ok")){ ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::ON); ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::OFF); }
+		if (getChild("output")->getChild("partial")->has("ok")){ ProgCtrl()->setSummary(EVX_ClearFinal, EVXA::OFF); ProgCtrl()->setSummary(EVX_ClearPartial, EVXA::ON); }
 
 		// do the job
-		bool bFinal = (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON)? true:false;
-		bFinal? T.ProgCtrl()->outputFinalSummary() : T.ProgCtrl()->outputPartialSummary();
+		bool bFinal = (ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON)? true:false;
+		bFinal? ProgCtrl()->outputFinalSummary() : ProgCtrl()->outputPartialSummary();
 
 		// display results
-		m_Log << CUtil::CLog::endl << "CEX: " << name() << " output -- " << (bFinal? "Final" : "Partial") << "/" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? "Lot":"Sublot") << CUtil::CLog::endl;
+		m_Log << CUtil::CLog::endl << "CEX: " << name() << " output -- " << (bFinal? "Final" : "Partial") << "/" << (ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? "Lot":"Sublot") << CUtil::CLog::endl;
 		if (bFinal)
 		{
-			m_Log << "     Clearing results: Sublot" << (T.ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? ", Lot":"") << CUtil::CLog::endl;
+			m_Log << "     Clearing results: Sublot" << (ProgCtrl()->getLotTypeSummary() == EVX_LOT_SUMMARY? ", Lot":"") << CUtil::CLog::endl;
 			m_Log << "     Reseting NextSerial to '1'." << CUtil::CLog::endl;
 		}
 		m_Log << CUtil::CLog::endl;
@@ -893,18 +885,18 @@ bool CEvxSummary::exec()
 		m_Log << "evx_summary status:" << CUtil::CLog::endl;
 
 		// print site state
-		EVXA::ON_OFF_TYPE state = T.ProgCtrl()->getSummary(EVX_UpdateBreakout);
+		EVXA::ON_OFF_TYPE state = ProgCtrl()->getSummary(EVX_UpdateBreakout);
 		m_Log << "    site     " << (state == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
 		// print lot type
-		EVX_LOT_TYPE_SUMMARY lot = T.ProgCtrl()->getLotTypeSummary();
+		EVX_LOT_TYPE_SUMMARY lot = ProgCtrl()->getLotTypeSummary();
 		m_Log << "    lot_type " << (lot == EVX_SUBLOT_SUMMARY? "sublot" : "lot") << CUtil::CLog::endl;
 
 		// print partial status
-		m_Log << "    partial  full " << (T.ProgCtrl()->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
-		m_Log << ",  clear " << (T.ProgCtrl()->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+		m_Log << "    partial  full " << (ProgCtrl()->getSummary(EVX_UpdateFinal) == EVXA::ON? "on" : "off");
+		m_Log << ",  clear " << (ProgCtrl()->getSummary(EVX_ClearPartial) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
 
 		// print final status
-		m_Log << "    final    clear " << (T.ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
+		m_Log << "    final    clear " << (ProgCtrl()->getSummary(EVX_ClearFinal) == EVXA::ON? "on" : "off") << CUtil::CLog::endl;
 	}
 	return true;
 }
@@ -940,7 +932,6 @@ bool CDlogMethods::exec()
 	if (m_Args.size()) setValue( *m_Args.begin() );
 
 	// EXECUTION time!
-	CTester& T = CTester::instance();
 	// do we arg? if yes, it must be integer and has valid range
 	if ( getValue().size() )
 	{
@@ -952,22 +943,22 @@ bool CDlogMethods::exec()
 		
 		// check if <dlog_index> is within range
 		long n = CUtil::toLong( getValue() );
-		if ( n < 0 || n >= T.ProgCtrl()->getNumDatalogs() )
+		if ( n < 0 || n >= ProgCtrl()->getNumDatalogs() )
 		{
-			m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+			m_Log << "CEX Error: valid dlog index is from 0 to " << (ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
 			return false;
 		}
 	}
 
-	for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+	for (int i = 0; i < ProgCtrl()->getNumDatalogs(); i++)
 	{
 		// try to get the <method> at this index
 		std::stringstream val;
 		// if <method> is immediate, you can query it at this index
-		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
+		val << ProgCtrl()->getDatalogString(i, 1, 0);
 
 		// but if <method> is buffered, it must be queried here
-		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+		if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
 
 		// if we didn't find <method>...
 		if (!val.str().size())
@@ -1013,7 +1004,6 @@ bool CDlogFileFreq::exec()
 {
 	if ( getChild("-help")->has("ok") ) return help();
 
-	CTester& T = CTester::instance();
 
 	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
 	if (!m_Args.size())
@@ -1048,9 +1038,9 @@ bool CDlogFileFreq::exec()
 				return false;
 			}
 			// check if next arg's value is within dlog method's range
-			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= T.ProgCtrl()->getNumDatalogs() )
+			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= ProgCtrl()->getNumDatalogs() )
 			{
-				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
 				return false;
 			}	
 			// at this point, -n <m> is valid, we save it. 
@@ -1104,8 +1094,8 @@ bool CDlogFileFreq::exec()
 
 		// check if this is valid dlog method
 		std::stringstream val;
-		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+		val << ProgCtrl()->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
 
 		if (!val.str().size())
 		{
@@ -1114,7 +1104,7 @@ bool CDlogFileFreq::exec()
 		}
 		else 
 		{
-			T.ProgCtrl()->setDatalogFileFreq (i, s.c_str() );
+			ProgCtrl()->setDatalogFileFreq (i, s.c_str() );
 			m_Log << "CEX: File frequency for dlog" << i << " set to " << s << "." << CUtil::CLog::endl;
 			return true;
 		}
@@ -1122,17 +1112,17 @@ bool CDlogFileFreq::exec()
 	// if -m <method> is used
 	else 
 	{
-		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+		for (int i = 0; i < ProgCtrl()->getNumDatalogs(); i++)
 		{
 			std::stringstream val;
-			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+			val << ProgCtrl()->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
 			
 			if (val.str().compare( getChild("-m")->getValue() ) == 0)
 			{
 				std::string s = getValue();
 				s.insert(0, "DlogFreq:");
-				T.ProgCtrl()->setDatalogFileFreq (i, s.c_str());
+				ProgCtrl()->setDatalogFileFreq (i, s.c_str());
 				m_Log << "CEX: File Frequency for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << s << "." << CUtil::CLog::endl;
 				return true;
 			}
@@ -1157,7 +1147,6 @@ bool CDlogSampleRate::exec()
 {
 	if ( getChild("-help")->has("ok") ) return help();
 
-	CTester& T = CTester::instance();
 
 	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
 	if (!m_Args.size())
@@ -1213,9 +1202,9 @@ bool CDlogSampleRate::exec()
 				return false;
 			}
 			// check if next arg's value is within dlog method's range
-			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= T.ProgCtrl()->getNumDatalogs() )
+			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= ProgCtrl()->getNumDatalogs() )
 			{
-				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
 				return false;
 			}	
 			// at this point, -n <m> is valid, we save it. 
@@ -1255,8 +1244,8 @@ bool CDlogSampleRate::exec()
 
 		// check if this is valid dlog method
 		std::stringstream val;
-		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+		val << ProgCtrl()->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
  
 		if (!val.str().size())
 		{
@@ -1265,8 +1254,8 @@ bool CDlogSampleRate::exec()
 		}
 		else 
 		{
-			T.ProgCtrl()->setSampleFreqForStream (i, getValue().c_str() );
-			const char* p = T.ProgCtrl()->getSampleFreqForStream(i);
+			ProgCtrl()->setSampleFreqForStream (i, getValue().c_str() );
+			const char* p = ProgCtrl()->getSampleFreqForStream(i);
 			m_Log << "CEX: Sample rate for dlog" << i << " set to " << (p? p:"") << "." << CUtil::CLog::endl;
 			return true;
 		}
@@ -1274,16 +1263,16 @@ bool CDlogSampleRate::exec()
 	// if -m <method> is used
 	else 
 	{
-		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+		for (int i = 0; i < ProgCtrl()->getNumDatalogs(); i++)
 		{
 			std::stringstream val;
-			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+			val << ProgCtrl()->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
 			
 			if (val.str().compare( getChild("-m")->getValue() ) == 0)
 			{
-				T.ProgCtrl()->setSampleFreqForStream (i, getValue().c_str());
-				const char* p = T.ProgCtrl()->getSampleFreqForStream(i);
+				ProgCtrl()->setSampleFreqForStream (i, getValue().c_str());
+				const char* p = ProgCtrl()->getSampleFreqForStream(i);
 				m_Log << "CEX: Sample rate for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << (p? p:"") << "." << CUtil::CLog::endl;
 				return true;
 			}
@@ -1311,7 +1300,6 @@ bool CDlogTestID::exec()
 {
 	if ( getChild("-help")->has("ok") ) return help();
 
-	CTester& T = CTester::instance();
 
 	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
 	if (!m_Args.size())
@@ -1355,9 +1343,9 @@ bool CDlogTestID::exec()
 				return false;
 			}
 			// check if next arg's value is within dlog method's range
-			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= T.ProgCtrl()->getNumDatalogs() )
+			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= ProgCtrl()->getNumDatalogs() )
 			{
-				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
 				return false;
 			}	
 			// at this point, -n <m> is valid, we save it. 
@@ -1397,8 +1385,8 @@ bool CDlogTestID::exec()
 
 		// check if this is valid dlog method
 		std::stringstream val;
-		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+		val << ProgCtrl()->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
  
 		if (!val.str().size())
 		{
@@ -1410,8 +1398,8 @@ bool CDlogTestID::exec()
 			std::stringstream ss; 
 			if (getValue().compare("clear") == 0) ss << "";
 			else ss << "'" << getValue() << "'";
-			T.ProgCtrl()->setTestIdForStream(i, ss.str().c_str() );
-			const char* p = T.ProgCtrl()->getTestIdForStream(i,0);
+			ProgCtrl()->setTestIdForStream(i, ss.str().c_str() );
+			const char* p = ProgCtrl()->getTestIdForStream(i,0);
 			if (getValue().compare("clear") == 0) m_Log << "CEX: TestID string for dlog" << i << " has been cleared." <<  CUtil::CLog::endl;
 			else m_Log << "CEX: TestID string for dlog" << i << " set to " << (p?p:"") << "." << CUtil::CLog::endl;
 			return true;
@@ -1420,19 +1408,19 @@ bool CDlogTestID::exec()
 	// if -m <method> is used
 	else 
 	{
-		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+		for (int i = 0; i < ProgCtrl()->getNumDatalogs(); i++)
 		{
 			std::stringstream val;
-			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+			val << ProgCtrl()->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
 			
 			if (val.str().compare( getChild("-m")->getValue() ) == 0)
 			{
 				std::stringstream ss; 				
 				if (getValue().compare("clear") == 0) ss << "";
 				else ss << "'" << getValue() << "'";
-				T.ProgCtrl()->setTestIdForStream(i, ss.str().c_str());
-				const char* p = T.ProgCtrl()->getTestIdForStream(i,0);
+				ProgCtrl()->setTestIdForStream(i, ss.str().c_str());
+				const char* p = ProgCtrl()->getTestIdForStream(i,0);
 				if (getValue().compare("clear") == 0) m_Log << "CEX: Type for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] has been cleared." << CUtil::CLog::endl;
 				else m_Log << "CEX: TestID string for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << (p?p:"") << "." << CUtil::CLog::endl;
 				return true;
@@ -1459,7 +1447,6 @@ bool CDlogType::exec()
 {
 	if ( getChild("-help")->has("ok") ) return help();
 
-	CTester& T = CTester::instance();
 
 	// if no options, ERROR: CEX Error: Must specify either a valid method or dlog index.
 	if (!m_Args.size())
@@ -1494,9 +1481,9 @@ bool CDlogType::exec()
 				return false;
 			}
 			// check if next arg's value is within dlog method's range
-			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= T.ProgCtrl()->getNumDatalogs() )
+			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= ProgCtrl()->getNumDatalogs() )
 			{
-				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
 				return false;
 			}	
 			// at this point, -n <m> is valid, we save it. 
@@ -1548,8 +1535,8 @@ bool CDlogType::exec()
 
 		// check if this is valid dlog method
 		std::stringstream val;
-		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+		val << ProgCtrl()->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
  
 		if (!val.str().size())
 		{
@@ -1558,8 +1545,8 @@ bool CDlogType::exec()
 		}
 		else 
 		{
-			T.ProgCtrl()->setDatalogType (i, getValue().c_str() );
-			const char* p = T.ProgCtrl()->getDatalogType(i);
+			ProgCtrl()->setDatalogType (i, getValue().c_str() );
+			const char* p = ProgCtrl()->getDatalogType(i);
 			m_Log << "CEX: Type for dlog" << i << " set to " << (p?p:"") << "." << CUtil::CLog::endl;
 			return true;
 		}
@@ -1567,16 +1554,16 @@ bool CDlogType::exec()
 	// if -m <method> is used
 	else 
 	{
-		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+		for (int i = 0; i < ProgCtrl()->getNumDatalogs(); i++)
 		{
 			std::stringstream val;
-			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+			val << ProgCtrl()->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
 			
 			if (val.str().compare( getChild("-m")->getValue() ) == 0)
 			{
-				T.ProgCtrl()->setDatalogType (i, getValue().c_str());
-				const char* p = T.ProgCtrl()->getDatalogType(i);
+				ProgCtrl()->setDatalogType (i, getValue().c_str());
+				const char* p = ProgCtrl()->getDatalogType(i);
 				m_Log << "CEX: Type for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << (p?p:"") << "." << CUtil::CLog::endl;
 				return true;
 			}
@@ -1589,40 +1576,39 @@ bool CDlogType::exec()
 
 bool CDebug::exec()
 {
-	CTester& T = CTester::instance();
 
-	//m_Log << "Path: >" << T.ProgCtrl()->getProgramPath() << "<" << CUtil::CLog::endl;
-	//m_Log << "Name: >" << T.ProgCtrl()->getProgramName() << "<" << CUtil::CLog::endl;
+	//m_Log << "Path: >" << ProgCtrl()->getProgramPath() << "<" << CUtil::CLog::endl;
+	//m_Log << "Name: >" << ProgCtrl()->getProgramName() << "<" << CUtil::CLog::endl;
 
 	//return true;
 
 
-	m_Log << "Num Datalogs: " << T.ProgCtrl()->getNumDatalogs() << CUtil::CLog::endl;
-	for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+	m_Log << "Num Datalogs: " << ProgCtrl()->getNumDatalogs() << CUtil::CLog::endl;
+	for (int i = 0; i < ProgCtrl()->getNumDatalogs(); i++)
 	{
-		m_Log << "    [" << i << "] Attributes: " << T.ProgCtrl()->getNumDatalogAttributes(i) << CUtil::CLog::endl;
-		for (int j = 0; j < T.ProgCtrl()->getNumDatalogAttributes(i); j++)
+		m_Log << "    [" << i << "] Attributes: " << ProgCtrl()->getNumDatalogAttributes(i) << CUtil::CLog::endl;
+		for (int j = 0; j < ProgCtrl()->getNumDatalogAttributes(i); j++)
 		{
-			m_Log << "        [" << j << "] " << T.ProgCtrl()->getDlogAttributeString(i, j) << CUtil::CLog::endl;
+			m_Log << "        [" << j << "] " << ProgCtrl()->getDlogAttributeString(i, j) << CUtil::CLog::endl;
 		}
 	}
-	m_Log << CUtil::CLog::endl << "Num Datalogs: " << T.ProgCtrl()->getNumDatalogs() << CUtil::CLog::endl;
-//	for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+	m_Log << CUtil::CLog::endl << "Num Datalogs: " << ProgCtrl()->getNumDatalogs() << CUtil::CLog::endl;
+//	for (int i = 0; i < ProgCtrl()->getNumDatalogs(); i++)
 	for (int i = 0; i < 4; i++)
 	{
 		
 		//m_Log << "    [" << i << "] " << m_pProgCtrl->getDatalogFormat(i) << CLog::endl;
-		m_Log << "----[" << i  << "] " << T.ProgCtrl()->getDatalogString(i, -1, 0) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 0, 0) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 1, 0) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 2, 0) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 3, 1) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 4, 1) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 5, 1) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 6, 1) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 7, 1) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 8, 1) << CUtil::CLog::endl;
-		m_Log << "    [" << i  << "] " << T.ProgCtrl()->getDatalogString(i, 9, 1) << CUtil::CLog::endl;
+		m_Log << "----[" << i  << "] " << ProgCtrl()->getDatalogString(i, -1, 0) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 0, 0) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 1, 0) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 2, 0) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 3, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 4, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 5, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 6, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 7, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 8, 1) << CUtil::CLog::endl;
+		m_Log << "    [" << i  << "] " << ProgCtrl()->getDatalogString(i, 9, 1) << CUtil::CLog::endl;
 //		m_Log << "    [" << i  << "] " << m_pProgCtrl->getTestIdForStream(i, 1) << CLog::endl;
 
 //		int nDlogFormat = m_pProgCtrl->getNumDatalogFormats();
@@ -1753,9 +1739,8 @@ bool CExecFlow::exec()
 	}
 
 	// execute. consider -nowait option
-	CTester& T = CTester::instance();
 	m_Debug << "[DEBUG] Started Executing " << getValue() << "[" << type << "]..." << CUtil::CLog::endl;
-	T.ProgCtrl()->executeFlow( type, getChild("-nowait")->has("ok")? EVXA::NO_WAIT : EVXA::WAIT );
+	ProgCtrl()->executeFlow( type, getChild("-nowait")->has("ok")? EVXA::NO_WAIT : EVXA::WAIT );
 	m_Debug << "[DEBUG] Done: -nowait " << (getChild("-nowait")->has("ok")? "enabled" : "disabled") << "." << CUtil::CLog::endl;
 	return true;
 }
@@ -1775,18 +1760,17 @@ bool CSave::exec()
 	}
 
 	// ensure there's program loaded
-	CTester& T = CTester::instance();
-	if (!T.ProgCtrl()->isProgramLoaded())
+	if (!ProgCtrl()->isProgramLoaded())
 	{	
 		m_Log << "CEX Error: There is no program loaded. " << CUtil::CLog::endl;
 		return false;
 	}
 	
-	const char* p = T.ProgCtrl()->getProgramPath();
+	const char* p = ProgCtrl()->getProgramPath();
 	if (p)
 	{
-		T.ProgCtrl()->save(p);
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		ProgCtrl()->save(p);
+		if ( ProgCtrl()->getStatus() != EVXA::OK )
 		{
 			m_Log << "CEX Error: Error in saving " << p << CUtil::CLog::endl;
 			return false;
@@ -1822,18 +1806,17 @@ bool CSaveAs::exec()
 	}
 
 	// ensure there's program loaded
-	CTester& T = CTester::instance();
-	if (!T.ProgCtrl()->isProgramLoaded())
+	if (!ProgCtrl()->isProgramLoaded())
 	{	
 		m_Log << "CEX Error: There is no program loaded. " << CUtil::CLog::endl;
 		return false;
 	}
 	
-	const char* p = T.ProgCtrl()->getProgramPath();
+	const char* p = ProgCtrl()->getProgramPath();
 	if (p)
 	{
-		T.ProgCtrl()->save((*m_Args.begin()).c_str());
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		ProgCtrl()->save((*m_Args.begin()).c_str());
+		if ( ProgCtrl()->getStatus() != EVXA::OK )
 		{
 			m_Log << "CEX Error: Error in saving as " << (*m_Args.begin()) << CUtil::CLog::endl;
 			return false;
@@ -1872,15 +1855,14 @@ bool CRestart::exec()
 	}
 
 	// ensure there's program loaded
-	CTester& T = CTester::instance();
-	if (!T.ProgCtrl()->isProgramLoaded())
+	if (!ProgCtrl()->isProgramLoaded())
 	{	
 		m_Log << "CEX Error: There is no program loaded. " << CUtil::CLog::endl;
 		return false;
 	}
 	
-	T.ProgCtrl()->restart( getChild("-nowait")->has("ok")? EVXA::NO_WAIT : EVXA::WAIT );		
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	ProgCtrl()->restart( getChild("-nowait")->has("ok")? EVXA::NO_WAIT : EVXA::WAIT );		
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
 		m_Log << "CEX Error: Error on restart()" << CUtil::CLog::endl;
 		return false;
@@ -1907,7 +1889,6 @@ bool CDFilter::exec()
 {
 	if ( getChild("-help")->has("ok") ) return help();
 
-	CTester& T = CTester::instance();
 
 	for (std::list< std::string >::iterator it = m_Args.begin(); it != m_Args.end(); it++)
 	{
@@ -1943,9 +1924,9 @@ bool CDFilter::exec()
 				return false;
 			}
 			// check if next arg's value is within dlog method's range
-			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= T.ProgCtrl()->getNumDatalogs() )
+			if ( CUtil::toLong( *it ) < 0 || CUtil::toLong( *it ) >= ProgCtrl()->getNumDatalogs() )
 			{
-				m_Log << "CEX Error: valid dlog index is from 0 to " << (T.ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
+				m_Log << "CEX Error: valid dlog index is from 0 to " << (ProgCtrl()->getNumDatalogs() - 1) << "." << CUtil::CLog::endl;
 				return false;
 			}	
 			// at this point, -n <m> is valid, we save it. 
@@ -2005,16 +1986,16 @@ bool CDFilter::exec()
 		if ( has("failonly") ) filter = EVX_FilterFail;
 
 		// if -n and -m were not specified, we are setting overall datalog setting instead.
-		T.ProgCtrl()->setDatalog(filter);
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		ProgCtrl()->setDatalog(filter);
+		if ( ProgCtrl()->getStatus() != EVXA::OK )
 		{
-			m_Log << "CEX Error: Could not get datalog. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+			m_Log << "CEX Error: Could not get datalog. " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
 			return false;
 		}
 		else
 		{
 			m_Log << "CEX: Datalogging was turned ";
-			EVX_Filter filter = T.ProgCtrl()->getDatalog();
+			EVX_Filter filter = ProgCtrl()->getDatalog();
 			switch(filter)
 			{
 				case EVX_FilterOn:
@@ -2049,8 +2030,8 @@ bool CDFilter::exec()
 
 		// check if this is valid dlog method
 		std::stringstream val;
-		val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-		if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+		val << ProgCtrl()->getDatalogString(i, 1, 0);
+		if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
  
 		if (!val.str().size())
 		{
@@ -2065,8 +2046,8 @@ bool CDFilter::exec()
 			if (has("failonly")) ss << "Dlog:FailOnly";
 			if (has("default")) ss << "";
 
-			T.ProgCtrl()->setDatalogString (i, 0, ss.str().c_str() );
-			const char* p = T.ProgCtrl()->getDatalogString(i, 0, 0);
+			ProgCtrl()->setDatalogString (i, 0, ss.str().c_str() );
+			const char* p = ProgCtrl()->getDatalogString(i, 0, 0);
 			m_Log << "CEX: Datalog filter for index " << i << " was set to " << (p?(strlen(p)?p:"default"):"") << "." << CUtil::CLog::endl;
 			return true;
 		}
@@ -2074,11 +2055,11 @@ bool CDFilter::exec()
 	// if -m <method> is used
 	else 
 	{
-		for (int i = 0; i < T.ProgCtrl()->getNumDatalogs(); i++)
+		for (int i = 0; i < ProgCtrl()->getNumDatalogs(); i++)
 		{
 			std::stringstream val;
-			val << T.ProgCtrl()->getDatalogString(i, 1, 0);
-			if (!val.str().size()) val << T.ProgCtrl()->getDatalogString(i, 2, 0);
+			val << ProgCtrl()->getDatalogString(i, 1, 0);
+			if (!val.str().size()) val << ProgCtrl()->getDatalogString(i, 2, 0);
 			
 			if (val.str().compare( getChild("-m")->getValue() ) == 0)
 			{
@@ -2088,8 +2069,8 @@ bool CDFilter::exec()
 				if (has("failonly")) ss << "Dlog:FailOnly";
 				if (has("default")) ss << "";
 
-				T.ProgCtrl()->setDatalogString (i, 0, ss.str().c_str() );
-				const char* p = T.ProgCtrl()->getDatalogString(i, 0, 0);
+				ProgCtrl()->setDatalogString (i, 0, ss.str().c_str() );
+				const char* p = ProgCtrl()->getDatalogString(i, 0, 0);
 				m_Log << "CEX: Datalog filter for method "<<  getChild("-m")->getValue() << " [dlog" << i << "] set to " << (p?(strlen(p)?p:"default"):"") << "." << CUtil::CLog::endl;
 				return true;
 			}
@@ -2116,8 +2097,7 @@ bool CList::exec()
 	}
 
 	// ensure there's program loaded
-	CTester& T = CTester::instance();
-	if (!T.ProgCtrl()->isProgramLoaded())
+	if (!ProgCtrl()->isProgramLoaded())
 	{	
 		m_Log << "CEX Error: There is no program loaded. " << CUtil::CLog::endl;
 		return false;
@@ -2125,7 +2105,7 @@ bool CList::exec()
 
 	
 	// print loaded program name
-	const char* p = T.ProgCtrl()->getProgramName();
+	const char* p = ProgCtrl()->getProgramName();
 	if (p)
 	{
 		m_Log << "Loaded Program:" << CUtil::CLog::endl;
@@ -2150,23 +2130,22 @@ bool CListActiveObjects::exec()
 		return false;
 	}
 
-	CTester& T = CTester::instance();
 
 	// get num active objects
-	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveAdapter);
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	int n = ProgCtrl()->getNumActiveObjects(EVX_ActiveAdapter);
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
-		m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
 		return false;
 	}
 	else m_Log << "numActiveAdapter: " << n << CUtil::CLog::endl;
 
 
 
-	const char* p = T.ProgCtrl()->getActiveObject(EVX_ActiveAdapter);
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	const char* p = ProgCtrl()->getActiveObject(EVX_ActiveAdapter);
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
-		m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		m_Log << "CEX Error: " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
 		return false;
 	}
 	else m_Log << "ActiveAdapter: " << p << CUtil::CLog::endl;
@@ -2188,13 +2167,12 @@ bool CListBoards::exec()
 		return false;
 	}
 
-	CTester& T = CTester::instance();
 
 	// get num boards
-	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveAdapter);
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	int n = ProgCtrl()->getNumActiveObjects(EVX_ActiveAdapter);
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
-		m_Log << "CEX Error: Could not get the number of Active Adapter Board's. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		m_Log << "CEX Error: Could not get the number of Active Adapter Board's. " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
 		return false;
 	}
 
@@ -2206,12 +2184,12 @@ bool CListBoards::exec()
 
 	for (int i = 0; i < n; i++)
 	{
-		const char* p = T.ProgCtrl()->returnActiveObjects(EVX_ActiveAdapter, i);
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		const char* p = ProgCtrl()->returnActiveObjects(EVX_ActiveAdapter, i);
+		if ( ProgCtrl()->getStatus() != EVXA::OK )
 		{
 			m_Log.clear();
 			m_Log.immediate = true;
-			m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
+			m_Log << "CEX Error: " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
 			return false;
 		}
 		else m_Log << " " << p << CUtil::CLog::endl;
@@ -2238,13 +2216,12 @@ bool CListWafers::exec()
 		return false;
 	}
 
-	CTester& T = CTester::instance();
 
 	// get num boards
-	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveWafer);
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	int n = ProgCtrl()->getNumActiveObjects(EVX_ActiveWafer);
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
-		m_Log << "CEX Error: Could not get the number of Active Wafer's. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		m_Log << "CEX Error: Could not get the number of Active Wafer's. " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
 		return false;
 	}
 
@@ -2256,12 +2233,12 @@ bool CListWafers::exec()
 
 	for (int i = 0; i < n; i++)
 	{
-		const char* p = T.ProgCtrl()->returnActiveObjects(EVX_ActiveWafer, i);
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		const char* p = ProgCtrl()->returnActiveObjects(EVX_ActiveWafer, i);
+		if ( ProgCtrl()->getStatus() != EVXA::OK )
 		{
 			m_Log.clear();
 			m_Log.immediate = true;
-			m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
+			m_Log << "CEX Error: " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
 			return false;
 		}
 		else m_Log << " " << p << CUtil::CLog::endl;
@@ -2288,13 +2265,12 @@ bool CListFlows::exec()
 		return false;
 	}
 
-	CTester& T = CTester::instance();
 
 	// get num boards
-	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveFlow);
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	int n = ProgCtrl()->getNumActiveObjects(EVX_ActiveFlow);
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
-		m_Log << "CEX Error: Could not get the number of Active Flow's. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		m_Log << "CEX Error: Could not get the number of Active Flow's. " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
 		return false;
 	}
 
@@ -2306,12 +2282,12 @@ bool CListFlows::exec()
 
 	for (int i = 0; i < n; i++)
 	{
-		const char* p = T.ProgCtrl()->returnActiveObjects(EVX_ActiveFlow, i);
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		const char* p = ProgCtrl()->returnActiveObjects(EVX_ActiveFlow, i);
+		if ( ProgCtrl()->getStatus() != EVXA::OK )
 		{
 			m_Log.clear();
 			m_Log.immediate = true;
-			m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
+			m_Log << "CEX Error: " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
 			return false;
 		}
 		else m_Log << " " << p << CUtil::CLog::endl;
@@ -2338,13 +2314,12 @@ bool CListMaps::exec()
 		return false;
 	}
 
-	CTester& T = CTester::instance();
 
 	// get num boards
-	int n = T.ProgCtrl()->getNumActiveObjects(EVX_ActiveBinmap);
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	int n = ProgCtrl()->getNumActiveObjects(EVX_ActiveBinmap);
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
-		m_Log << "CEX Error: Could not get the number of Active Bin Map's. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		m_Log << "CEX Error: Could not get the number of Active Bin Map's. " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
 		return false;
 	}
 
@@ -2356,12 +2331,12 @@ bool CListMaps::exec()
 
 	for (int i = 0; i < n; i++)
 	{
-		const char* p = T.ProgCtrl()->returnActiveObjects(EVX_ActiveBinmap, i);
-		if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+		const char* p = ProgCtrl()->returnActiveObjects(EVX_ActiveBinmap, i);
+		if ( ProgCtrl()->getStatus() != EVXA::OK )
 		{
 			m_Log.clear();
 			m_Log.immediate = true;
-			m_Log << "CEX Error: " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
+			m_Log << "CEX Error: " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;			
 			return false;
 		}
 		else m_Log << " " << p << CUtil::CLog::endl;
@@ -2390,12 +2365,11 @@ bool CListExtIntfObjects::exec()
 
 	// get list of interface objects
 	std::vector< std::string > v;
-	CTester& T = CTester::instance();
-	T.ProgCtrl()->getExtInterfaceNames(v);
+	ProgCtrl()->getExtInterfaceNames(v);
 
-	if ( T.ProgCtrl()->getStatus() != EVXA::OK )
+	if ( ProgCtrl()->getStatus() != EVXA::OK )
 	{
-		m_Log << "CEX Error: Could not get the list of extintf objects. " << T.ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
+		m_Log << "CEX Error: Could not get the list of extintf objects. " << ProgCtrl()->getStatusBuffer() << CUtil::CLog::endl;
 		return false;
 	}
 

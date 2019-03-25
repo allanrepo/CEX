@@ -81,4 +81,9 @@ public:
 	int getHead(){ return m_nHead; }
 };
 
+
+ProgramControl* const ProgCtrl();
+
+
+
 #endif
